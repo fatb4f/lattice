@@ -11,18 +11,41 @@ import (
 #CueSelectorExpr: #NonEmptyString & =~"^[_#A-Za-z][_A-Za-z0-9]*(\\.[_A-Za-z][_A-Za-z0-9]*)*$"
 
 #CueIdiomFamily:
+	"constraint" |
 	"unification" |
 	"definition" |
 	"default" |
 	"disjunction" |
+	"embedding" |
 	"comprehension" |
 	"closedness" |
+	"bottom" |
 	"subsumption" |
+	"fixture" |
 	"negative-fixture" |
+	"validation" |
 	"projection" |
 	"constructor" |
 	"tool-command" |
-	"adapter-boundary"
+	"adapter-boundary" |
+	"list" |
+	"string" |
+	"number" |
+	"package" |
+	"stdlib" |
+	"data-ingestion" |
+	"tooling"
+
+#CuePillarClass:
+	"cue-language-pillars" |
+	"lattice-contract-pillars" |
+	"adapter-projection-pillars"
+
+#CoverageStatus:
+	"missing" |
+	"partial" |
+	"seed" |
+	"captured"
 
 #ValidationMode:
 	"vet-passes" |
@@ -34,6 +57,8 @@ import (
 #CueIdiom: close({
 	id:      #KebabIdentifier
 	family:  #CueIdiomFamily
+	pillarClass: #CuePillarClass | *"lattice-contract-pillars"
+	coverageStatus: #CoverageStatus | *"seed"
 	title:   #NonEmptyString
 	problem: #NonEmptyString
 	rule:    #NonEmptyString
@@ -69,4 +94,3 @@ import (
 	schema: "fatb4f.lattice.cue-idiom-catalog.v1"
 	idioms: #CueIdiomMap
 })
-

@@ -26,6 +26,9 @@ import "strings"
 	"cue-closedness" |
 	"cue-subsume" |
 	"cue-tool-commands" |
+	"cue-modules" |
+	"cue-packages" |
+	"cue-imports" |
 	"cue-by-example" |
 	"cuetorials-useful-patterns" |
 	"apercue-projection-patterns"
@@ -109,6 +112,21 @@ cueIdiomSources: close({
 			kind:  "official-doc"
 			title: "CUE command tasks"
 			ref:   "https://cuelang.org/docs/concept/using-the-cue-command-line/"
+		}
+		"cue-modules": {
+			kind:  "official-doc"
+			title: "CUE modules"
+			ref:   "https://cuelang.org/docs/reference/modules/"
+		}
+		"cue-packages": {
+			kind:  "official-doc"
+			title: "CUE packages"
+			ref:   "https://cuelang.org/docs/concept/modules-packages-instances/"
+		}
+		"cue-imports": {
+			kind:  "official-doc"
+			title: "CUE imports and standard library"
+			ref:   "https://pkg.go.dev/cuelang.org/go/pkg"
 		}
 		"cue-by-example": {
 			kind:  "example-corpus"

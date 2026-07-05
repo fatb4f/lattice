@@ -3,6 +3,20 @@
 
 **Not really.** I do not find a mature, canonical **“Refactoring.Guru for CUE”** or **“TheAlgorithms/CUE”** equivalent.
 
+## Catalog split
+
+`patterns/` now separates three catalog axes:
+
+| Axis | Purpose |
+| ---- | ------- |
+| `cue-language-pillars` | General CUE mechanics such as constraints, unification, defaults, disjunctions, closedness, lists, strings, numbers, packages, stdlib, data ingestion, and CLI recipes. |
+| `lattice-contract-pillars` | Project-specific proof idioms: graph-state validation, no-widening, fixture matrices, negative probes, constructors, and validation reports. |
+| `adapter-projection-pillars` | Evidence-only boundaries for generated projections, external data, CLI tooling, and operator-facing adapters. |
+
+The executable catalog remains in the parent `patterns` CUE package. Category
+subdirectories are indexes for expanding each pillar without changing import
+paths.
+
 What exists is closer to:
 
 | Need                                   | Existing closest match                                            | Gap                                                                            |
