@@ -25,8 +25,9 @@ import (
 }
 
 // Domain profiles refine these vocabularies with bounded enums.
-#ResourceRole:  #NonEmptyString
-#OperationKind: #NonEmptyString
+#ResourceRole:                #NonEmptyString
+#OperationKind:               #NonEmptyString
+#GeneratedOutputResourceRole: "generated-output"
 
 #VisibilityTier:
 	"public" |
@@ -146,6 +147,17 @@ import (
 	operations: #OperationMap
 	gates:      #GateMap
 	witnesses:  #WitnessMap
+
+	_createsGeneratedOutputProof: {
+		for operationID, operation in operations {
+			for resourceID, _ in operation.creates {
+				"\(operationID)-creates-\(resourceID)-exists": list.Contains(list.SortStrings([for key, _ in resources {key}]), resourceID) & true
+				"\(operationID)-creates-\(resourceID)-role": resources[resourceID] & {
+					role: #GeneratedOutputResourceRole
+				}
+			}
+		}
+	}
 }
 
 #MakeClosedObligationState: {
@@ -190,19 +202,19 @@ import (
 #StateKeySet: close({
 	state: #ClosedObligationState
 
-	resources:  list.SortStrings([for key, _ in state.resources {key}])
+	resources: list.SortStrings([for key, _ in state.resources {key}])
 	operations: list.SortStrings([for key, _ in state.operations {key}])
-	gates:      list.SortStrings([for key, _ in state.gates {key}])
-	witnesses:  list.SortStrings([for key, _ in state.witnesses {key}])
+	gates: list.SortStrings([for key, _ in state.gates {key}])
+	witnesses: list.SortStrings([for key, _ in state.witnesses {key}])
 })
 
 #OperationRefKeySet: close({
 	operation: #Operation
 
-	reads:             list.SortStrings([for key, _ in operation.reads {key}])
-	writes:            list.SortStrings([for key, _ in operation.writes {key}])
-	creates:           list.SortStrings([for key, _ in operation.creates {key}])
-	requiresGates:     list.SortStrings([for key, _ in operation.requiresGates {key}])
+	reads: list.SortStrings([for key, _ in operation.reads {key}])
+	writes: list.SortStrings([for key, _ in operation.writes {key}])
+	creates: list.SortStrings([for key, _ in operation.creates {key}])
+	requiresGates: list.SortStrings([for key, _ in operation.requiresGates {key}])
 	requiresWitnesses: list.SortStrings([for key, _ in operation.requiresWitnesses {key}])
 })
 
@@ -211,7 +223,7 @@ import (
 	target:    #ClosedObligationState
 
 	authorityKeys: (#StateKeySet & {state: authority})
-	targetKeys:    (#StateKeySet & {state: target})
+	targetKeys: (#StateKeySet & {state: target})
 
 	keyEquality: {
 		resources:  authorityKeys.resources & targetKeys.resources
@@ -224,7 +236,7 @@ import (
 		for operationID, _ in authority.operations {
 			"\(operationID)": {
 				authorityRefs: (#OperationRefKeySet & {operation: authority.operations[operationID]})
-				targetRefs:    (#OperationRefKeySet & {operation: target.operations[operationID]})
+				targetRefs: (#OperationRefKeySet & {operation: target.operations[operationID]})
 
 				reads:             authorityRefs.reads & targetRefs.reads
 				writes:            authorityRefs.writes & targetRefs.writes
