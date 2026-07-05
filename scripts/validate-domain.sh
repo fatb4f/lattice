@@ -24,6 +24,11 @@ cue export ./domain -e _closedState --out cue >/dev/null
 cue export ./idioms -e cueIdiomSources --out cue >/dev/null
 cue export ./patterns -e cueIdiomCatalog --out cue >/dev/null
 cue export ./patterns -e cuePillarExpectations --out cue >/dev/null
+cue export ./patterns/defaults -e defaultsFixtureReport --out cue >/dev/null
+cue export ./patterns/disjunctions -e disjunctionsFixtureReport --out cue >/dev/null
+cue export ./patterns/packages -e packagesFixtureReport --out cue >/dev/null
+cue export ./patterns/data -e dataIngestionFixtureReport --out cue >/dev/null
+cue export ./patterns/tooling -e toolingFixtureReport --out cue >/dev/null
 cue export ./profiles/code-intel -e expectedCodeIntelProfile --out cue >/dev/null
 cue export ./profiles/code-intel -e codeIntelProfileFeedbackReport --out cue >/dev/null
 cue export ./exports -e cueIdiomCatalog --out cue >/dev/null
