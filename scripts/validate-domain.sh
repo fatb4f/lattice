@@ -13,12 +13,42 @@ expect_failure() {
 	fi
 }
 
+check_pattern_surfaces() {
+	local requirements
+	requirements="$(mktemp)"
+	trap 'rm -f "$requirements"' RETURN
+
+	cue export ./patterns -e cuePillarExpectations --out json |
+		jq -r '
+			.pillars[] |
+			.surface as $surface |
+			[
+				[$surface.requiresReadme, "README.md"],
+				[$surface.requiresPattern, "pattern.cue"],
+				[$surface.requiresPositive, "positive.cue"],
+				[$surface.requiresNegative, "negative.cue"],
+				[$surface.requiresReport, "report.cue"]
+			][] |
+			select(.[0] == true) |
+			"patterns/\($surface.dir)/\(.[1])"
+		' >"$requirements"
+
+	while IFS= read -r required_file; do
+		if [[ ! -f "$required_file" ]]; then
+			printf 'missing declared pattern surface: %s\n' "$required_file"
+			return 1
+		fi
+	done <"$requirements"
+}
+
 cue vet ./domain
 cue vet ./idioms
 cue vet ./patterns
 cue vet ./profiles
 cue vet ./profiles/code-intel
 cue vet ./exports
+
+check_pattern_surfaces
 
 cue export ./domain -e _closedState --out cue >/dev/null
 cue export ./idioms -e cueIdiomSources --out cue >/dev/null
