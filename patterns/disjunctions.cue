@@ -31,3 +31,54 @@ cueIdiomCatalog: #CueIdiomCatalog & {
 	}
 }
 
+_disjunctionCommand:
+	close({
+		kind:   "vet"
+		target: string
+	}) |
+	close({
+		kind:     "export"
+		target:   string
+		selector: string
+	})
+
+_disjunctionExport: _disjunctionCommand & {
+	kind:     "export"
+	target:   "./patterns"
+	selector: "cueIdiomCatalog"
+}
+
+cuePillarSpecs: {
+	pillars: {
+		disjunctions: {
+			title:  "Disjunctions"
+			class:  "language"
+			status: "fixture-backed"
+			mechanics: [
+				"Disjunctions bound scalar vocabularies.",
+				"Struct branches model tagged unions.",
+				"Invalid branches bottom when required fields are absent.",
+			]
+			idioms: {
+				"tagged-command-union": {
+					title: "Model command variants as a tagged union"
+					problem: "Open command maps allow selectors and targets to appear on the wrong branch."
+					rule: "Use a kind field to select a closed branch with branch-specific required fields."
+					constructs: ["|", "close", "tagged union"]
+					canonical: {
+						expr:  "_disjunctionExport"
+						value: _disjunctionExport
+					}
+					positive: {
+						expr:  "_disjunctionExport"
+						value: _disjunctionExport
+					}
+					expectedBottom: {
+						probeExpr: "_disjunctionCommand & {kind: \"export\", target: \"./patterns\"}"
+						reason:    "The export branch requires selector."
+					}
+				}
+			}
+		}
+	}
+}

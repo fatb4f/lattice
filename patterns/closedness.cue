@@ -31,3 +31,47 @@ cueIdiomCatalog: #CueIdiomCatalog & {
 	}
 }
 
+_closedSurface: close({
+	id:   #KebabIdentifier
+	role: "authority" | "projection"
+})
+
+_closedSurfacePositive: _closedSurface & {
+	id:   "closed-authority"
+	role: "authority"
+}
+
+cuePillarSpecs: {
+	pillars: {
+		closedness: {
+			title:  "Closedness"
+			class:  "language"
+			status: "validated"
+			mechanics: [
+				"Open structs admit additional fields.",
+				"close() rejects fields outside the declared surface.",
+				"Closed authority surfaces prevent typo-driven widening.",
+			]
+			idioms: {
+				"closed-authority-surface": {
+					title: "Close public authority surfaces"
+					problem: "Unexpected fields can become unreviewed authority."
+					rule: "Use close() for the public contract and keep extension points explicit."
+					constructs: ["close", "closed structs", "field rejection"]
+					canonical: {
+						expr:  "_closedSurfacePositive"
+						value: _closedSurfacePositive
+					}
+					positive: {
+						expr:  "_closedSurfacePositive"
+						value: _closedSurfacePositive
+					}
+					expectedBottom: {
+						probeExpr: "_closedSurface & {id: \"closed-authority\", role: \"authority\", typo: true}"
+						reason:    "The closed surface does not admit typo."
+					}
+				}
+			}
+		}
+	}
+}

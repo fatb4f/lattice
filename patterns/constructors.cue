@@ -34,3 +34,51 @@ cueIdiomCatalog: #CueIdiomCatalog & {
 	}
 }
 
+#ConstructorExample: {
+	in: {
+		id: #KebabIdentifier
+		role?: "authority" | "projection"
+	}
+	out: close({
+		id:   in.id
+		role: "authority" | "projection" | *"authority"
+		if in.role != _|_ {
+			role: in.role
+		}
+	})
+}
+
+constructorExampleOutput: (#ConstructorExample & {
+	in: id: "constructed-authority"
+}).out
+
+cuePillarSpecs: {
+	pillars: {
+		constructors: {
+			title:  "Constructors"
+			class:  "contract"
+			status: "validated"
+			mechanics: [
+				"Constructors separate partial input from normalized output.",
+				"Output values apply defaults and derived fields.",
+				"Closed output prevents callers from widening the constructed target.",
+			]
+			idioms: {
+				"in-out-normalizer": {
+					title: "Normalize partial input into a closed output"
+					problem: "Partial fixtures are useful inputs but unstable as authority."
+					rule: "Expose an in/out constructor and validate only the constructed output."
+					constructs: ["in/out shape", "defaults", "close"]
+					canonical: {
+						expr:  "constructorExampleOutput"
+						value: constructorExampleOutput
+					}
+					positive: {
+						expr:  "constructorExampleOutput"
+						value: constructorExampleOutput
+					}
+				}
+			}
+		}
+	}
+}

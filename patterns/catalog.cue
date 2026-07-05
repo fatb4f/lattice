@@ -16,9 +16,13 @@ import (
 	"definition" |
 	"default" |
 	"disjunction" |
+	"top-and-bottom" |
+	"bounds" |
 	"embedding" |
 	"comprehension" |
 	"closedness" |
+	"hidden-and-let" |
+	"cycle" |
 	"bottom" |
 	"subsumption" |
 	"fixture" |
@@ -26,6 +30,7 @@ import (
 	"validation" |
 	"projection" |
 	"constructor" |
+	"attribute" |
 	"tool-command" |
 	"adapter-boundary" |
 	"list" |
@@ -53,6 +58,105 @@ import (
 	"eval-bottoms" |
 	"subsumes" |
 	"no-widening"
+
+#PillarID:
+	"unification" |
+	"definitions" |
+	"defaults" |
+	"disjunctions" |
+	"comprehensions" |
+	"closedness" |
+	"subsumption" |
+	"negative-fixtures" |
+	"projections" |
+	"constructors" |
+	"top-and-bottom" |
+	"bounds" |
+	"hidden-and-let" |
+	"cycles" |
+	"lists" |
+	"attributes"
+
+#PillarSpecClass:
+	"language" |
+	"contract" |
+	"adapter"
+
+#PillarSpecStatus:
+	"doc-only" |
+	"fixture-backed" |
+	"validated"
+
+#CueValueWitness: close({
+	expr:  #NonEmptyString
+	value: _
+})
+
+#CueBottomWitness: close({
+	probeExpr: #NonEmptyString
+	reason:    #NonEmptyString
+})
+
+#ExecutableIdiomSpec: close({
+	title:      #NonEmptyString
+	problem:    #NonEmptyString
+	rule:       #NonEmptyString
+	constructs: [...#NonEmptyString] & [_, ...]
+
+	canonical?:      #CueValueWitness
+	positive?:       #CueValueWitness
+	negative?:       #CueValueWitness
+	expectedBottom?: #CueBottomWitness
+})
+
+#ExecutableIdiomSpecMap: {
+	[ID= !~"^[a-z0-9]+(-[a-z0-9]+)*$"]: {
+		_invalidMapKey: ID & #KebabIdentifier
+	}
+	[string]: #ExecutableIdiomSpec
+}
+
+#PillarSpec: close({
+	id:        #PillarID
+	title:     #NonEmptyString
+	class:     #PillarSpecClass
+	status:    #PillarSpecStatus
+	mechanics: [...#NonEmptyString] & [_, ...]
+	idioms:    #ExecutableIdiomSpecMap
+})
+
+#PillarSpecMap: {
+	[ID= !~"^[a-z0-9]+(-[a-z0-9]+)*$"]: {
+		_invalidMapKey: ID & #KebabIdentifier
+	}
+	[string]: #PillarSpec
+	[ID=string]: {
+		id: ID
+	}
+}
+
+#IdiomFamilyID:
+	"types-are-values" |
+	"smart-enum-fallback" |
+	"composition-privacy" |
+	"data-pipeline" |
+	"contract-testing"
+
+#IdiomFamilySpec: close({
+	id:      #IdiomFamilyID
+	pillars: [...#PillarID] & [_, ...]
+	rule:    #NonEmptyString
+})
+
+#IdiomFamilySpecMap: {
+	[ID= !~"^[a-z0-9]+(-[a-z0-9]+)*$"]: {
+		_invalidMapKey: ID & #KebabIdentifier
+	}
+	[string]: #IdiomFamilySpec
+	[ID=string]: {
+		id: ID
+	}
+}
 
 #CueIdiom: close({
 	id:      #KebabIdentifier
@@ -93,4 +197,14 @@ import (
 #CueIdiomCatalog: close({
 	schema: "fatb4f.lattice.cue-idiom-catalog.v1"
 	idioms: #CueIdiomMap
+})
+
+cuePillarSpecs: close({
+	schema:  "fatb4f.lattice.cue-pillar-specs.v1"
+	pillars: #PillarSpecMap
+})
+
+idiomFamilies: close({
+	schema:   "fatb4f.lattice.cue-idiom-families.v1"
+	families: #IdiomFamilySpecMap
 })

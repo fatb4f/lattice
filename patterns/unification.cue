@@ -31,3 +31,46 @@ cueIdiomCatalog: #CueIdiomCatalog & {
 	}
 }
 
+_unificationSchema: {
+	name: string
+	tier: "internal" | "public"
+}
+
+_unificationData: {
+	name: "catalog"
+	tier: "internal"
+}
+
+_unificationCanonical: _unificationSchema & _unificationData
+
+cuePillarSpecs: {
+	pillars: {
+		unification: {
+			title:  "Unification"
+			class:  "language"
+			status: "validated"
+			mechanics: [
+				"Values combine with &.",
+				"Compatible constraints refine to a narrower value.",
+				"Incompatible constraints produce bottom.",
+				"Schema and data are checked by the same operation.",
+			]
+			idioms: {
+				"schema-data-unification": {
+					title: "Unify schema and data as values"
+					problem: "Separate schema checks can drift from the data they claim to validate."
+					rule: "Unify concrete data with the schema value and export the resulting value."
+					constructs: ["&", "struct constraints", "enum refinement"]
+					canonical: {
+						expr:  "_unificationCanonical"
+						value: _unificationCanonical
+					}
+					expectedBottom: {
+						probeExpr: "_unificationSchema & {tier: \"external\"}"
+						reason:    "external is outside the admitted tier disjunction."
+					}
+				}
+			}
+		}
+	}
+}
