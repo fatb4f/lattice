@@ -237,3 +237,84 @@ import (
 
 	compatibility: authority & target
 })
+
+#NegativeFixtureSpec: close({
+	id:          #KebabIdentifier
+	description: #NonEmptyString
+	polarity:    "negative"
+
+	authority: #ClosedObligationState
+	invalid:   #ClosedObligationState
+
+	proofStatus: "requiresDestructiveProbe"
+})
+
+#NegativeFixture:          #NegativeFixtureSpec
+#UncheckedNegativeFixture: #NegativeFixtureSpec
+
+#NegativeFixtureProbeSpec: {
+	authority: #ClosedObligationState
+	invalid:   #ClosedObligationState
+	...
+}
+
+#NegativeFixtureConflictProbe: #NegativeFixtureProbeSpec & {
+	authority: #ClosedObligationState
+	invalid:   #ClosedObligationState
+
+	proof: authority & invalid
+}
+
+#NegativeFixtureProbeBinding: close({
+	fixture: #NegativeFixtureSpec
+	probe: #NegativeFixtureConflictProbe & {
+		authority: fixture.authority
+		invalid:   fixture.invalid
+	}
+})
+
+#NegativeFixtureCheck: #NegativeFixtureProbeBinding
+
+#MakeUncheckedNegativeFixture: {
+	in: close({
+		id:          #KebabIdentifier
+		description: #NonEmptyString
+		authority:   #ObligationState
+		invalid:     #ObligationState
+	})
+	let closedAuthority = (#MakeClosedObligationState & {"in": in.authority}).out
+	let closedInvalid = (#MakeClosedObligationState & {"in": in.invalid}).out
+	out: #NegativeFixtureSpec & {
+		id:          in.id
+		description: in.description
+		polarity:    "negative"
+		authority:   closedAuthority
+		invalid:     closedInvalid
+		proofStatus: "requiresDestructiveProbe"
+	}
+}
+
+#MakeNegativeFixtureSpec: #MakeUncheckedNegativeFixture
+
+#MakeNegativeFixtureProbeBinding: {
+	in: close({
+		id:          #KebabIdentifier
+		description: #NonEmptyString
+		authority:   #ObligationState
+		invalid:     #ObligationState
+	})
+	let builtFixture = (#MakeUncheckedNegativeFixture & {
+		"in": in
+	}).out
+	out: #NegativeFixtureProbeBinding & {
+		fixture: builtFixture
+		probe: {
+			authority: builtFixture.authority
+			invalid:   builtFixture.invalid
+		}
+	}
+}
+
+#MakeNegativeFixture: #MakeNegativeFixtureProbeBinding
+
+#MakeNegativeFixtureCheck: #MakeNegativeFixtureProbeBinding
