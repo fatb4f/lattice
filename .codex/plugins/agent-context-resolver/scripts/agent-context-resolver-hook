@@ -1,0 +1,226 @@
+#!/bin/sh
+set -eu
+
+script_dir=$(CDPATH= cd -- "$(dirname "$0")" && pwd -P)
+plugin_root=$(CDPATH= cd -- "$script_dir/.." && pwd -P)
+generated_dir="$plugin_root/generated"
+[ -d "$generated_dir" ] || exit 2
+input_json=$(mktemp "${TMPDIR:-/tmp}/agent-context-resolver.XXXXXX.json")
+trap 'rm -f "$input_json"' EXIT HUP INT TERM
+cat >"$input_json"
+
+prompt=$(jq -er 'select(.hook_event_name == "UserPromptSubmit") | .prompt' "$input_json") || {
+	exit 0
+}
+
+classification=$(
+	jq -cn \
+		--arg prompt "$prompt" \
+		--slurpfile turnStart "$generated_dir/turn_start_fragments.json" \
+		--slurpfile promptRoutes "$generated_dir/prompt_routes.json" \
+		--slurpfile routeInventory "$generated_dir/route_inventory.json" '
+		($prompt | ascii_downcase) as $lower |
+		[$turnStart[0].fragments[].id] as $available |
+		[
+		($promptRoutes[0] | if type == "array" then . else .routes end)[]
+			| . as $route
+				| select(any($route.terms[]; . as $term | $lower | contains($term)))
+		] as $matched |
+		([
+			$matched[].selects[] as $id
+			| select($available | index($id) != null)
+			| $id
+		] | unique) as $selected |
+		([$matched[].invokes[]] | unique) as $invoked |
+		([
+			$routeInventory[0].routes[]
+			| . as $route
+			| select($invoked | index($route.id) != null)
+			| select([
+				$route.inputFragments[] as $fragment
+				| $selected
+				| index($fragment) != null
+			] | all)
+			| del(.promptRouteIDs)
+		] | sort_by(.sequence, -.priority, .id)) as $routes |
+		([$routes[].gates[]] | unique) as $gateIDs |
+		{
+			schema: "agent.route-controller-packet.v1",
+			availableFragmentIDs: $available,
+			selectedFragments: $selected,
+			compactHints: [$matched[].hint] | unique,
+			evidence: [
+				$matched[]
+					| {kind: "prompt_route", value: .id, source: "user_prompt"}
+			],
+			controller: {
+				schema: "agent.route-plan.v1",
+				plannerKind: "generated_controller_packet",
+				authority: "resolver_projection",
+				turnID: (
+					"prompt-" +
+					($prompt | @base64 | gsub("[^A-Za-z0-9]"; "") | .[0:20])
+				),
+				intent: ($matched | sort_by(-.priority, .id) | .[0].id),
+				availableFragmentIDs: $available,
+				availableRouteIDs: [$routeInventory[0].routes[].id],
+				selectedFragments: $selected,
+				routes: $routes,
+				propagation: {
+					mode: "route-local",
+					root: {
+						includes: {
+							intent: ($matched | sort_by(-.priority, .id) | .[0].id),
+							selectedFragments: $selected,
+							acceptedRouteResults: []
+						},
+						excludes: [
+							"raw route logs",
+							"unvalidated route claims",
+							"runtime implementation details"
+						]
+					},
+					perRoute: (
+						reduce $routes[] as $route ({};
+							.[$route.id] = {
+								includes: {
+									objective: $route.task.objective,
+									acceptedFacts: [],
+									selectedFragments: $route.inputFragments,
+									files: ($route.task.files // []),
+									priorArtifacts: ($route.dependsOn // []),
+									validationCommands: ($route.task.commands // [])
+								},
+								excludes: [
+									"full transcript",
+									"unselected fragments",
+									"raw registry",
+									"unbounded tool logs",
+									"irrelevant route outputs"
+								],
+								return: {
+									schema: $route.outputSchema,
+									maxSummaryTokens: 800,
+									evidenceRequired: true
+								}
+							}
+						)
+					),
+					denyFullTranscript: true,
+					denyRawRegistryDump: true,
+					denyUnselectedFragments: true,
+					requireStructuredResult: true
+				},
+				gates: [
+					$routeInventory[0].gates[]
+						| . as $gate
+						| select($gateIDs | index($gate.id) != null)
+				],
+				expectedMerge: {
+					mode: "fail_closed",
+					requireStructuredResults: true,
+					requireEvidenceForClaims: true,
+					conflictPolicy: "root_decides",
+					maxMergedSummaryTokens: 1200,
+					finalAuthority: "root_codex",
+					routeResultsAreAuthority: false
+				},
+				runtime: {
+					mode: "requires-agent-runtime",
+					routeRefs: [
+						$routes[] as $route
+						| {
+							schema: "agent.runtime-route-reference.v1",
+							routeID: $route.id,
+							routeKind: $route.kind,
+							context: {
+								includes: {
+									objective: $route.task.objective,
+									acceptedFacts: [],
+									selectedFragments: $route.inputFragments,
+									files: ($route.task.files // []),
+									priorArtifacts: ($route.dependsOn // []),
+									validationCommands: ($route.task.commands // [])
+								},
+								excludes: [
+									"full transcript",
+									"unselected fragments",
+									"raw registry",
+									"unbounded tool logs",
+									"irrelevant route outputs"
+								],
+								return: {
+									schema: $route.outputSchema,
+									maxSummaryTokens: 800,
+									evidenceRequired: true
+								}
+							},
+							outputSchema: $route.outputSchema
+						}
+					],
+					requirements: {
+						agentRuntimeRegistry: "absent",
+						mcpRouteExecutor: "absent"
+					},
+					execution: {
+						allowed: false,
+						requiresMCPAdapter: false,
+						requiresRuntimeRegistry: false,
+						backend: "codex-sdk"
+					},
+					deny: {
+						directSDKSpawn: true,
+						rawTranscriptForwarding: true,
+						rawRegistryDump: true,
+						unselectedFragments: true,
+						globalMutation: true
+					},
+					expectedResult: {schema: "agent.route-result.v1"}
+				}
+			},
+			generatedFrom: {
+				turnStart: "contracts/plugin-bundle/agent-context-resolver/src/contracts/agent-context-resolver/generated/turn_start_fragments.json",
+				promptRoutes: "contracts/plugin-bundle/agent-context-resolver/src/contracts/agent-context-resolver/generated/prompt_routes.json",
+				routeInventory: "contracts/plugin-bundle/agent-context-resolver/src/contracts/agent-context-resolver/generated/route_inventory.json"
+			},
+			resolver: {
+				command: ".codex/plugins/agent-context-resolver/scripts/resolve-agent-context",
+				skill: ".codex/plugins/agent-context-resolver/SKILL.md"
+			}
+		}'
+)
+
+[ "$(printf '%s' "$classification" | jq '.controller.routes | length')" -gt 0 ] || {
+	exit 0
+}
+
+if [ "${AGENT_CONTEXT_RESOLVER_PACKET:-}" = 1 ]; then
+	printf '%s\n' "$classification"
+	exit 0
+fi
+
+printf '%s\n' "$classification" | jq -c '{
+	hookSpecificOutput: {
+		hookEventName: "UserPromptSubmit",
+		additionalContext: ({
+			schema: "agent.resolver-prompt-surface.v1",
+			intent: .controller.intent,
+			selectedFragments: .selectedFragments,
+			selectedRoutes: [
+				.controller.routes[]
+				| {
+					id,
+					kind,
+					objective: .task.objective
+				}
+			],
+			execution: {
+				mode: "prompt-only",
+				routeExecution: false,
+				controllerPacket: false,
+				debugEvidence: "stderr-or-file"
+			},
+			hints: (.compactHints | map({text: .}))
+		} | tojson)
+	}
+}'

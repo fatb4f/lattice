@@ -1,0 +1,22 @@
+{
+  "name": "code-intel",
+  "version": "0.1.0+codex.20260702180848",
+  "description": "Read-only reference overlays for dotfiles Lua, CUE, MCP declarations, and type context.",
+  "author": {
+    "name": "fatb4f"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Code Intel",
+    "shortDescription": "Provides read-only code intelligence references for dotfiles.",
+    "longDescription": "Provides read-only reference context for dotfiles Lua, CUE, MCP declarations, and Neovim or WezTerm type overlays.",
+    "developerName": "fatb4f",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read"
+    ],
+    "defaultPrompt": [
+      "Load dotfiles Lua code intelligence."
+    ]
+  }
+}

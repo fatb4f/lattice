@@ -1,0 +1,48 @@
+#!/bin/sh
+set -eu
+
+script_dir=$(CDPATH= cd -- "$(dirname "$0")" && pwd -P)
+prompt=
+while [ "$#" -gt 0 ]; do
+	case $1 in
+	--prompt)
+		[ "$#" -ge 2 ] || exit 2
+		prompt=$2
+		shift 2
+		;;
+	--cwd|--candidate)
+		[ "$#" -ge 2 ] || exit 2
+		shift 2
+		;;
+	*)
+		printf 'resolve-agent-context: unknown argument: %s\n' "$1" >&2
+		exit 2
+		;;
+	esac
+done
+
+[ -n "$prompt" ] || {
+	printf 'resolve-agent-context: --prompt is required\n' >&2
+	exit 2
+}
+
+output=$(
+	printf '{"hook_event_name":"UserPromptSubmit","prompt":%s}\n' \
+		"$(printf '%s' "$prompt" | jq -Rs .)" |
+		AGENT_CONTEXT_RESOLVER_PACKET=1 "$script_dir/agent-context-resolver-hook"
+)
+
+[ -n "$output" ] || {
+	printf '{}\n'
+	exit 0
+}
+
+printf '%s\n' "$output" | jq -er '
+	if . == {} then
+		{}
+	elif .schema == "agent.route-controller-packet.v1" then
+		.
+	else
+		error("unexpected resolver hook output shape")
+	end
+'

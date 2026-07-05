@@ -1,0 +1,149 @@
+{
+  "generatedFrom": "registry.index.json",
+  "fragments": [
+    {
+      "id": "agent-context-resolver.authority",
+      "sourceContract": "agent-context-resolver",
+      "sourcePath": ".codex/plugins/agent-context-resolver/SKILL.md",
+      "sourceAuthorityPath": "contracts/plugin-bundle/agent-context-resolver/src/contracts/agent-context-resolver/manifest.cue",
+      "pathLocality": "installed-plugin",
+      "role": "authority",
+      "surface": "turn_start",
+      "summary": "Authoritative resolver lifecycle and context selection boundary.",
+      "authorityRoot": ".codex/plugins/agent-context-resolver",
+      "contractPath": ".codex/plugins/agent-context-resolver/SKILL.md"
+    },
+    {
+      "id": "agent-runtime.authority",
+      "sourceContract": "agent-runtime",
+      "sourcePath": ".codex/plugins/agent-context-resolver/generated/route_inventory.json",
+      "sourceAuthorityPath": "contracts/agent-runtime/manifest.cue",
+      "pathLocality": "installed-plugin",
+      "role": "authority",
+      "surface": "turn_start",
+      "summary": "Registered worker, route invocation, budget, lifecycle, adapter, and structured-result boundary.",
+      "authorityRoot": ".codex/plugins/agent-context-resolver",
+      "contractPath": ".codex/plugins/agent-context-resolver/generated/route_inventory.json"
+    },
+    {
+      "id": "agent-skill.projection",
+      "sourceContract": "agent-skill",
+      "sourcePath": ".codex/plugins/agent-context-resolver/skills/SKILL.md",
+      "sourceAuthorityPath": "contracts/agent-skill/manifest.cue",
+      "pathLocality": "installed-plugin",
+      "role": "constraint",
+      "surface": "turn_start",
+      "summary": "Generated agent skill, hook, and script projection constraints.",
+      "authorityRoot": ".codex/plugins/agent-context-resolver",
+      "contractPath": ".codex/plugins/agent-context-resolver/skills/SKILL.md"
+    },
+    {
+      "id": "mcp.evidence-plane",
+      "sourceContract": "mcp",
+      "sourcePath": ".codex/plugins/agent-context-resolver/generated/fragment_inventory.json",
+      "sourceAuthorityPath": "contracts/protocols/mcp/mcp.cue",
+      "pathLocality": "installed-plugin",
+      "role": "constraint",
+      "surface": "turn_start",
+      "summary": "MCP provider, result, and evidence-plane constraints.",
+      "authorityRoot": ".codex/plugins/agent-context-resolver",
+      "contractPath": ".codex/plugins/agent-context-resolver/generated/fragment_inventory.json"
+    },
+    {
+      "id": "repo.contract-seed",
+      "sourceContract": "repo",
+      "sourcePath": ".codex/plugins/agent-context-resolver/generated/fragment_inventory.json",
+      "sourceAuthorityPath": "contracts/repo/contract_seed.cue",
+      "pathLocality": "installed-plugin",
+      "role": "authority",
+      "surface": "turn_start",
+      "summary": "Temporary shared contract atom seed for later vb-contract rebasing.",
+      "authorityRoot": ".codex/plugins/agent-context-resolver",
+      "contractPath": ".codex/plugins/agent-context-resolver/manifest.json"
+    },
+    {
+      "id": "repo.lifecycle",
+      "sourceContract": "repo",
+      "sourcePath": ".codex/plugins/agent-context-resolver/manifest.json",
+      "sourceAuthorityPath": "contracts/repo/lifecycle.cue",
+      "pathLocality": "installed-plugin",
+      "role": "constraint",
+      "surface": "turn_start",
+      "summary": "Repository source, generated, fixture, and lifecycle boundaries.",
+      "authorityRoot": ".codex/plugins/agent-context-resolver",
+      "contractPath": ".codex/plugins/agent-context-resolver/manifest.json"
+    },
+    {
+      "id": "resolver.context-packet",
+      "sourceContract": "resolver",
+      "sourcePath": ".codex/plugins/agent-context-resolver/generated/prompt_routes.json",
+      "sourceAuthorityPath": "contracts/context/packet/manifest.cue",
+      "pathLocality": "installed-plugin",
+      "role": "workflow",
+      "surface": "turn_start",
+      "summary": "Context packet selection and dependency projection workflow.",
+      "authorityRoot": ".codex/plugins/agent-context-resolver",
+      "contractPath": ".codex/plugins/agent-context-resolver/generated/prompt_routes.json"
+    },
+    {
+      "id": "vb-contract.authority",
+      "sourceContract": "vb-contract",
+      "sourcePath": ".codex/plugins/agent-context-resolver/generated/fragment_inventory.json",
+      "sourceAuthorityPath": "contracts/repo/manifest.cue",
+      "pathLocality": "installed-plugin",
+      "role": "authority",
+      "surface": "turn_start",
+      "summary": "Temporary virtual-branch contract root and registry contribution.",
+      "authorityRoot": ".codex/plugins/agent-context-resolver",
+      "contractPath": ".codex/plugins/agent-context-resolver/generated/fragment_inventory.json"
+    },
+    {
+      "id": "vb-contract.component-seed",
+      "sourceContract": "vb-contract",
+      "sourcePath": ".codex/plugins/agent-context-resolver/generated/fragment_inventory.json",
+      "sourceAuthorityPath": "contracts/repo/component_seed.cue",
+      "pathLocality": "installed-plugin",
+      "role": "constraint",
+      "surface": "turn_start",
+      "summary": "Shared reusable component ownership, dependency, glue, and gate schema.",
+      "authorityRoot": ".codex/plugins/agent-context-resolver",
+      "contractPath": ".codex/plugins/agent-context-resolver/generated/fragment_inventory.json"
+    },
+    {
+      "id": "vb-contract.contract-seed",
+      "sourceContract": "vb-contract",
+      "sourcePath": ".codex/plugins/agent-context-resolver/generated/fragment_inventory.json",
+      "sourceAuthorityPath": "contracts/repo/contract_seed.cue",
+      "pathLocality": "installed-plugin",
+      "role": "constraint",
+      "surface": "turn_start",
+      "summary": "Temporary contract, template, instance, and projection bootstrap seed.",
+      "authorityRoot": ".codex/plugins/agent-context-resolver",
+      "contractPath": ".codex/plugins/agent-context-resolver/generated/fragment_inventory.json"
+    },
+    {
+      "id": "vb-contract.virtual-branch",
+      "sourceContract": "vb-contract",
+      "sourcePath": ".codex/plugins/agent-context-resolver/generated/fragment_inventory.json",
+      "sourceAuthorityPath": "contracts/repo/virtual_branch.cue",
+      "pathLocality": "installed-plugin",
+      "role": "constraint",
+      "surface": "turn_start",
+      "summary": "Shared reusable virtual-branch schema with separate temporary bootstrap instances.",
+      "authorityRoot": ".codex/plugins/agent-context-resolver",
+      "contractPath": ".codex/plugins/agent-context-resolver/generated/fragment_inventory.json"
+    },
+    {
+      "id": "vcs.patch-stack",
+      "sourceContract": "vcs",
+      "sourcePath": ".codex/plugins/agent-context-resolver/generated/fragment_inventory.json",
+      "sourceAuthorityPath": "contracts/vcs/patch_stack_manifest.cue",
+      "pathLocality": "installed-plugin",
+      "role": "workflow",
+      "surface": "turn_start",
+      "summary": "Patch stack ownership, ordering, and validation workflow.",
+      "authorityRoot": ".codex/plugins/agent-context-resolver",
+      "contractPath": ".codex/plugins/agent-context-resolver/generated/fragment_inventory.json"
+    }
+  ]
+}
