@@ -14,8 +14,19 @@ expect_failure() {
 }
 
 cue vet ./domain
+cue vet ./idioms
+cue vet ./patterns
+cue vet ./profiles
+cue vet ./profiles/code-intel
+cue vet ./exports
 
 cue export ./domain -e _closedState --out cue >/dev/null
+cue export ./idioms -e cueIdiomSources --out cue >/dev/null
+cue export ./patterns -e cueIdiomCatalog --out cue >/dev/null
+cue export ./profiles/code-intel -e expectedCodeIntelProfile --out cue >/dev/null
+cue export ./profiles/code-intel -e codeIntelProfileFeedbackReport --out cue >/dev/null
+cue export ./exports -e cueIdiomCatalog --out cue >/dev/null
+cue export ./exports -e codeIntelProfileExpectation --out cue >/dev/null
 
 expect_failure cue export ./domain -t negativeproof -e _negativeFixtureConflictBinding.probe.proof --out cue
 
