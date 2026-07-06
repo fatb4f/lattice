@@ -13,6 +13,7 @@ cuePatternSources: {
 		"cue-modules":          _
 		"cue-packages":         _
 		"cue-imports":          _
+		"cue-release-v0-17-0":  _
 		"cue-bottom-semantics": _
 	}
 }

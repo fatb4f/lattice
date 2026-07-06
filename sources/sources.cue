@@ -9,6 +9,7 @@ import "strings"
 	"local-kernel" |
 	"local-doc" |
 	"official-doc" |
+	"official-release" |
 	"example-corpus" |
 	"tutorial" |
 	"projection-substrate"
@@ -29,6 +30,7 @@ import "strings"
 	"cue-modules" |
 	"cue-packages" |
 	"cue-imports" |
+	"cue-release-v0-17-0" |
 	"cue-by-example" |
 	"cuetorials-useful-patterns" |
 	"apercue-projection-patterns"
@@ -127,6 +129,11 @@ cuePatternSources: close({
 			kind:  "official-doc"
 			title: "CUE imports and standard library"
 			ref:   "https://pkg.go.dev/cuelang.org/go/pkg"
+		}
+		"cue-release-v0-17-0": {
+			kind:  "official-release"
+			title: "CUE v0.17.0 release"
+			ref:   "https://github.com/cue-lang/cue/releases/tag/v0.17.0"
 		}
 		"cue-by-example": {
 			kind:  "example-corpus"

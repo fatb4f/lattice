@@ -8,6 +8,12 @@
 `patterns/` is the executable pattern suite. One file is one pattern, and each file
 exposes `canonical`, `positive`, and `negative` witnesses under `#Patterns`.
 
+`patterns/schema.cue` also records CUE release coverage used by the suite. The
+v0.17.0 entries distinguish stable features to use now from experimental or
+watch-list items: module replacement, comprehension fixes, cleaner list syntax,
+cue-lsp improvements, JSON Schema encoder changes, Go API fs loading, and the
+explicitly gated short-circuit experiment.
+
 What exists is closer to:
 
 | Need                                   | Existing closest match                                            | Gap                                                                            |

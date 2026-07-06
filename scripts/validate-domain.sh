@@ -162,6 +162,9 @@ validate_patterns() {
 	done
 
 	cue vet ./patterns
+	cue export ./patterns -e 'cueVersionCoverage["v0.17.0"]' --out cue >/dev/null
+	cue export ./patterns -e 'cueVersionCoverage["v0.17.0"].features.shortcircuit.maturity' --out cue >/dev/null
+	cue export ./patterns -e 'cueVersionCoverage["v0.17.0"].features.jsonschema_encoder.maturity' --out cue >/dev/null
 
 	expect_failure cue eval patterns/unification.cue -e '(#Patterns["unification"].#KernelResource & #Patterns["unification"].negative.incompatibleRole)' --out cue
 	expect_failure cue eval patterns/definitions.cue -e '(#Patterns["definitions"].#KernelResourceRef & #Patterns["definitions"].negative.invalidRole)' --out cue
