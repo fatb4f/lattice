@@ -1,9 +1,13 @@
-package pillars
+package patterns
 
 import meta "github.com/fatb4f/lattice/meta"
 
-#Pillars: {
+#Patterns: {
 	"disjunctions": {
+
+		name:    "Disjunctions"
+		summary: "Represent mutually exclusive operation variants as closed disjunctions."
+		demonstrates: ["disjunctions", "tagged variants", "closed structs"]
 
 		#KernelOperationIntent:
 			close({

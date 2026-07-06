@@ -4,7 +4,7 @@ latticeReference: #DriftModel & {
 	schema: "codex-drift-model.v1"
 
 	surfaceIDs: [
-		"idiom-suite",
+		"pattern-suite",
 		"source-registry",
 		"meta-kernel",
 		"validation-controller",
@@ -13,45 +13,47 @@ latticeReference: #DriftModel & {
 	]
 
 	surfaces: close({
-		"idiom-suite": {
-			id:          "idiom-suite"
+		"pattern-suite": {
+			id:          "pattern-suite"
 			kind:        "authority"
-			description: "Flat executable 16-idiom CUE kernel pattern suite."
+			description: "Flat executable 16-pattern CUE kernel pattern suite."
 
 			requiredPaths: [
-				"idioms/unification.cue",
-				"idioms/definitions.cue",
-				"idioms/defaults.cue",
-				"idioms/disjunctions.cue",
-				"idioms/comprehensions.cue",
-				"idioms/closedness.cue",
-				"idioms/subsumption.cue",
-				"idioms/negative-fixtures.cue",
-				"idioms/projections.cue",
-				"idioms/constructors.cue",
-				"idioms/top-and-bottom.cue",
-				"idioms/bounds.cue",
-				"idioms/hidden-and-let.cue",
-				"idioms/cycles.cue",
-				"idioms/lists.cue",
-				"idioms/attributes.cue",
+				"patterns/schema.cue",
+				"patterns/unification.cue",
+				"patterns/definitions.cue",
+				"patterns/defaults.cue",
+				"patterns/disjunctions.cue",
+				"patterns/comprehensions.cue",
+				"patterns/closedness.cue",
+				"patterns/subsumption.cue",
+				"patterns/negative-fixtures.cue",
+				"patterns/projections.cue",
+				"patterns/constructors.cue",
+				"patterns/top-and-bottom.cue",
+				"patterns/bounds.cue",
+				"patterns/hidden-and-let.cue",
+				"patterns/cycles.cue",
+				"patterns/lists.cue",
+				"patterns/attributes.cue",
 			]
 
 			forbiddenPaths: [
 				"pillars",
-				"idioms/catalog.cue",
-				"idioms/pillars.cue",
-				"idioms/language_pillars.cue",
-				"idioms/contract_pillars.cue",
-				"idioms/adapter_pillars.cue",
-				"idioms/idiom_families.cue",
+				"idioms",
+				"patterns/catalog.cue",
+				"patterns/pillars.cue",
+				"patterns/language_pillars.cue",
+				"patterns/contract_pillars.cue",
+				"patterns/adapter_pillars.cue",
+				"patterns/idiom_families.cue",
 			]
 		}
 
 		"source-registry": {
 			id:          "source-registry"
 			kind:        "verification"
-			description: "Reference/source registry for CUE idiom research inputs."
+			description: "Reference/source registry for CUE pattern research inputs."
 
 			requiredPaths: [
 				"sources/apercue.cue",
@@ -62,11 +64,12 @@ latticeReference: #DriftModel & {
 			]
 
 			forbiddenPaths: [
-				"idioms/sources.cue",
-				"idioms/official_docs.cue",
-				"idioms/cue_by_example.cue",
-				"idioms/cuetorials.cue",
-				"idioms/apercue.cue",
+				"idioms",
+				"patterns/sources.cue",
+				"patterns/official_docs.cue",
+				"patterns/cue_by_example.cue",
+				"patterns/cuetorials.cue",
+				"patterns/apercue.cue",
 			]
 		}
 
@@ -101,7 +104,7 @@ latticeReference: #DriftModel & {
 		"codex-drift-kg": {
 			id:          "codex-drift-kg"
 			kind:        "policy"
-			description: "Codex drift policy outside the idiom validation path."
+			description: "Codex drift policy outside the pattern validation path."
 
 			requiredPaths: [
 				".kg/codex/model.cue",
@@ -126,8 +129,8 @@ latticeReference: #DriftModel & {
 			]
 
 			forbiddenPaths: [
-				"idioms/kg.cue",
-				"idioms/kg",
+				"patterns/kg.cue",
+				"patterns/kg",
 				"meta/kg.cue",
 				"meta/kg",
 			]
@@ -145,22 +148,22 @@ latticeReference: #DriftModel & {
 	})
 
 	rules: close({
-		"idiom-suite-required-path-present": {
-			id:       "idiom-suite-required-path-present"
+		"pattern-suite-required-path-present": {
+			id:       "pattern-suite-required-path-present"
 			kind:     "missing-required-surface"
-			surface:  "idiom-suite"
+			surface:  "pattern-suite"
 			severity: "violation"
 			response: "block"
-			reason:   "A required idiom suite authority file is missing."
+			reason:   "A required pattern suite authority file is missing."
 		}
 
-		"no-idiom-registry": {
-			id:       "no-idiom-registry"
+		"no-pattern-registry": {
+			id:       "no-pattern-registry"
 			kind:     "duplicate-authority"
-			surface:  "idiom-suite"
+			surface:  "pattern-suite"
 			severity: "violation"
 			response: "block"
-			reason:   "The flat idiom files are authority; catalog-style registries duplicate authority."
+			reason:   "The flat pattern files are authority; catalog-style registries duplicate authority."
 		}
 
 		"source-registry-required-path-present": {
@@ -172,13 +175,13 @@ latticeReference: #DriftModel & {
 			reason:   "A required source registry file is missing."
 		}
 
-		"sources-outside-idioms": {
-			id:       "sources-outside-idioms"
+		"sources-outside-patterns": {
+			id:       "sources-outside-patterns"
 			kind:     "duplicate-authority"
 			surface:  "source-registry"
 			severity: "violation"
 			response: "block"
-			reason:   "Reference source registries belong under sources/, not idioms/."
+			reason:   "Reference source registries belong under sources/, not patterns/."
 		}
 
 		"meta-kernel-required-path-present": {
@@ -214,7 +217,7 @@ latticeReference: #DriftModel & {
 			surface:  "codex-drift-kg"
 			severity: "violation"
 			response: "block"
-			reason:   "The KG layer checks Codex drift and must not enter meta or idiom validation."
+			reason:   "The KG layer checks Codex drift and must not enter meta or pattern validation."
 		}
 
 		"codex-drift-kg-change-review": {

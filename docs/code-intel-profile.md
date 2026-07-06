@@ -5,8 +5,8 @@ generated code-intel profile snapshots.
 
 `projections/code-intel` consumes a snapshot-shaped fixture and validates:
 
-- required pillar coverage
-- lattice pillar authority references
+- required pattern coverage
+- lattice pattern authority references
 - cue-lsp as evidence-only provider
 - generated/operator context as non-authority
 

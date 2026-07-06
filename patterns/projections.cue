@@ -1,15 +1,19 @@
-package pillars
+package patterns
 
 import meta "github.com/fatb4f/lattice/meta"
 
-#Pillars: {
+#Patterns: {
 	"projections": {
+
+		name:    "Projections"
+		summary: "Project a public view from closed authority while preserving no-widening checks."
+		demonstrates: ["projections", "filters", "no widening"]
 
 		_authority: {
 			id: "projections"
 			resources: {
 				"authority-file": {
-					path:       "pillars/projections.cue"
+					path:       "patterns/projections.cue"
 					role:       "authority"
 					visibility: "public"
 				}
@@ -38,7 +42,7 @@ import meta "github.com/fatb4f/lattice/meta"
 		positive: {
 			publicResources: canonical.publicResources & [{
 				id:   "authority-file"
-				path: "pillars/projections.cue"
+				path: "patterns/projections.cue"
 			}]
 			validation: meta.#NoWideningProof & {
 				authority: _closedAuthority

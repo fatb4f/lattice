@@ -14,13 +14,13 @@ expect_failure() {
 }
 
 expect_closedness_extra_field_failure() {
-	local probe="pillars/.closedness-extra-field-probe.cue"
+	local probe="patterns/.closedness-extra-field-probe.cue"
 	cat >"$probe" <<'EOF'
-package pillars
+package patterns
 
-_probe: #ClosedKernelResource & #Pillars["closedness"].negative.extraField
+_probe: #ClosedKernelResource & #Patterns["closedness"].negative.extraField
 EOF
-	if cue eval pillars/closedness.cue "$probe" -e _probe --out cue >/dev/null 2>&1; then
+	if cue eval patterns/closedness.cue "$probe" -e _probe --out cue >/dev/null 2>&1; then
 		rm -f "$probe"
 		printf 'expected failure but closedness extra-field probe passed\n'
 		return 1
@@ -28,23 +28,43 @@ EOF
 	rm -f "$probe"
 }
 
-pillar_files=(
-	pillars/unification.cue
-	pillars/definitions.cue
-	pillars/defaults.cue
-	pillars/disjunctions.cue
-	pillars/comprehensions.cue
-	pillars/closedness.cue
-	pillars/subsumption.cue
-	pillars/negative-fixtures.cue
-	pillars/projections.cue
-	pillars/constructors.cue
-	pillars/top-and-bottom.cue
-	pillars/bounds.cue
-	pillars/hidden-and-let.cue
-	pillars/cycles.cue
-	pillars/lists.cue
-	pillars/attributes.cue
+pattern_files=(
+	patterns/schema.cue
+	patterns/unification.cue
+	patterns/definitions.cue
+	patterns/defaults.cue
+	patterns/disjunctions.cue
+	patterns/comprehensions.cue
+	patterns/closedness.cue
+	patterns/subsumption.cue
+	patterns/negative-fixtures.cue
+	patterns/projections.cue
+	patterns/constructors.cue
+	patterns/top-and-bottom.cue
+	patterns/bounds.cue
+	patterns/hidden-and-let.cue
+	patterns/cycles.cue
+	patterns/lists.cue
+	patterns/attributes.cue
+)
+
+pattern_entry_files=(
+	patterns/unification.cue
+	patterns/definitions.cue
+	patterns/defaults.cue
+	patterns/disjunctions.cue
+	patterns/comprehensions.cue
+	patterns/closedness.cue
+	patterns/subsumption.cue
+	patterns/negative-fixtures.cue
+	patterns/projections.cue
+	patterns/constructors.cue
+	patterns/top-and-bottom.cue
+	patterns/bounds.cue
+	patterns/hidden-and-let.cue
+	patterns/cycles.cue
+	patterns/lists.cue
+	patterns/attributes.cue
 )
 
 validate_meta() {
@@ -119,55 +139,58 @@ validate_meta() {
 	}}).out' --out cue
 }
 
-validate_pillars() {
+validate_patterns() {
 	local expected
-	expected="$(printf '%s\n' "${pillar_files[@]}" | sort)"
+	expected="$(printf '%s\n' "${pattern_files[@]}" | sort)"
 	local actual
-	actual="$(find pillars -maxdepth 1 -type f -name '*.cue' | sort)"
+	actual="$(find patterns -maxdepth 1 -type f -name '*.cue' | sort)"
 	if [[ "$actual" != "$expected" ]]; then
-		printf 'unexpected pillars/ surface\nexpected:\n%s\nactual:\n%s\n' "$expected" "$actual"
+		printf 'unexpected patterns/ surface\nexpected:\n%s\nactual:\n%s\n' "$expected" "$actual"
 		return 1
 	fi
 
-	local pillar_file
-	for pillar_file in "${pillar_files[@]}"; do
-		local pillar_id
-		pillar_id="$(basename "$pillar_file" .cue)"
-		cue eval "$pillar_file" -e "#Pillars[\"$pillar_id\"].canonical" --out cue >/dev/null
-		cue eval "$pillar_file" -e "#Pillars[\"$pillar_id\"].positive" --out cue >/dev/null
-		cue eval "$pillar_file" -e "#Pillars[\"$pillar_id\"].negative" --out cue >/dev/null
+	local pattern_file
+	for pattern_file in "${pattern_entry_files[@]}"; do
+		local pattern_id
+		pattern_id="$(basename "$pattern_file" .cue)"
+		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].name" --out cue >/dev/null
+		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].summary" --out cue >/dev/null
+		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].demonstrates" --out cue >/dev/null
+		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].canonical" --out cue >/dev/null
+		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].positive" --out cue >/dev/null
+		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].negative" --out cue >/dev/null
 	done
 
-	cue vet ./pillars
+	cue vet ./patterns
 
-	expect_failure cue eval pillars/unification.cue -e '(#Pillars["unification"].#KernelResource & #Pillars["unification"].negative.incompatibleRole)' --out cue
-	expect_failure cue eval pillars/definitions.cue -e '(#Pillars["definitions"].#KernelResourceRef & #Pillars["definitions"].negative.invalidRole)' --out cue
-	expect_failure cue eval pillars/defaults.cue -e '(#Pillars["defaults"].#KernelGatePolicy & #Pillars["defaults"].negative.invalidRequired)' --out cue
-	expect_failure cue eval pillars/disjunctions.cue -e '(#Pillars["disjunctions"].#KernelOperationIntent & #Pillars["disjunctions"].negative.invalidSelector)' --out cue
-	expect_failure cue eval pillars/comprehensions.cue -e '(#Pillars["comprehensions"].#ResourceInputs & #Pillars["comprehensions"].negative.badServicePort)' --out cue
+	expect_failure cue eval patterns/unification.cue -e '(#Patterns["unification"].#KernelResource & #Patterns["unification"].negative.incompatibleRole)' --out cue
+	expect_failure cue eval patterns/definitions.cue -e '(#Patterns["definitions"].#KernelResourceRef & #Patterns["definitions"].negative.invalidRole)' --out cue
+	expect_failure cue eval patterns/defaults.cue -e '(#Patterns["defaults"].#KernelGatePolicy & #Patterns["defaults"].negative.invalidRequired)' --out cue
+	expect_failure cue eval patterns/disjunctions.cue -e '(#Patterns["disjunctions"].#KernelOperationIntent & #Patterns["disjunctions"].negative.invalidSelector)' --out cue
+	expect_failure cue eval patterns/comprehensions.cue -e '(#Patterns["comprehensions"].#ResourceInputs & #Patterns["comprehensions"].negative.badServicePort)' --out cue
 	expect_closedness_extra_field_failure
-	expect_failure cue eval pillars/subsumption.cue -e '(#Pillars["subsumption"].#AuthorityResource & #Pillars["subsumption"].negative.incompatibleField)' --out cue
-	expect_failure cue eval pillars/negative-fixtures.cue -e '(meta.#MakeNegativeFixture & {in: #Pillars["negative-fixtures"].negative.proof}).out.probe.proof' --out cue
-	expect_failure cue eval pillars/projections.cue -e '(meta.#NoWideningProof & {
-		authority: #Pillars["projections"]._closedAuthority
+	expect_failure cue eval patterns/subsumption.cue -e '(#Patterns["subsumption"].#AuthorityResource & #Patterns["subsumption"].negative.incompatibleField)' --out cue
+	expect_failure cue eval patterns/negative-fixtures.cue -e '(meta.#MakeNegativeFixture & {in: #Patterns["negative-fixtures"].negative.proof}).out.probe.proof' --out cue
+	expect_failure cue eval patterns/projections.cue -e '(meta.#NoWideningProof & {
+		authority: #Patterns["projections"]._closedAuthority
 		target: (meta.#MakeClosedObligationState & {
-			in: #Pillars["projections"]._authority & #Pillars["projections"].negative.widenedProjection
+			in: #Patterns["projections"]._authority & #Patterns["projections"].negative.widenedProjection
 		}).out
 	})' --out cue
-	expect_failure cue eval pillars/constructors.cue -e '(#Pillars["constructors"].#MakeResource & {in: #Pillars["constructors"].negative.badResource}).out' --out cue
-	expect_failure cue eval pillars/top-and-bottom.cue -e '(#Pillars["top-and-bottom"].negative.conflict.left & #Pillars["top-and-bottom"].negative.conflict.right)' --out cue
-	expect_failure cue eval pillars/bounds.cue -e '(#Pillars["bounds"].#NonEmptyText & #Pillars["bounds"].negative.emptyDescription)' --out cue
-	expect_failure cue eval pillars/bounds.cue -e '(#Pillars["bounds"].#KernelID & #Pillars["bounds"].negative.badID)' --out cue
-	expect_failure cue eval pillars/hidden-and-let.cue -e '(#Pillars["hidden-and-let"]._generatedRole & #Pillars["hidden-and-let"].negative.privateConflict)' --out cue
-	expect_failure cue eval pillars/cycles.cue -e '#Pillars["cycles"].negative.arithmeticCycle.expression.x' --out cue
-	expect_failure cue eval pillars/lists.cue -e '(#Pillars["lists"].#NonEmptyKeyList & #Pillars["lists"].negative.emptyCommands)' --out cue
-	expect_failure cue eval pillars/lists.cue -e '(#Pillars["lists"].#AuthorityKeyTuple & #Pillars["lists"].negative.badTuple)' --out cue
-	expect_failure cue eval pillars/attributes.cue -e '(#Pillars["attributes"].#TaggedKernelSelector & #Pillars["attributes"].negative.invalidKind)' --out cue
+	expect_failure cue eval patterns/constructors.cue -e '(#Patterns["constructors"].#MakeResource & {in: #Patterns["constructors"].negative.badResource}).out' --out cue
+	expect_failure cue eval patterns/top-and-bottom.cue -e '(#Patterns["top-and-bottom"].negative.conflict.left & #Patterns["top-and-bottom"].negative.conflict.right)' --out cue
+	expect_failure cue eval patterns/bounds.cue -e '(#Patterns["bounds"].#NonEmptyText & #Patterns["bounds"].negative.emptyDescription)' --out cue
+	expect_failure cue eval patterns/bounds.cue -e '(#Patterns["bounds"].#KernelID & #Patterns["bounds"].negative.badID)' --out cue
+	expect_failure cue eval patterns/hidden-and-let.cue -e '(#Patterns["hidden-and-let"]._generatedRole & #Patterns["hidden-and-let"].negative.privateConflict)' --out cue
+	expect_failure cue eval patterns/cycles.cue -e '#Patterns["cycles"].negative.arithmeticCycle.expression.x' --out cue
+	expect_failure cue eval patterns/lists.cue -e '(#Patterns["lists"].#NonEmptyKeyList & #Patterns["lists"].negative.emptyCommands)' --out cue
+	expect_failure cue eval patterns/lists.cue -e '(#Patterns["lists"].#AuthorityKeyTuple & #Patterns["lists"].negative.badTuple)' --out cue
+	expect_failure cue eval patterns/attributes.cue -e '(#Patterns["attributes"].#TaggedKernelSelector & #Patterns["attributes"].negative.invalidKind)' --out cue
 }
 
-validate_idioms() {
-	cue vet ./idioms
-	cue export ./idioms -e cueIdiomSources --out cue >/dev/null
+validate_sources() {
+	cue vet ./sources
+	cue export ./sources -e cuePatternSources --out cue >/dev/null
 }
 
 validate_projections() {
@@ -178,8 +201,8 @@ validate_projections() {
 }
 
 validate_meta
-validate_pillars
-validate_idioms
+validate_patterns
+validate_sources
 validate_projections
 
 cue vet ./exports

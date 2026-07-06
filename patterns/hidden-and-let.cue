@@ -1,9 +1,13 @@
-package pillars
+package patterns
 
 import meta "github.com/fatb4f/lattice/meta"
 
-#Pillars: {
+#Patterns: {
 	"hidden-and-let": {
+
+		name:    "Hidden Fields And Let Bindings"
+		summary: "Use hidden values and local bindings for internal proof computations."
+		demonstrates: ["hidden fields", "let bindings", "derived proofs"]
 
 		_generatedRole: "generated-output"
 

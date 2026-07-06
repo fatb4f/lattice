@@ -5,13 +5,13 @@ import "strings"
 #NonEmptyString:  string & strings.MinRunes(1)
 #KebabIdentifier: #NonEmptyString & =~"^[a-z0-9]+(-[a-z0-9]+)*$"
 
-#LatticePillarAuthority: close({
+#LatticePatternAuthority: close({
 	repo:   "fatb4f/lattice"
 	module: "github.com/fatb4f/lattice"
-	export: "pillars/*.cue"
+	export: "patterns/*.cue"
 })
 
-#PillarID:
+#PatternID:
 	"unification" |
 	"definitions" |
 	"defaults" |
@@ -49,9 +49,9 @@ import "strings"
 	schema: "factory.plugin-bundle.code-intel.cue-profile.v1"
 	id:     "code-intel-cue-profile"
 
-	pillarAuthority: #LatticePillarAuthority
-	providers:      #CodeIntelProviders
+	patternAuthority: #LatticePatternAuthority
+	providers:        #CodeIntelProviders
 
-	requiredPillars: [...#PillarID] & [_, ...]
+	requiredPatterns: [...#PatternID] & [_, ...]
 	operatorRules: [...#NonEmptyString] & [_, ...]
 })

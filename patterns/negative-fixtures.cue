@@ -1,9 +1,13 @@
-package pillars
+package patterns
 
 import meta "github.com/fatb4f/lattice/meta"
 
-#Pillars: {
+#Patterns: {
 	"negative-fixtures": {
+
+		name:    "Negative Fixtures"
+		summary: "Keep invalid examples exportable while proving failure through a destructive probe."
+		demonstrates: ["negative fixtures", "bottom", "probe separation"]
 
 		_authority: {
 			id: "negative-fixtures"

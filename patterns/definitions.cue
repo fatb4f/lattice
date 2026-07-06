@@ -1,9 +1,13 @@
-package pillars
+package patterns
 
 import meta "github.com/fatb4f/lattice/meta"
 
-#Pillars: {
+#Patterns: {
 	"definitions": {
+
+		name:    "Definitions"
+		summary: "Define reusable schema terms for resource-like records."
+		demonstrates: ["definitions", "closed structs", "enums"]
 
 		#KernelResourceRef: close({
 			id:         =~"^[a-z0-9]+(-[a-z0-9]+)*$"

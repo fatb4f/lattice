@@ -1,8 +1,8 @@
-package idioms
+package sources
 
 import "strings"
 
-#NonEmptyString: string & strings.MinRunes(1)
+#NonEmptyString:  string & strings.MinRunes(1)
 #KebabIdentifier: #NonEmptyString & =~"^[a-z0-9]+(-[a-z0-9]+)*$"
 
 #SourceKind:
@@ -50,8 +50,8 @@ import "strings"
 	}
 }
 
-cueIdiomSources: close({
-	schema: "fatb4f.lattice.cue-idiom-sources.v1"
+cuePatternSources: close({
+	schema: "fatb4f.lattice.cue-pattern-sources.v1"
 	sources: #SourceRefMap & {
 		"lattice-meta-kernel": {
 			kind:  "local-kernel"

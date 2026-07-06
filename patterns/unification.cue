@@ -1,9 +1,13 @@
-package pillars
+package patterns
 
 import meta "github.com/fatb4f/lattice/meta"
 
-#Pillars: {
+#Patterns: {
 	"unification": {
+
+		name:    "Unification"
+		summary: "Combine schemas and data to derive a more specific value."
+		demonstrates: ["unification", "constraints", "closed structs"]
 
 		#KernelResource: close({
 			id:   =~"^[a-z0-9]+(-[a-z0-9]+)*$"

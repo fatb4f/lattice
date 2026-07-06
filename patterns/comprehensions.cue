@@ -1,9 +1,13 @@
-package pillars
+package patterns
 
 import meta "github.com/fatb4f/lattice/meta"
 
-#Pillars: {
+#Patterns: {
 	"comprehensions": {
+
+		name:    "Comprehensions"
+		summary: "Derive normalized maps from input registries by iterating over keys and values."
+		demonstrates: ["comprehensions", "derived fields", "keyed maps"]
 
 		#ResourceInputs: {
 			[string]: {

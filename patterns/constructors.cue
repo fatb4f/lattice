@@ -1,9 +1,13 @@
-package pillars
+package patterns
 
 import meta "github.com/fatb4f/lattice/meta"
 
-#Pillars: {
+#Patterns: {
 	"constructors": {
+
+		name:    "Constructors"
+		summary: "Model reusable builders with explicit input and normalized output fields."
+		demonstrates: ["definitions", "unification", "normalization"]
 
 		#MakeResource: {
 			in: {

@@ -1,9 +1,13 @@
-package pillars
+package patterns
 
 import meta "github.com/fatb4f/lattice/meta"
 
-#Pillars: {
+#Patterns: {
 	"attributes": {
+
+		name:    "Attributes"
+		summary: "Attach command-line tags to fields that tooling can select or populate."
+		demonstrates: ["attributes", "field tags", "tool parameters"]
 
 		#TaggedKernelSelector: {
 			selector: string @tag(selector)

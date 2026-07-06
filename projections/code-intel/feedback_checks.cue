@@ -9,7 +9,7 @@ import (
 profileSnapshot: #CodeIntelProfileSnapshot & fixtures.validProfileSnapshot
 
 profileCoverage: close({
-	required: profileSnapshot.requiredPillars
+	required: profileSnapshot.requiredPatterns
 	available: [
 		"unification",
 		"definitions",
@@ -45,7 +45,7 @@ profileAuthorityBoundary: close({
 #CodeIntelProfileFeedbackReport: close({
 	schema: "fatb4f.lattice.code-intel-profile-feedback.v1"
 	profileID: string
-	pillarSuite: string
+	patternSuite: string
 	coverage: _
 	authorityBoundary: _
 	accepted: bool
@@ -53,7 +53,7 @@ profileAuthorityBoundary: close({
 
 codeIntelProfileFeedbackReport: #CodeIntelProfileFeedbackReport & {
 	profileID:         profileSnapshot.id
-	pillarSuite:       "pillars/*.cue"
+	patternSuite:       "patterns/*.cue"
 	coverage:         profileCoverage
 	authorityBoundary: profileAuthorityBoundary
 	accepted:         profileCoverage.accepted && profileAuthorityBoundary.accepted

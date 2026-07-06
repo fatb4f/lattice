@@ -1,9 +1,13 @@
-package pillars
+package patterns
 
 import meta "github.com/fatb4f/lattice/meta"
 
-#Pillars: {
+#Patterns: {
 	"defaults": {
+
+		name:    "Defaults"
+		summary: "Provide default values while still allowing explicit refinement."
+		demonstrates: ["defaults", "disjunctions", "refinement"]
 
 		#KernelGatePolicy: close({
 			id:          =~"^[a-z0-9]+(-[a-z0-9]+)*$"

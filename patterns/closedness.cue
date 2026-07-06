@@ -1,4 +1,4 @@
-package pillars
+package patterns
 
 import meta "github.com/fatb4f/lattice/meta"
 
@@ -9,8 +9,12 @@ import meta "github.com/fatb4f/lattice/meta"
 	visibility: "public" | "internal" | "restricted" | *"internal"
 })
 
-#Pillars: {
+#Patterns: {
 	"closedness": {
+
+		name:    "Closedness"
+		summary: "Close public shapes so unexpected fields become validation failures."
+		demonstrates: ["closed structs", "field rejection", "schema boundaries"]
 
 		canonical: {
 			id:        "closedness"

@@ -1,9 +1,13 @@
-package pillars
+package patterns
 
 import meta "github.com/fatb4f/lattice/meta"
 
-#Pillars: {
+#Patterns: {
 	"cycles": {
+
+		name:    "Cycles"
+		summary: "Use references for valid graph relationships and isolate invalid cyclic expressions as probes."
+		demonstrates: ["references", "cycles", "bottom"]
 
 		canonical: {
 			id:        "cycles"

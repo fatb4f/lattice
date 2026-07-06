@@ -1,8 +1,7 @@
-package idioms
+package sources
 
-cueIdiomSources: {
+cuePatternSources: {
 	sources: {
 		"apercue-projection-patterns": _
 	}
 }
-

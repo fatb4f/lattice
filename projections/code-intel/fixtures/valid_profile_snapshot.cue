@@ -3,7 +3,7 @@ package codeintelprofilefixtures
 import projections "github.com/fatb4f/lattice/projections"
 
 validProfileSnapshot: projections.#CodeIntelProfileExpectation & {
-	requiredPillars: [
+	requiredPatterns: [
 		"unification",
 		"definitions",
 		"defaults",
@@ -23,7 +23,7 @@ validProfileSnapshot: projections.#CodeIntelProfileExpectation & {
 	]
 
 	operatorRules: [
-		"Use lattice pillar files before inventing local CUE patterns.",
+		"Use lattice pattern files before inventing local CUE patterns.",
 		"Use cue-lsp diagnostics as evidence, not authority.",
 		"Prefer exportable witness surfaces and isolated destructive probes.",
 		"Keep generated plugin references evidence-only.",

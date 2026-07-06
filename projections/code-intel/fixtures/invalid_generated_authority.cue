@@ -8,10 +8,10 @@ invalidGeneratedAuthority: {
 	snapshot: {
 		schema: "factory.plugin-bundle.code-intel.cue-profile.v1"
 		id:     "code-intel-cue-profile"
-		pillarAuthority: {
+		patternAuthority: {
 			repo:   "fatb4f/lattice"
 			module: "github.com/fatb4f/lattice"
-			export: "pillars/*.cue"
+			export: "patterns/*.cue"
 		}
 		providers: cueLsp: {
 			id:           "cue-lsp"
@@ -20,7 +20,7 @@ invalidGeneratedAuthority: {
 			diagnostics:  true
 			format:       true
 		}
-		requiredPillars: validProfileSnapshot.requiredPillars
+		requiredPatterns: validProfileSnapshot.requiredPatterns
 		operatorRules:   validProfileSnapshot.operatorRules
 	}
 }

@@ -1,9 +1,13 @@
-package pillars
+package patterns
 
 import meta "github.com/fatb4f/lattice/meta"
 
-#Pillars: {
+#Patterns: {
 	"top-and-bottom": {
+
+		name:    "Top And Bottom"
+		summary: "Use top for open inputs and bottom-producing conflicts for proof failures."
+		demonstrates: ["top", "bottom", "conflicts"]
 
 		canonical: {
 			id:             "top-and-bottom"

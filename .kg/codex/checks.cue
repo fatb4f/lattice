@@ -135,11 +135,11 @@ import (
 			if model.rules["\(surfaceID)-forbidden-path-absent"] != _|_ {
 				rule: model.rules["\(surfaceID)-forbidden-path-absent"].id
 			}
-			if model.rules["no-idiom-registry"].surface == surfaceID {
-				rule: model.rules["no-idiom-registry"].id
+			if model.rules["no-pattern-registry"].surface == surfaceID {
+				rule: model.rules["no-pattern-registry"].id
 			}
-			if model.rules["sources-outside-idioms"].surface == surfaceID {
-				rule: model.rules["sources-outside-idioms"].id
+			if model.rules["sources-outside-patterns"].surface == surfaceID {
+				rule: model.rules["sources-outside-patterns"].id
 			}
 			if model.rules["kg-outside-validator"].surface == surfaceID {
 				rule: model.rules["kg-outside-validator"].id

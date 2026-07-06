@@ -1,4 +1,4 @@
-package pillars
+package patterns
 
 import (
 	"list"
@@ -6,8 +6,12 @@ import (
 	meta "github.com/fatb4f/lattice/meta"
 )
 
-#Pillars: {
+#Patterns: {
 	"lists": {
+
+		name:    "Lists"
+		summary: "Extract and compare stable key lists from maps."
+		demonstrates: ["lists", "standard library sorting", "key sets"]
 
 		#NonEmptyKeyList: [...string] & [_, ...]
 		#AuthorityKeyTuple: ["authority-file", "generated-file"]

@@ -1,9 +1,13 @@
-package pillars
+package patterns
 
 import meta "github.com/fatb4f/lattice/meta"
 
-#Pillars: {
+#Patterns: {
 	"subsumption": {
+
+		name:    "Subsumption"
+		summary: "Check compatibility between authority and projected resource shapes."
+		demonstrates: ["subsumption", "compatibility", "refinement"]
 
 		#AuthorityResource: {
 			id:   string
