@@ -44,12 +44,14 @@ fi
 
 repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 
-repo_json=$(
-	cd "$repo_root"
-	find . -path ./.git -prune -o -type f -print |
-		sed 's#^\./##' |
-		sort |
-		jq -Rn '
+case "$mode" in
+worktree)
+	repo_json=$(
+		cd "$repo_root"
+		find . -path ./.git -prune -o -type f -print |
+			sed 's#^\./##' |
+			sort |
+			jq -Rn '
 			[inputs | select(length > 0)] as $paths |
 			{
 				filesByPath: (
@@ -57,7 +59,24 @@ repo_json=$(
 				)
 			}
 		'
-)
+	)
+	;;
+range)
+	repo_json=$(
+		cd "$repo_root"
+		git ls-tree -r --name-only "$head" |
+			sort |
+			jq -Rn '
+			[inputs | select(length > 0)] as $paths |
+			{
+				filesByPath: (
+					reduce $paths[] as $path ({}; .[$path] = true)
+				)
+			}
+		'
+	)
+	;;
+esac
 
 case "$mode" in
 worktree)

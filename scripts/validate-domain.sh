@@ -18,7 +18,7 @@ expect_closedness_extra_field_failure() {
 	cat >"$probe" <<'EOF'
 package pillars
 
-_probe: #ClosedCommand & #Pillars["closedness"].negative.extraField
+_probe: #ClosedKernelResource & #Pillars["closedness"].negative.extraField
 EOF
 	if cue eval pillars/closedness.cue "$probe" -e _probe --out cue >/dev/null 2>&1; then
 		rm -f "$probe"
@@ -140,13 +140,13 @@ validate_pillars() {
 
 	cue vet ./pillars
 
-	expect_failure cue eval pillars/unification.cue -e '(#Pillars["unification"].#Service & #Pillars["unification"].negative.incompatibleTier)' --out cue
-	expect_failure cue eval pillars/definitions.cue -e '(#Pillars["definitions"].#ResourceRef & #Pillars["definitions"].negative.invalidRole)' --out cue
-	expect_failure cue eval pillars/defaults.cue -e '(#Pillars["defaults"].#LogLevel & #Pillars["defaults"].negative.invalidLogLevel)' --out cue
-	expect_failure cue eval pillars/disjunctions.cue -e '(#Pillars["disjunctions"].#Command & #Pillars["disjunctions"].negative.invalidSelector)' --out cue
-	expect_failure cue eval pillars/comprehensions.cue -e '(#Pillars["comprehensions"].#Services & #Pillars["comprehensions"].negative.badServicePort)' --out cue
+	expect_failure cue eval pillars/unification.cue -e '(#Pillars["unification"].#KernelResource & #Pillars["unification"].negative.incompatibleRole)' --out cue
+	expect_failure cue eval pillars/definitions.cue -e '(#Pillars["definitions"].#KernelResourceRef & #Pillars["definitions"].negative.invalidRole)' --out cue
+	expect_failure cue eval pillars/defaults.cue -e '(#Pillars["defaults"].#KernelGatePolicy & #Pillars["defaults"].negative.invalidRequired)' --out cue
+	expect_failure cue eval pillars/disjunctions.cue -e '(#Pillars["disjunctions"].#KernelOperationIntent & #Pillars["disjunctions"].negative.invalidSelector)' --out cue
+	expect_failure cue eval pillars/comprehensions.cue -e '(#Pillars["comprehensions"].#ResourceInputs & #Pillars["comprehensions"].negative.badServicePort)' --out cue
 	expect_closedness_extra_field_failure
-	expect_failure cue eval pillars/subsumption.cue -e '(#Pillars["subsumption"].#V1 & #Pillars["subsumption"].negative.incompatibleField)' --out cue
+	expect_failure cue eval pillars/subsumption.cue -e '(#Pillars["subsumption"].#AuthorityResource & #Pillars["subsumption"].negative.incompatibleField)' --out cue
 	expect_failure cue eval pillars/negative-fixtures.cue -e '(meta.#MakeNegativeFixture & {in: #Pillars["negative-fixtures"].negative.proof}).out.probe.proof' --out cue
 	expect_failure cue eval pillars/projections.cue -e '(meta.#NoWideningProof & {
 		authority: #Pillars["projections"]._closedAuthority
@@ -154,15 +154,15 @@ validate_pillars() {
 			in: #Pillars["projections"]._authority & #Pillars["projections"].negative.widenedProjection
 		}).out
 	})' --out cue
-	expect_failure cue eval pillars/constructors.cue -e '(#Pillars["constructors"].#MakeService & {in: #Pillars["constructors"].negative.badPort}).out' --out cue
-	expect_failure cue eval pillars/top-and-bottom.cue -e '(string & int)' --out cue
-	expect_failure cue eval pillars/bounds.cue -e '(#Pillars["bounds"].#Port & #Pillars["bounds"].negative.portTooHigh)' --out cue
-	expect_failure cue eval pillars/bounds.cue -e '(#Pillars["bounds"].#Identifier & #Pillars["bounds"].negative.badID)' --out cue
-	expect_failure cue eval pillars/hidden-and-let.cue -e '(#Pillars["hidden-and-let"]._privateSuffix & #Pillars["hidden-and-let"].negative.privateConflict)' --out cue
-	expect_failure cue eval pillars/cycles.cue -e '({x: x + 1}).x' --out cue
-	expect_failure cue eval pillars/lists.cue -e '(#Pillars["lists"].#CommandList & #Pillars["lists"].negative.emptyCommands)' --out cue
-	expect_failure cue eval pillars/lists.cue -e '(#Pillars["lists"].#CommandTuple & #Pillars["lists"].negative.badTuple)' --out cue
-	expect_failure cue eval pillars/attributes.cue -e '(#Pillars["attributes"].#TaggedCommand & #Pillars["attributes"].negative.invalidKind)' --out cue
+	expect_failure cue eval pillars/constructors.cue -e '(#Pillars["constructors"].#MakeResource & {in: #Pillars["constructors"].negative.badResource}).out' --out cue
+	expect_failure cue eval pillars/top-and-bottom.cue -e '(#Pillars["top-and-bottom"].negative.conflict.left & #Pillars["top-and-bottom"].negative.conflict.right)' --out cue
+	expect_failure cue eval pillars/bounds.cue -e '(#Pillars["bounds"].#NonEmptyText & #Pillars["bounds"].negative.emptyDescription)' --out cue
+	expect_failure cue eval pillars/bounds.cue -e '(#Pillars["bounds"].#KernelID & #Pillars["bounds"].negative.badID)' --out cue
+	expect_failure cue eval pillars/hidden-and-let.cue -e '(#Pillars["hidden-and-let"]._generatedRole & #Pillars["hidden-and-let"].negative.privateConflict)' --out cue
+	expect_failure cue eval pillars/cycles.cue -e '#Pillars["cycles"].negative.arithmeticCycle.expression.x' --out cue
+	expect_failure cue eval pillars/lists.cue -e '(#Pillars["lists"].#NonEmptyKeyList & #Pillars["lists"].negative.emptyCommands)' --out cue
+	expect_failure cue eval pillars/lists.cue -e '(#Pillars["lists"].#AuthorityKeyTuple & #Pillars["lists"].negative.badTuple)' --out cue
+	expect_failure cue eval pillars/attributes.cue -e '(#Pillars["attributes"].#TaggedKernelSelector & #Pillars["attributes"].negative.invalidKind)' --out cue
 }
 
 validate_idioms() {
