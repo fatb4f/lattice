@@ -5,8 +5,8 @@
 
 ## Local shape
 
-`patterns/` is the executable idiom suite. One file is one pillar, and each file
-exposes `canonical`, `positive`, and `negative` witnesses.
+`pillars/` is the executable pillar suite. One file is one pillar, and each file
+exposes `canonical`, `positive`, and `negative` witnesses under `#Pillars`.
 
 What exists is closer to:
 

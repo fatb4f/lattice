@@ -14,8 +14,8 @@ import "strings"
 	"projection-substrate"
 
 #SourceID:
-	"lattice-domain-kernel" |
-	"lattice-domain-negative-fixture" |
+	"lattice-meta-kernel" |
+	"lattice-meta-negative-fixture" |
 	"lattice-readme-projection-kernel" |
 	"cue-bottom-semantics" |
 	"cue-definitions" |
@@ -53,15 +53,15 @@ import "strings"
 cueIdiomSources: close({
 	schema: "fatb4f.lattice.cue-idiom-sources.v1"
 	sources: #SourceRefMap & {
-		"lattice-domain-kernel": {
+		"lattice-meta-kernel": {
 			kind:  "local-kernel"
-			title: "Lattice domain obligation kernel"
-			ref:   "domain/kernel.cue"
+			title: "Lattice meta obligation kernel"
+			ref:   "meta/kernel.cue"
 		}
-		"lattice-domain-negative-fixture": {
+		"lattice-meta-negative-fixture": {
 			kind:  "local-kernel"
 			title: "Lattice negative fixture proof split"
-			ref:   "domain/kernel.cue"
+			ref:   "meta/kernel.cue"
 		}
 		"lattice-readme-projection-kernel": {
 			kind:  "local-doc"

@@ -1,5 +1,5 @@
 package exports
 
-import codeintelprofile "github.com/fatb4f/lattice/profiles/code-intel:codeintelprofile"
+import codeintelprofile "github.com/fatb4f/lattice/projections/code-intel:codeintelprofile"
 
 codeIntelProfileExpectation: codeintelprofile.expectedCodeIntelProfile

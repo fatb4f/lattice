@@ -5,6 +5,11 @@ script_dir=$(CDPATH= cd -- "$(dirname "$0")" && pwd -P)
 plugin_root=$(CDPATH= cd -- "$script_dir/.." && pwd -P)
 generated_dir="$plugin_root/generated"
 [ -d "$generated_dir" ] || exit 2
+if repo_root=$(git -C "$plugin_root" rev-parse --show-toplevel 2>/dev/null); then
+	:
+else
+	repo_root=$(CDPATH= cd -- "$plugin_root/../../.." && pwd -P)
+fi
 input_json=$(mktemp "${TMPDIR:-/tmp}/agent-context-resolver.XXXXXX.json")
 trap 'rm -f "$input_json"' EXIT HUP INT TERM
 cat >"$input_json"
@@ -13,9 +18,33 @@ prompt=$(jq -er 'select(.hook_event_name == "UserPromptSubmit") | .prompt' "$inp
 	exit 0
 }
 
+drift='{"schema":"codex-drift-context.v1","available":false,"authority":".kg/codex","findingCount":0,"maxResponse":"allow","findings":[]}'
+if [ -x "$repo_root/.kg/codex/scripts/drift-check" ]; then
+	if drift_findings=$("$repo_root/.kg/codex/scripts/drift-check" --format json --mode full 2>/dev/null); then
+		drift=$(
+			printf '%s\n' "$drift_findings" |
+				jq -c '{
+					schema: "codex-drift-context.v1",
+					available: true,
+					authority: ".kg/codex",
+					findingCount: length,
+					maxResponse: (
+						if any(.[]; .response == "block") then "block"
+						elif any(.[]; .response == "require-review") then "require-review"
+						elif any(.[]; .response == "warn") then "warn"
+						else "allow"
+						end
+					),
+					findings: .
+				}'
+		)
+	fi
+fi
+
 classification=$(
 	jq -cn \
 		--arg prompt "$prompt" \
+		--argjson drift "$drift" \
 		--slurpfile turnStart "$generated_dir/turn_start_fragments.json" \
 		--slurpfile promptRoutes "$generated_dir/prompt_routes.json" \
 		--slurpfile routeInventory "$generated_dir/route_inventory.json" '
@@ -66,6 +95,7 @@ classification=$(
 				availableRouteIDs: [$routeInventory[0].routes[].id],
 				selectedFragments: $selected,
 				routes: $routes,
+				drift: $drift,
 				propagation: {
 					mode: "route-local",
 					root: {
@@ -221,6 +251,8 @@ printf '%s\n' "$classification" | jq -c '{
 				debugEvidence: "stderr-or-file"
 			},
 			hints: (.compactHints | map({text: .}))
+			,
+			drift: .controller.drift
 		} | tojson)
 	}
 }'

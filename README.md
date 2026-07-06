@@ -5,23 +5,23 @@ This repository now starts with a domain-neutral lattice CUE module:
 
 ```text
 module: github.com/fatb4f/lattice
-package: github.com/fatb4f/lattice/domain
+package: github.com/fatb4f/lattice/meta
 ```
 
-The `domain` package owns the reusable kernel:
+The `meta` package owns the reusable kernel:
 
 * `#Resource`, `#Operation`, `#Gate`, and `#Witness`
 * `#ObligationState` and `#ClosedObligationState`
 * `#MakeClosedObligationState`
 * `#StateKeySet`, `#OperationRefKeySet`, and `#NoWideningProof`
 
-Domain profiles should refine the generic vocabularies, then adapt their local names onto the neutral buckets:
+Projections should refine the generic vocabularies, then adapt their local names onto the neutral buckets:
 
 ```text
 resources + operations + gates + witnesses
 ```
 
-The first downstream profile is the dotfiles Codex contract, which maps artifacts/actions/checks/evidence onto that generic lattice surface.
+The first downstream projection is the dotfiles Codex contract, which maps artifacts/actions/checks/evidence onto that generic lattice surface.
 
 ## Core generalization
 

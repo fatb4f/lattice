@@ -13,118 +13,175 @@ expect_failure() {
 	fi
 }
 
-pattern_files=(
-	patterns/unification.cue
-	patterns/definitions.cue
-	patterns/defaults.cue
-	patterns/disjunctions.cue
-	patterns/comprehensions.cue
-	patterns/closedness.cue
-	patterns/subsumption.cue
-	patterns/negative-fixtures.cue
-	patterns/projections.cue
-	patterns/constructors.cue
-	patterns/top-and-bottom.cue
-	patterns/bounds.cue
-	patterns/hidden-and-let.cue
-	patterns/cycles.cue
-	patterns/lists.cue
-	patterns/attributes.cue
+expect_closedness_extra_field_failure() {
+	local probe="pillars/.closedness-extra-field-probe.cue"
+	cat >"$probe" <<'EOF'
+package pillars
+
+_probe: #ClosedCommand & #Pillars["closedness"].negative.extraField
+EOF
+	if cue eval pillars/closedness.cue "$probe" -e _probe --out cue >/dev/null 2>&1; then
+		rm -f "$probe"
+		printf 'expected failure but closedness extra-field probe passed\n'
+		return 1
+	fi
+	rm -f "$probe"
+}
+
+pillar_files=(
+	pillars/unification.cue
+	pillars/definitions.cue
+	pillars/defaults.cue
+	pillars/disjunctions.cue
+	pillars/comprehensions.cue
+	pillars/closedness.cue
+	pillars/subsumption.cue
+	pillars/negative-fixtures.cue
+	pillars/projections.cue
+	pillars/constructors.cue
+	pillars/top-and-bottom.cue
+	pillars/bounds.cue
+	pillars/hidden-and-let.cue
+	pillars/cycles.cue
+	pillars/lists.cue
+	pillars/attributes.cue
 )
 
-validate_patterns() {
+validate_meta() {
+	cue vet ./meta
+	cue export ./meta -e _closedState --out cue >/dev/null
+
+	expect_failure cue export ./meta -e '((#MakeNegativeFixture & {"in": {
+		id:          "negative-conflict"
+		description: "Negative fixture derives paired destructive probe input"
+		authority:   _validState
+		invalid: {
+			id: "valid-state"
+			resources: {
+				"authority-file": {
+					path: "contracts/authority.cue"
+					role: "forbidden"
+				}
+				"generated-file": {
+					path: "generated/assertions.json"
+					role: "generated-output"
+				}
+			}
+			operations: {}
+			gates: {}
+			witnesses: {}
+		}
+	}}).out).probe.proof' --out cue
+
+	expect_failure cue export ./meta -e '(#MakeClosedObligationState & {"in": {
+		id: "missing-create-state"
+		resources: {}
+		operations: {
+			"create-missing": {
+				kind:        "inspect"
+				description: "Creates missing resource"
+				reads: {}
+				writes: {}
+				creates: {
+					"missing-resource": true
+				}
+				requiresGates: {}
+				requiresWitnesses: {}
+			}
+		}
+		gates: {}
+		witnesses: {}
+	}}).out' --out cue
+
+	expect_failure cue export ./meta -e '(#MakeClosedObligationState & {"in": {
+		id: "authority-create-state"
+		resources: {
+			"authority-file": {
+				path: "contracts/authority.cue"
+				role: "authority"
+			}
+		}
+		operations: {
+			"create-authority": {
+				kind:        "inspect"
+				description: "Creates authority resource"
+				reads: {}
+				writes: {}
+				creates: {
+					"authority-file": true
+				}
+				requiresGates: {}
+				requiresWitnesses: {}
+			}
+		}
+		gates: {}
+		witnesses: {}
+	}}).out' --out cue
+}
+
+validate_pillars() {
 	local expected
-	expected="$(printf '%s\n' "${pattern_files[@]}" | sort)"
+	expected="$(printf '%s\n' "${pillar_files[@]}" | sort)"
 	local actual
-	actual="$(find patterns -maxdepth 1 -type f -name '*.cue' | sort)"
+	actual="$(find pillars -maxdepth 1 -type f -name '*.cue' | sort)"
 	if [[ "$actual" != "$expected" ]]; then
-		printf 'unexpected patterns/ surface\nexpected:\n%s\nactual:\n%s\n' "$expected" "$actual"
+		printf 'unexpected pillars/ surface\nexpected:\n%s\nactual:\n%s\n' "$expected" "$actual"
 		return 1
 	fi
 
-	local pattern_file
-	for pattern_file in "${pattern_files[@]}"; do
-		cue eval "$pattern_file" -e canonical --out cue >/dev/null
-		cue eval "$pattern_file" -e positive --out cue >/dev/null
+	local pillar_file
+	for pillar_file in "${pillar_files[@]}"; do
+		local pillar_id
+		pillar_id="$(basename "$pillar_file" .cue)"
+		cue eval "$pillar_file" -e "#Pillars[\"$pillar_id\"].canonical" --out cue >/dev/null
+		cue eval "$pillar_file" -e "#Pillars[\"$pillar_id\"].positive" --out cue >/dev/null
+		cue eval "$pillar_file" -e "#Pillars[\"$pillar_id\"].negative" --out cue >/dev/null
 	done
 
-	expect_failure cue eval patterns/unification.cue -e negative.incompatibleTier --out cue
-	expect_failure cue eval patterns/definitions.cue -e negative.invalidRole --out cue
-	expect_failure cue eval patterns/defaults.cue -e negative.invalidLogLevel --out cue
-	expect_failure cue eval patterns/disjunctions.cue -e negative.invalidSelector --out cue
-	expect_failure cue eval patterns/comprehensions.cue -e negative.badServicePort --out cue
-	expect_failure cue eval patterns/closedness.cue -e negative.extraField --out cue
-	expect_failure cue eval patterns/subsumption.cue -e negative.incompatibleField --out cue
-	expect_failure cue eval patterns/negative-fixtures.cue -e negative.proof --out cue
-	expect_failure cue eval patterns/projections.cue -e negative.widenedProjection --out cue
-	expect_failure cue eval patterns/constructors.cue -e negative.badPort --out cue
-	expect_failure cue eval patterns/top-and-bottom.cue -e negative.conflict --out cue
-	expect_failure cue eval patterns/bounds.cue -e negative.portTooHigh --out cue
-	expect_failure cue eval patterns/bounds.cue -e negative.badID --out cue
-	expect_failure cue eval patterns/hidden-and-let.cue -e negative.privateConflict --out cue
-	expect_failure cue eval patterns/cycles.cue -e negative.arithmeticCycle --out cue
-	expect_failure cue eval patterns/lists.cue -e negative.emptyCommands --out cue
-	expect_failure cue eval patterns/lists.cue -e negative.badTuple --out cue
-	expect_failure cue eval patterns/attributes.cue -e negative.invalidKind --out cue
+	cue vet ./pillars
+
+	expect_failure cue eval pillars/unification.cue -e '(#Pillars["unification"].#Service & #Pillars["unification"].negative.incompatibleTier)' --out cue
+	expect_failure cue eval pillars/definitions.cue -e '(#Pillars["definitions"].#ResourceRef & #Pillars["definitions"].negative.invalidRole)' --out cue
+	expect_failure cue eval pillars/defaults.cue -e '(#Pillars["defaults"].#LogLevel & #Pillars["defaults"].negative.invalidLogLevel)' --out cue
+	expect_failure cue eval pillars/disjunctions.cue -e '(#Pillars["disjunctions"].#Command & #Pillars["disjunctions"].negative.invalidSelector)' --out cue
+	expect_failure cue eval pillars/comprehensions.cue -e '(#Pillars["comprehensions"].#Services & #Pillars["comprehensions"].negative.badServicePort)' --out cue
+	expect_closedness_extra_field_failure
+	expect_failure cue eval pillars/subsumption.cue -e '(#Pillars["subsumption"].#V1 & #Pillars["subsumption"].negative.incompatibleField)' --out cue
+	expect_failure cue eval pillars/negative-fixtures.cue -e '(meta.#MakeNegativeFixture & {in: #Pillars["negative-fixtures"].negative.proof}).out.probe.proof' --out cue
+	expect_failure cue eval pillars/projections.cue -e '(meta.#NoWideningProof & {
+		authority: #Pillars["projections"]._closedAuthority
+		target: (meta.#MakeClosedObligationState & {
+			in: #Pillars["projections"]._authority & #Pillars["projections"].negative.widenedProjection
+		}).out
+	})' --out cue
+	expect_failure cue eval pillars/constructors.cue -e '(#Pillars["constructors"].#MakeService & {in: #Pillars["constructors"].negative.badPort}).out' --out cue
+	expect_failure cue eval pillars/top-and-bottom.cue -e '(string & int)' --out cue
+	expect_failure cue eval pillars/bounds.cue -e '(#Pillars["bounds"].#Port & #Pillars["bounds"].negative.portTooHigh)' --out cue
+	expect_failure cue eval pillars/bounds.cue -e '(#Pillars["bounds"].#Identifier & #Pillars["bounds"].negative.badID)' --out cue
+	expect_failure cue eval pillars/hidden-and-let.cue -e '(#Pillars["hidden-and-let"]._privateSuffix & #Pillars["hidden-and-let"].negative.privateConflict)' --out cue
+	expect_failure cue eval pillars/cycles.cue -e '({x: x + 1}).x' --out cue
+	expect_failure cue eval pillars/lists.cue -e '(#Pillars["lists"].#CommandList & #Pillars["lists"].negative.emptyCommands)' --out cue
+	expect_failure cue eval pillars/lists.cue -e '(#Pillars["lists"].#CommandTuple & #Pillars["lists"].negative.badTuple)' --out cue
+	expect_failure cue eval pillars/attributes.cue -e '(#Pillars["attributes"].#TaggedCommand & #Pillars["attributes"].negative.invalidKind)' --out cue
 }
 
-cue vet ./domain
-cue vet ./idioms
-cue vet ./profiles
-cue vet ./profiles/code-intel
+validate_idioms() {
+	cue vet ./idioms
+	cue export ./idioms -e cueIdiomSources --out cue >/dev/null
+}
+
+validate_projections() {
+	cue vet ./projections
+	cue vet ./projections/code-intel
+	cue export ./projections/code-intel -e expectedCodeIntelProfile --out cue >/dev/null
+	cue export ./projections/code-intel -e codeIntelProfileFeedbackReport --out cue >/dev/null
+}
+
+validate_meta
+validate_pillars
+validate_idioms
+validate_projections
+
 cue vet ./exports
 
-validate_patterns
-
-cue export ./domain -e _closedState --out cue >/dev/null
-cue export ./idioms -e cueIdiomSources --out cue >/dev/null
-cue export ./profiles/code-intel -e expectedCodeIntelProfile --out cue >/dev/null
-cue export ./profiles/code-intel -e codeIntelProfileFeedbackReport --out cue >/dev/null
 cue export ./exports -e codeIntelProfileExpectation --out cue >/dev/null
-
-expect_failure cue export ./domain -t negativeproof -e _negativeFixtureConflictBinding.probe.proof --out cue
-
-expect_failure cue export ./domain -e '(#MakeClosedObligationState & {"in": {
-	id: "missing-create-state"
-	resources: {}
-	operations: {
-		"create-missing": {
-			kind:        "inspect"
-			description: "Creates missing resource"
-			reads: {}
-			writes: {}
-			creates: {
-				"missing-resource": true
-			}
-			requiresGates: {}
-			requiresWitnesses: {}
-		}
-	}
-	gates: {}
-	witnesses: {}
-}}).out' --out cue
-
-expect_failure cue export ./domain -e '(#MakeClosedObligationState & {"in": {
-	id: "authority-create-state"
-	resources: {
-		"authority-file": {
-			path: "contracts/authority.cue"
-			role: "authority"
-		}
-	}
-	operations: {
-		"create-authority": {
-			kind:        "inspect"
-			description: "Creates authority resource"
-			reads: {}
-			writes: {}
-			creates: {
-				"authority-file": true
-			}
-			requiresGates: {}
-			requiresWitnesses: {}
-		}
-	}
-	gates: {}
-	witnesses: {}
-}}).out' --out cue

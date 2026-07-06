@@ -1,3 +1,16 @@
 {
-  "hooks": []
+  "hooks": [
+    {
+      "event": "UserPromptSubmit",
+      "command": ".codex/plugins/agent-context-resolver/scripts/agent-context-resolver-hook"
+    },
+    {
+      "event": "UserPromptSubmit",
+      "command": ".kg/codex/scripts/drift-hook"
+    },
+    {
+      "event": "Stop",
+      "command": ".kg/codex/scripts/drift-hook"
+    }
+  ]
 }

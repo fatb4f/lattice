@@ -1,7 +1,7 @@
 # CUE Idioms
 
-`patterns/` is the executable idiom suite: one pillar file with `canonical`,
-`positive`, and `negative` witnesses.
+`pillars/` is the executable pillar suite: one pillar file with `canonical`,
+`positive`, and `negative` witnesses under `#Pillars`.
 
-`idioms/` records source references only. It is not a registry for the pattern
-suite.
+`idioms/` records practical idiom source references. It is not the pillar
+registry.

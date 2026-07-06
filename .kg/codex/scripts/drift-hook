@@ -1,0 +1,69 @@
+#!/usr/bin/env sh
+set -eu
+
+input_json=$(mktemp "${TMPDIR:-/tmp}/codex-drift-hook.XXXXXX.json")
+findings_json=$(mktemp "${TMPDIR:-/tmp}/codex-drift-findings.XXXXXX.json")
+trap 'rm -f "$input_json" "$findings_json"' EXIT HUP INT TERM
+
+cat >"$input_json"
+
+event_name=$(jq -r '.hook_event_name // .hookEventName // "unknown"' "$input_json")
+case "$event_name" in
+UserPromptSubmit|Stop|SessionEnd|TurnEnd|AgentTurnEnd|unknown) ;;
+*) exit 0 ;;
+esac
+
+repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+"$repo_root/.kg/codex/scripts/drift-check" --format json --mode full >"$findings_json"
+
+max_response=$(
+	jq -r '
+		if any(.[]; .response == "block") then "block"
+		elif any(.[]; .response == "require-review") then "require-review"
+		elif any(.[]; .response == "warn") then "warn"
+		else "allow"
+		end
+	' "$findings_json"
+)
+
+if [ "$event_name" = "UserPromptSubmit" ]; then
+	jq -cn --slurpfile findings "$findings_json" --arg maxResponse "$max_response" '{
+		hookSpecificOutput: {
+			hookEventName: "UserPromptSubmit",
+			additionalContext: ({
+				schema: "codex-drift-context.v1",
+				authority: ".kg/codex",
+				findingCount: ($findings[0] | length),
+				maxResponse: $maxResponse,
+				findings: $findings[0]
+			} | tojson)
+		}
+	}'
+	exit 0
+fi
+
+if [ "$max_response" = "block" ]; then
+	jq -cn --slurpfile findings "$findings_json" --arg maxResponse "$max_response" '{
+		decision: "block",
+		reason: "Codex drift KG found blocking drift.",
+		drift: {
+			schema: "codex-drift-context.v1",
+			authority: ".kg/codex",
+			findingCount: ($findings[0] | length),
+			maxResponse: $maxResponse,
+			findings: $findings[0]
+		}
+	}'
+	exit 1
+fi
+
+jq -cn --slurpfile findings "$findings_json" --arg maxResponse "$max_response" '{
+	decision: "allow",
+	drift: {
+		schema: "codex-drift-context.v1",
+		authority: ".kg/codex",
+		findingCount: ($findings[0] | length),
+		maxResponse: $maxResponse,
+		findings: $findings[0]
+	}
+}'

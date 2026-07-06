@@ -1,0 +1,67 @@
+#!/usr/bin/env sh
+set -eu
+
+format=json
+mode=full
+
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+	--format)
+		[ "$#" -ge 2 ] || exit 2
+		format=$2
+		shift 2
+		;;
+	--mode)
+		[ "$#" -ge 2 ] || exit 2
+		mode=$2
+		shift 2
+		;;
+	*)
+		printf 'drift-check: unknown argument: %s\n' "$1" >&2
+		exit 2
+		;;
+	esac
+done
+
+case "$format" in
+json|cue) ;;
+*)
+	printf 'drift-check: unsupported --format %s\n' "$format" >&2
+	exit 2
+	;;
+esac
+
+case "$mode" in
+full|repo|patch) ;;
+*)
+	printf 'drift-check: unsupported --mode %s\n' "$mode" >&2
+	exit 2
+	;;
+esac
+
+repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+facts_json=$(mktemp "${TMPDIR:-/tmp}/codex-drift-facts.XXXXXX.json")
+facts_cue=$(mktemp "${TMPDIR:-/tmp}/codex-drift-facts.XXXXXX.cue")
+trap 'rm -f "$facts_json" "$facts_cue"' EXIT HUP INT TERM
+
+"$repo_root/.kg/codex/scripts/drift-facts" >"$facts_json"
+
+{
+	printf 'package codexdrift\n\n_observedFacts: '
+	cat "$facts_json"
+	printf '\n'
+} >"$facts_cue"
+
+case "$mode" in
+full)
+	expr='(#FullDriftKG & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo, patch: _observedFacts.patch}}).findings'
+	;;
+repo)
+	expr='(#RepoDriftKG & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo}}).findings'
+	;;
+patch)
+	expr='(#PatchDriftKG & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {patch: _observedFacts.patch}}).findings'
+	;;
+esac
+
+cue export "$repo_root/.kg/codex" "$facts_cue" -e "$expr" --out "$format"

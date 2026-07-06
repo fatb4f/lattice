@@ -1,0 +1,63 @@
+#!/usr/bin/env sh
+set -eu
+
+repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+
+repo_json=$(
+	cd "$repo_root"
+	find . -path ./.git -prune -o -type f -print |
+		sed 's#^\./##' |
+		sort |
+		jq -Rn '
+			[inputs | select(length > 0)] as $paths |
+			{
+				filesByPath: (
+					reduce $paths[] as $path ({}; .[$path] = true)
+				)
+			}
+		'
+)
+
+patch_json=$(
+	cd "$repo_root"
+	{
+		git status --porcelain=v1 --untracked-files=all
+	} |
+		jq -Rn '
+			def action($status):
+				if ($status | test("^R")) then "renamed"
+				elif ($status | test("^A|^.A|^\\?\\?")) then "added"
+				elif ($status | test("^D|^.D")) then "deleted"
+				elif ($status | test("^M|^.M")) then "modified"
+				else "unknown"
+				end;
+
+			[
+				inputs
+				| select(length > 0)
+				| . as $line
+				| ($line[0:2]) as $status
+				| ($line[3:]) as $raw
+				| if ($raw | contains(" -> ")) then
+					($raw | split(" -> ")) as $parts
+					| {
+						path: $parts[1],
+						from: $parts[0],
+						action: action($status)
+					}
+				else
+					{
+						path: $raw,
+						action: action($status)
+					}
+				end
+			] as $changes |
+			{changes: $changes}
+		'
+)
+
+jq -n \
+	--arg schema "codex-drift-facts.v1" \
+	--argjson repo "$repo_json" \
+	--argjson patch "$patch_json" \
+	'{schema: $schema, repo: $repo, patch: $patch}'

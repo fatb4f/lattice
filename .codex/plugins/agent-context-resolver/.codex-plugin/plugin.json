@@ -6,6 +6,7 @@
     "name": "fatb4f"
   },
   "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
   "interface": {
     "displayName": "Agent Context Resolver",
     "shortDescription": "Routes dotfiles prompts to bounded context fragments.",
