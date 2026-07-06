@@ -5,6 +5,7 @@ latticeReference: #DriftModel & {
 
 	surfaceIDs: [
 		"pattern-suite",
+		"control-profile",
 		"source-registry",
 		"meta-kernel",
 		"validation-controller",
@@ -47,6 +48,22 @@ latticeReference: #DriftModel & {
 				"patterns/contract_pillars.cue",
 				"patterns/adapter_pillars.cue",
 				"patterns/idiom_families.cue",
+			]
+		}
+
+		"control-profile": {
+			id:          "control-profile"
+			kind:        "verification"
+			description: "Profile catalogue for deriving closed-loop feedback techniques from idiomatic patterns."
+
+			requiredPaths: [
+				"profiles/control/schema.cue",
+				"profiles/control/techniques.cue",
+			]
+
+			forbiddenPaths: [
+				"patterns/control",
+				"patterns/control.cue",
 			]
 		}
 
@@ -173,6 +190,24 @@ latticeReference: #DriftModel & {
 			severity: "violation"
 			response: "block"
 			reason:   "A required source registry file is missing."
+		}
+
+		"control-profile-required-path-present": {
+			id:       "control-profile-required-path-present"
+			kind:     "missing-required-surface"
+			surface:  "control-profile"
+			severity: "violation"
+			response: "block"
+			reason:   "The closed-loop control profile must remain under profiles/control."
+		}
+
+		"control-profile-outside-patterns": {
+			id:       "control-profile-outside-patterns"
+			kind:     "duplicate-authority"
+			surface:  "control-profile"
+			severity: "violation"
+			response: "block"
+			reason:   "Control feedback techniques are profile projections, not pattern authority."
 		}
 
 		"sources-outside-patterns": {

@@ -16,8 +16,8 @@ patterns/
     problem -> abstraction -> fixtures -> validation -> promotion rule
 
 profiles/
-  = domain mappings:
-    codex, dotfiles, semagrams, delivery, adapters, etc.
+  = domain/profile mappings:
+    control, codex, dotfiles, semagrams, delivery, adapters, etc.
 
 sources/
   = reference/source registry, not authority-bearing implementation
@@ -26,9 +26,7 @@ sources/
 ## Promotion Contract
 
 Every accepted pattern should satisfy this catalogue shape before it is treated
-as implemented. The `control` field is optional in the base schema while the
-catalogue is being migrated, but it is the promotion target for any pattern that
-claims to be implemented:
+as implemented:
 
 ```cue
 #PatternEntry: close({
@@ -53,12 +51,16 @@ claims to be implemented:
 		target: "meta-kernel" | "patterns" | "profile" | "adapter" | "deferred"
 		reason: #NonEmptyString
 	})
-
-	control?: #ControlSurface
 })
 ```
 
-Minimum closed-loop overlay:
+## Control Profile Track
+
+Closed-loop feedback is a parallel profile, not part of the base pattern entry.
+`patterns/` stays focused on pure idiomatic CUE. `profiles/control/` catalogs
+techniques for generating closed-loop feedback from those idiomatic patterns.
+
+The profile-level overlay is:
 
 ```cue
 #ControlSurface: close({
@@ -101,7 +103,17 @@ Minimum closed-loop overlay:
 })
 ```
 
-Every promoted pattern should be explainable as:
+Each control technique references a pattern and explains how to derive:
+
+- plant: what system or state is being controlled
+- setpoint: the desired authority contract or invariant
+- sensors: selectors, projections, fixtures, evidence, or command output
+- controller: constructor, validator, transition, gate, or adapter policy
+- actuators: optional command, adapter, codegen, mutation, or publication effects
+- feedback: error signal, proof reference, and stability claim
+
+Every mature pattern should eventually have a control-profile technique that can
+explain it as:
 
 ```text
 authority state
@@ -111,8 +123,8 @@ authority state
   -> admissibility decision
 ```
 
-That makes each pattern a closed-loop feedback system without forcing every
-existing entry to carry a full populated overlay during the migration.
+This keeps the idiom catalogue simple while still making closed-loop feedback a
+first-class engineering track.
 
 Canonical families:
 
@@ -190,8 +202,7 @@ Collapse overlapping candidates before implementation:
 - Implemented variants: `#Resource`, `#Operation`, `#Gate`, `#Witness`,
   `#ResourceMap`, `#OperationMap`, `#GateMap`, `#WitnessMap`,
   `#ObligationState`, `#ClosedObligationState`.
-- Next variants: strengthen `#PatternEntry`, `#SourceRef`, `#ControlSurface`,
-  `#DriftRule`.
+- Next variants: strengthen `#PatternEntry`, `#SourceRef`, `#DriftRule`.
 
 ### Projection / No-Widening
 

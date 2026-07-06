@@ -4,7 +4,6 @@ import "strings"
 
 #NonEmptyString: string & strings.MinRunes(1)
 #NonEmptyStringList: [...#NonEmptyString] & [_, ...]
-#KebabIdentifier: #NonEmptyString & =~"^[a-z0-9]+(-[a-z0-9]+)*$"
 
 #CheckSet: {
 	pass?: #NonEmptyStringList
@@ -40,105 +39,6 @@ import "strings"
 #Promotion: {
 	source: #NonEmptyString
 	reason: #NonEmptyString
-}
-
-#ControlSensorKind:
-	"selector" |
-	"projection" |
-	"fixture" |
-	"evidence" |
-	"command-output"
-
-#ControlSensorCoverage:
-	"full" |
-	"partial" |
-	"sentinel"
-
-#ControlControllerKind:
-	"constructor" |
-	"validator" |
-	"transition" |
-	"gate" |
-	"adapter"
-
-#ControlActuatorKind:
-	"command" |
-	"adapter" |
-	"codegen" |
-	"mutation" |
-	"publication"
-
-#ControlActuatorEffect:
-	"read" |
-	"write" |
-	"create" |
-	"delete" |
-	"publish"
-
-#ControlStability:
-	"idempotent" |
-	"monotone" |
-	"convergent" |
-	"bounded" |
-	"unchecked"
-
-#ControlSurface: close({
-	id: #KebabIdentifier
-
-	plant: close({
-		kind:        #NonEmptyString
-		stateRef:    #NonEmptyString
-		boundaryRef: #NonEmptyString
-	})
-
-	setpoint: close({
-		contractRef: #NonEmptyString
-		invariants:  #NonEmptyStringList
-	})
-
-	sensors: {
-		[string]: close({
-			kind:     #ControlSensorKind
-			target:   #NonEmptyString
-			coverage: #ControlSensorCoverage
-		})
-	}
-
-	controller: close({
-		kind:       #ControlControllerKind
-		policyRef:  #NonEmptyString
-		errorModes: #NonEmptyStringList
-	})
-
-	actuators?: {
-		[string]: close({
-			kind:   #ControlActuatorKind
-			target: #NonEmptyString
-			effect: #ControlActuatorEffect
-		})
-	}
-
-	feedback: close({
-		errorSignal: #NonEmptyString
-		proofRef:    #NonEmptyString
-		stability:   #ControlStability
-	})
-})
-
-#FixtureControl: close({
-	positive: close({
-		input:  _
-		expect: "accepted"
-	})
-	negative: close({
-		input:      _
-		expect:     "bottom"
-		errorClass: #NonEmptyString
-	})
-})
-
-#ControlledPatternEntry: #PatternEntry & {
-	control: #ControlSurface
 }
 
 #FeatureMaturity:
@@ -177,9 +77,8 @@ import "strings"
 	positive:  _
 	negative:  _
 
-	uses?:    #NonEmptyStringList
-	notes?:   #NonEmptyStringList
-	control?: #ControlSurface
+	uses?:  #NonEmptyStringList
+	notes?: #NonEmptyStringList
 
 	...
 }

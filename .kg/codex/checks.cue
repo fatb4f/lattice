@@ -141,6 +141,9 @@ import (
 			if model.rules["sources-outside-patterns"].surface == surfaceID {
 				rule: model.rules["sources-outside-patterns"].id
 			}
+			if model.rules["control-profile-outside-patterns"].surface == surfaceID {
+				rule: model.rules["control-profile-outside-patterns"].id
+			}
 			if model.rules["kg-outside-validator"].surface == surfaceID {
 				rule: model.rules["kg-outside-validator"].id
 			}

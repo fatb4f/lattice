@@ -283,10 +283,18 @@ validate_projections() {
 	cue export ./projections/code-intel -e codeIntelProfileFeedbackReport --out cue >/dev/null
 }
 
+validate_profiles() {
+	cue vet ./profiles/control
+	cue export ./profiles/control -e '#Techniques["constructor-normalization-loop"].control.feedback.stability' --out cue >/dev/null
+	cue export ./profiles/control -e '#Techniques["projection-observer-loop"].control.sensors' --out cue >/dev/null
+	cue export ./profiles/control -e '#Techniques["fixture-error-signal-loop"].checks' --out cue >/dev/null
+}
+
 validate_meta
 validate_patterns
 validate_sources
 validate_projections
+validate_profiles
 
 cue vet ./exports
 
