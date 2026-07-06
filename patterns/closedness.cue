@@ -15,6 +15,14 @@ import meta "github.com/fatb4f/lattice/meta"
 		name:    "Closedness"
 		summary: "Close public shapes so unexpected fields become validation failures."
 		demonstrates: ["closed structs", "field rejection", "schema boundaries"]
+		id:          "closedness"
+		family:      "schema"
+		status:      "implemented"
+		problem:     "Public records need an explicit boundary against accidental widening."
+		abstraction: "Closed record boundary"
+		fixtures: {canonical: canonical, positive: positive, negative: negative}
+		checks: {pass: ["cue eval patterns/closedness.cue -e #Patterns.closedness.positive"], fail: ["cue eval patterns/closedness.cue -e #Patterns.closedness.negative.extraField"]}
+		promotion: {source: "docs/patterns.md", reason: "Promotes schema boundary enforcement from CUE-native pattern framing."}
 
 		canonical: {
 			id:        "closedness"

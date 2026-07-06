@@ -148,13 +148,25 @@ import (
 	gates:      #GateMap
 	witnesses:  #WitnessMap
 
-	_createsGeneratedOutputProof: {
+	_operationRefProof: {
 		for operationID, operation in operations {
+			for resourceID, _ in operation.reads {
+				"\(operationID)-reads-\(resourceID)-exists": list.Contains(list.SortStrings([for key, _ in resources {key}]), resourceID) & true
+			}
+			for resourceID, _ in operation.writes {
+				"\(operationID)-writes-\(resourceID)-exists": list.Contains(list.SortStrings([for key, _ in resources {key}]), resourceID) & true
+			}
 			for resourceID, _ in operation.creates {
 				"\(operationID)-creates-\(resourceID)-exists": list.Contains(list.SortStrings([for key, _ in resources {key}]), resourceID) & true
 				"\(operationID)-creates-\(resourceID)-role": resources[resourceID] & {
 					role: #GeneratedOutputResourceRole
 				}
+			}
+			for gateID, _ in operation.requiresGates {
+				"\(operationID)-requires-gate-\(gateID)-exists": list.Contains(list.SortStrings([for key, _ in gates {key}]), gateID) & true
+			}
+			for witnessID, _ in operation.requiresWitnesses {
+				"\(operationID)-requires-witness-\(witnessID)-exists": list.Contains(list.SortStrings([for key, _ in witnesses {key}]), witnessID) & true
 			}
 		}
 	}

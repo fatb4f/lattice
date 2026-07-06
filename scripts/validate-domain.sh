@@ -114,6 +114,78 @@ validate_meta() {
 	}}).out' --out cue
 
 	expect_failure cue export ./meta -e '(#MakeClosedObligationState & {"in": {
+		id: "missing-read-state"
+		resources: {}
+		operations: {
+			"read-missing": {
+				kind:        "inspect"
+				description: "Reads missing resource"
+				reads: {"missing-resource": true}
+				writes: {}
+				creates: {}
+				requiresGates: {}
+				requiresWitnesses: {}
+			}
+		}
+		gates: {}
+		witnesses: {}
+	}}).out' --out cue
+
+	expect_failure cue export ./meta -e '(#MakeClosedObligationState & {"in": {
+		id: "missing-write-state"
+		resources: {}
+		operations: {
+			"write-missing": {
+				kind:        "inspect"
+				description: "Writes missing resource"
+				reads: {}
+				writes: {"missing-resource": true}
+				creates: {}
+				requiresGates: {}
+				requiresWitnesses: {}
+			}
+		}
+		gates: {}
+		witnesses: {}
+	}}).out' --out cue
+
+	expect_failure cue export ./meta -e '(#MakeClosedObligationState & {"in": {
+		id: "missing-gate-state"
+		resources: {}
+		operations: {
+			"require-missing-gate": {
+				kind:        "inspect"
+				description: "Requires missing gate"
+				reads: {}
+				writes: {}
+				creates: {}
+				requiresGates: {"missing-gate": true}
+				requiresWitnesses: {}
+			}
+		}
+		gates: {}
+		witnesses: {}
+	}}).out' --out cue
+
+	expect_failure cue export ./meta -e '(#MakeClosedObligationState & {"in": {
+		id: "missing-witness-state"
+		resources: {}
+		operations: {
+			"require-missing-witness": {
+				kind:        "inspect"
+				description: "Requires missing witness"
+				reads: {}
+				writes: {}
+				creates: {}
+				requiresGates: {}
+				requiresWitnesses: {"missing-witness": true}
+			}
+		}
+		gates: {}
+		witnesses: {}
+	}}).out' --out cue
+
+	expect_failure cue export ./meta -e '(#MakeClosedObligationState & {"in": {
 		id: "authority-create-state"
 		resources: {
 			"authority-file": {
@@ -154,8 +226,16 @@ validate_patterns() {
 		local pattern_id
 		pattern_id="$(basename "$pattern_file" .cue)"
 		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].name" --out cue >/dev/null
+		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].id" --out cue >/dev/null
+		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].family" --out cue >/dev/null
+		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].status" --out cue >/dev/null
 		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].summary" --out cue >/dev/null
+		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].problem" --out cue >/dev/null
 		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].demonstrates" --out cue >/dev/null
+		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].abstraction" --out cue >/dev/null
+		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].fixtures" --out cue >/dev/null
+		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].checks" --out cue >/dev/null
+		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].promotion" --out cue >/dev/null
 		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].canonical" --out cue >/dev/null
 		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].positive" --out cue >/dev/null
 		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].negative" --out cue >/dev/null

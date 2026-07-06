@@ -8,6 +8,14 @@ import meta "github.com/fatb4f/lattice/meta"
 		name:    "Defaults"
 		summary: "Provide default values while still allowing explicit refinement."
 		demonstrates: ["defaults", "disjunctions", "refinement"]
+		id:          "defaults"
+		family:      "default"
+		status:      "implemented"
+		problem:     "Policy fields need defaults without blocking explicit refinement."
+		abstraction: "Defaulted policy field"
+		fixtures: {canonical: canonical, positive: positive, negative: negative}
+		checks: {pass: ["cue eval patterns/defaults.cue -e #Patterns.defaults.positive"], fail: ["cue eval patterns/defaults.cue -e #Patterns.defaults.negative.invalidRequired"]}
+		promotion: {source: "docs/patterns.md", reason: "Promotes defaults and overrides as reusable CUE pattern material."}
 
 		#KernelGatePolicy: close({
 			id:          =~"^[a-z0-9]+(-[a-z0-9]+)*$"

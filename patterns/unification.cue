@@ -8,6 +8,14 @@ import meta "github.com/fatb4f/lattice/meta"
 		name:    "Unification"
 		summary: "Combine schemas and data to derive a more specific value."
 		demonstrates: ["unification", "constraints", "closed structs"]
+		id:          "unification"
+		family:      "schema"
+		status:      "implemented"
+		problem:     "Schemas and data need to compose into stricter values without procedural glue."
+		abstraction: "Schema-data unification"
+		fixtures: {canonical: canonical, positive: positive, negative: negative}
+		checks: {pass: ["cue eval patterns/unification.cue -e #Patterns.unification.positive"], fail: ["cue eval patterns/unification.cue -e #Patterns.unification.negative.incompatibleRole"]}
+		promotion: {source: "docs/patterns.md", reason: "Promotes unification as the base CUE composition pattern."}
 
 		#KernelResource: close({
 			id:   =~"^[a-z0-9]+(-[a-z0-9]+)*$"

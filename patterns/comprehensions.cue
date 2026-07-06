@@ -8,6 +8,14 @@ import meta "github.com/fatb4f/lattice/meta"
 		name:    "Comprehensions"
 		summary: "Derive normalized maps from input registries by iterating over keys and values."
 		demonstrates: ["comprehensions", "derived fields", "keyed maps"]
+		id:          "comprehensions"
+		family:      "constructor"
+		status:      "implemented"
+		problem:     "Input registries need normalized derived maps without hand-copying keys."
+		abstraction: "Map comprehension normalization"
+		fixtures: {canonical: canonical, positive: positive, negative: negative}
+		checks: {pass: ["cue eval patterns/comprehensions.cue -e #Patterns.comprehensions.positive"], fail: ["cue eval patterns/comprehensions.cue -e #Patterns.comprehensions.negative.badServicePort"]}
+		promotion: {source: "docs/patterns.md", reason: "Promotes registry transforms and derived key maps."}
 
 		#ResourceInputs: {
 			[string]: {

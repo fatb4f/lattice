@@ -10,6 +10,37 @@ import "strings"
 	fail?: #NonEmptyStringList
 }
 
+#PatternFamily:
+	"adapter" |
+	"bounds" |
+	"constructor" |
+	"default" |
+	"fixture" |
+	"graph" |
+	"keyset" |
+	"projection" |
+	"schema" |
+	"selector" |
+	"state" |
+	"variant"
+
+#PatternStatus:
+	"implemented" |
+	"partial" |
+	"planned" |
+	"watch"
+
+#FixtureSet: {
+	canonical: _
+	positive:  _
+	negative:  _
+}
+
+#Promotion: {
+	source: #NonEmptyString
+	reason: #NonEmptyString
+}
+
 #FeatureMaturity:
 	"stable" |
 	"experimental" |
@@ -30,17 +61,24 @@ import "strings"
 }
 
 #PatternEntry: {
+	id:           #NonEmptyString
 	name:         #NonEmptyString
+	family:       #PatternFamily
+	status:       #PatternStatus
 	summary:      #NonEmptyString
+	problem:      #NonEmptyString
 	demonstrates: #NonEmptyStringList
+	abstraction:  _
+	fixtures:     #FixtureSet
+	checks:       #CheckSet
+	promotion:    #Promotion
 
 	canonical: _
 	positive:  _
 	negative:  _
 
-	checks?: #CheckSet
-	uses?:   #NonEmptyStringList
-	notes?:  #NonEmptyStringList
+	uses?:  #NonEmptyStringList
+	notes?: #NonEmptyStringList
 
 	...
 }

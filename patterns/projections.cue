@@ -8,6 +8,14 @@ import meta "github.com/fatb4f/lattice/meta"
 		name:    "Projections"
 		summary: "Project a public view from closed authority while preserving no-widening checks."
 		demonstrates: ["projections", "filters", "no widening"]
+		id:          "projections"
+		family:      "projection"
+		status:      "implemented"
+		problem:     "Public views must be derived from authority without adding keys or refs."
+		abstraction: "Filtered projection with no-widening proof"
+		fixtures: {canonical: canonical, positive: positive, negative: negative}
+		checks: {pass: ["cue eval patterns/projections.cue -e #Patterns.projections.positive"], fail: ["cue eval patterns/projections.cue -e #Patterns.projections.negative.widenedProjection"]}
+		promotion: {source: "docs/patterns.md", reason: "Promotes adapter/projection boundaries and no-widening checks."}
 
 		_authority: {
 			id: "projections"
