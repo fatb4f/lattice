@@ -1,6 +1,6 @@
 package codexdrift
 
-#NonEmptyString: string & != ""
+#NonEmptyString: string & !=""
 #Path:           #NonEmptyString
 #KebabID:        #NonEmptyString & =~"^[a-z0-9]+(-[a-z0-9]+)*$"
 
@@ -51,8 +51,8 @@ package codexdrift
 })
 
 #ObservedPatch: close({
-	base?:   #NonEmptyString
-	head?:   #NonEmptyString
+	base?: #NonEmptyString
+	head?: #NonEmptyString
 	changes: [...#ObservedChange]
 })
 
@@ -61,7 +61,7 @@ package codexdrift
 	kind:        #ControlSurfaceKind
 	description: #NonEmptyString
 
-	requiredPaths:  [...#Path] | *[]
+	requiredPaths: [...#Path] | *[]
 	forbiddenPaths: [...#Path] | *[]
 	protectedPaths: [...#Path] | *[]
 })

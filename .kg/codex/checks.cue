@@ -16,8 +16,8 @@ import (
 })
 
 #CheckReport: close({
-	model: #DriftModel
-	repo?: #ObservedRepo
+	model:  #DriftModel
+	repo?:  #ObservedRepo
 	patch?: #ObservedPatch
 
 	findings: _
@@ -117,6 +117,9 @@ import (
 		let surface = model.surfaces[surfaceID]
 		for _, pathValue in surface.requiredPaths
 		if list.Contains(_paths, pathValue) != true {
+			if model.rules["\(surfaceID)-required-path-present"] != _|_ {
+				rule: model.rules["\(surfaceID)-required-path-present"].id
+			}
 			kind:     "missing-required-surface"
 			surface:  surfaceID
 			path:     pathValue
@@ -129,6 +132,15 @@ import (
 		for _, pathValue in surface.forbiddenPaths
 		for _, observedPath in _paths
 		if (#PathMatches & {path: observedPath, pattern: pathValue}).matches == true {
+			if model.rules["\(surfaceID)-forbidden-path-absent"] != _|_ {
+				rule: model.rules["\(surfaceID)-forbidden-path-absent"].id
+			}
+			if model.rules["no-pillar-registry"].surface == surfaceID {
+				rule: model.rules["no-pillar-registry"].id
+			}
+			if model.rules["kg-outside-validator"].surface == surfaceID {
+				rule: model.rules["kg-outside-validator"].id
+			}
 			kind:     "unexpected-surface"
 			surface:  surfaceID
 			path:     observedPath
@@ -159,12 +171,24 @@ import (
 		for _, pathValue in surface.protectedPaths
 		for change in patch.changes
 		if (#PathMatches & {path: change.path, pattern: pathValue}).matches == true {
-			kind: "policy-violated"
-			surface: surfaceID
-			path: change.path
+			if model.rules["kernel-change-review"].surface == surfaceID {
+				rule: model.rules["kernel-change-review"].id
+			}
+			if model.rules["validator-change-review"].surface == surfaceID {
+				rule: model.rules["validator-change-review"].id
+			}
+			if model.rules["codex-drift-kg-change-review"].surface == surfaceID {
+				rule: model.rules["codex-drift-kg-change-review"].id
+			}
+			if model.rules["generated-facts-not-authority"].surface == surfaceID {
+				rule: model.rules["generated-facts-not-authority"].id
+			}
+			kind:     "policy-violated"
+			surface:  surfaceID
+			path:     change.path
 			severity: "warning"
 			response: "require-review"
-			reason: "A protected control surface path changed."
+			reason:   "A protected control surface path changed."
 		},
 	]
 

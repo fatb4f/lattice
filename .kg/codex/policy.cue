@@ -11,16 +11,16 @@ latticeResponsePolicy: {
 	}
 
 	protectedSurfaces: {
-		"meta-kernel":            true
-		"validation-controller":  true
-		"codex-drift-kg":         true
-		"generated-codex-facts":  true
+		"meta-kernel":           true
+		"validation-controller": true
+		"codex-drift-kg":        true
+		"generated-codex-facts": true
 	}
 
 	blockedWithoutReview: {
-		"duplicate-authority":              true
-		"adapter-boundary-crossed":         true
-		"generated-promoted-to-authority":  true
-		"policy-violated":                  true
+		"duplicate-authority":             true
+		"adapter-boundary-crossed":        true
+		"generated-promoted-to-authority": true
+		"policy-violated":                 true
 	}
 }

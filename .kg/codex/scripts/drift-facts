@@ -1,6 +1,47 @@
 #!/usr/bin/env sh
 set -eu
 
+mode=worktree
+base=
+head=HEAD
+
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+	--mode)
+		[ "$#" -ge 2 ] || exit 2
+		mode=$2
+		shift 2
+		;;
+	--base)
+		[ "$#" -ge 2 ] || exit 2
+		base=$2
+		shift 2
+		;;
+	--head)
+		[ "$#" -ge 2 ] || exit 2
+		head=$2
+		shift 2
+		;;
+	*)
+		printf 'drift-facts: unknown argument: %s\n' "$1" >&2
+		exit 2
+		;;
+	esac
+done
+
+case "$mode" in
+worktree | range) ;;
+*)
+	printf 'drift-facts: unsupported --mode %s\n' "$mode" >&2
+	exit 2
+	;;
+esac
+
+if [ "$mode" = "range" ] && [ -z "$base" ]; then
+	printf 'drift-facts: --mode range requires --base\n' >&2
+	exit 2
+fi
+
 repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 
 repo_json=$(
@@ -18,12 +59,14 @@ repo_json=$(
 		'
 )
 
-patch_json=$(
-	cd "$repo_root"
-	{
-		git status --porcelain=v1 --untracked-files=all
-	} |
-		jq -Rn '
+case "$mode" in
+worktree)
+	patch_json=$(
+		cd "$repo_root"
+		{
+			git status --porcelain=v1 --untracked-files=all
+		} |
+			jq -Rn '
 			def action($status):
 				if ($status | test("^R")) then "renamed"
 				elif ($status | test("^A|^.A|^\\?\\?")) then "added"
@@ -54,7 +97,46 @@ patch_json=$(
 			] as $changes |
 			{changes: $changes}
 		'
-)
+	)
+	;;
+range)
+	patch_json=$(
+		cd "$repo_root"
+		{
+			git diff --name-status --find-renames "$base..$head"
+		} |
+			jq -Rn --arg base "$base" --arg head "$head" '
+			def action($status):
+				if ($status | test("^R")) then "renamed"
+				elif ($status == "A") then "added"
+				elif ($status == "D") then "deleted"
+				elif ($status == "M") then "modified"
+				else "unknown"
+				end;
+
+			[
+				inputs
+				| select(length > 0)
+				| split("\t") as $parts
+				| ($parts[0]) as $status
+				| if ($status | test("^R")) then
+					{
+						path: $parts[2],
+						from: $parts[1],
+						action: action($status)
+					}
+				else
+					{
+						path: $parts[1],
+						action: action($status)
+					}
+				end
+			] as $changes |
+			{base: $base, head: $head, changes: $changes}
+		'
+	)
+	;;
+esac
 
 jq -n \
 	--arg schema "codex-drift-facts.v1" \

@@ -3,6 +3,7 @@ set -eu
 
 format=json
 mode=full
+facts=
 
 while [ "$#" -gt 0 ]; do
 	case "$1" in
@@ -16,6 +17,11 @@ while [ "$#" -gt 0 ]; do
 		mode=$2
 		shift 2
 		;;
+	--facts)
+		[ "$#" -ge 2 ] || exit 2
+		facts=$2
+		shift 2
+		;;
 	*)
 		printf 'drift-check: unknown argument: %s\n' "$1" >&2
 		exit 2
@@ -24,7 +30,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 case "$format" in
-json|cue) ;;
+json | cue) ;;
 *)
 	printf 'drift-check: unsupported --format %s\n' "$format" >&2
 	exit 2
@@ -32,7 +38,7 @@ json|cue) ;;
 esac
 
 case "$mode" in
-full|repo|patch) ;;
+full | repo | patch) ;;
 *)
 	printf 'drift-check: unsupported --mode %s\n' "$mode" >&2
 	exit 2
@@ -44,7 +50,11 @@ facts_json=$(mktemp "${TMPDIR:-/tmp}/codex-drift-facts.XXXXXX.json")
 facts_cue=$(mktemp "${TMPDIR:-/tmp}/codex-drift-facts.XXXXXX.cue")
 trap 'rm -f "$facts_json" "$facts_cue"' EXIT HUP INT TERM
 
-"$repo_root/.kg/codex/scripts/drift-facts" >"$facts_json"
+if [ -n "$facts" ]; then
+	cp "$facts" "$facts_json"
+else
+	"$repo_root/.kg/codex/scripts/drift-facts" >"$facts_json"
+fi
 
 {
 	printf 'package codexdrift\n\n_observedFacts: '

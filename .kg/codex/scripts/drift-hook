@@ -9,7 +9,7 @@ cat >"$input_json"
 
 event_name=$(jq -r '.hook_event_name // .hookEventName // "unknown"' "$input_json")
 case "$event_name" in
-UserPromptSubmit|Stop|SessionEnd|TurnEnd|AgentTurnEnd|unknown) ;;
+UserPromptSubmit | Stop | SessionEnd | TurnEnd | AgentTurnEnd | unknown) ;;
 *) exit 0 ;;
 esac
 

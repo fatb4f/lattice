@@ -121,6 +121,15 @@ latticeReference: #DriftModel & {
 	})
 
 	rules: close({
+		"pillar-suite-required-path-present": {
+			id:       "pillar-suite-required-path-present"
+			kind:     "missing-required-surface"
+			surface:  "pillar-suite"
+			severity: "violation"
+			response: "block"
+			reason:   "A required pillar suite authority file is missing."
+		}
+
 		"no-pillar-registry": {
 			id:       "no-pillar-registry"
 			kind:     "duplicate-authority"
@@ -130,6 +139,33 @@ latticeReference: #DriftModel & {
 			reason:   "The flat pillar files are authority; catalog-style registries duplicate authority."
 		}
 
+		"meta-kernel-required-path-present": {
+			id:       "meta-kernel-required-path-present"
+			kind:     "missing-required-surface"
+			surface:  "meta-kernel"
+			severity: "violation"
+			response: "block"
+			reason:   "The meta kernel authority file is missing."
+		}
+
+		"validation-controller-required-path-present": {
+			id:       "validation-controller-required-path-present"
+			kind:     "missing-required-surface"
+			surface:  "validation-controller"
+			severity: "violation"
+			response: "block"
+			reason:   "The validation controller script is missing."
+		}
+
+		"codex-drift-kg-required-path-present": {
+			id:       "codex-drift-kg-required-path-present"
+			kind:     "missing-required-surface"
+			surface:  "codex-drift-kg"
+			severity: "violation"
+			response: "block"
+			reason:   "A required Codex drift KG file is missing."
+		}
+
 		"kg-outside-validator": {
 			id:       "kg-outside-validator"
 			kind:     "adapter-boundary-crossed"
@@ -137,6 +173,15 @@ latticeReference: #DriftModel & {
 			severity: "violation"
 			response: "block"
 			reason:   "The KG layer checks Codex drift and must not enter meta or pillar validation."
+		}
+
+		"codex-drift-kg-change-review": {
+			id:       "codex-drift-kg-change-review"
+			kind:     "policy-violated"
+			surface:  "codex-drift-kg"
+			severity: "warning"
+			response: "require-review"
+			reason:   "Codex drift KG changes alter advisory and enforcement behavior."
 		}
 
 		"kernel-change-review": {
