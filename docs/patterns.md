@@ -7,6 +7,8 @@
 
 `patterns/` is the executable pattern suite. One file is one pattern, and each file
 exposes `canonical`, `positive`, and `negative` witnesses under `#Patterns`.
+Catalogue metadata and path admission live in `.kg`, not in the executable
+pattern cases.
 
 `patterns/schema.cue` also records CUE release coverage used by the suite. The
 v0.17.0 entries distinguish stable features to use now from experimental or

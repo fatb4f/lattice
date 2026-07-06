@@ -4,5 +4,5 @@
 the executable pattern registry.
 
 `patterns/` is the executable pattern suite. Each pattern file exposes a named
-entry under `#Patterns`, and `patterns/schema.cue` defines the shared entry
-contract.
+case under `#Patterns`, and `patterns/schema.cue` defines the shared executable
+case contract.

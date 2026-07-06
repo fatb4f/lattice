@@ -1,9 +1,6 @@
 package control
 
-import (
-	patterns "github.com/fatb4f/lattice/patterns"
-	"strings"
-)
+import "strings"
 
 #NonEmptyString: string & strings.MinRunes(1)
 #NonEmptyStringList: [...#NonEmptyString] & [_, ...]
@@ -53,6 +50,20 @@ import (
 	"implemented" |
 	"planned" |
 	"deferred"
+
+#PatternFamily:
+	"adapter" |
+	"bounds" |
+	"constructor" |
+	"default" |
+	"fixture" |
+	"graph" |
+	"keyset" |
+	"projection" |
+	"schema" |
+	"selector" |
+	"state" |
+	"variant"
 
 #ControlSurface: close({
 	id: #KebabIdentifier
@@ -111,7 +122,7 @@ import (
 
 #PatternRef: close({
 	id:     #KebabIdentifier
-	family: patterns.#PatternFamily
+	family: #PatternFamily
 })
 
 #TechniqueEntry: close({
@@ -123,7 +134,10 @@ import (
 	technique:   #NonEmptyString
 	derivesFrom: #NonEmptyStringList
 	control:     #ControlSurface
-	checks?:     patterns.#CheckSet
+	checks?: close({
+		pass?: #NonEmptyStringList
+		fail?: #NonEmptyStringList
+	})
 })
 
 #TechniqueMap: {

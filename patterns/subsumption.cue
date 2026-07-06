@@ -5,18 +5,6 @@ import meta "github.com/fatb4f/lattice/meta"
 #Patterns: {
 	"subsumption": {
 
-		name:    "Subsumption"
-		summary: "Check compatibility between authority and projected resource shapes."
-		demonstrates: ["subsumption", "compatibility", "refinement"]
-		id:          "subsumption"
-		family:      "projection"
-		status:      "implemented"
-		problem:     "Authority and projected shapes need compatibility checks."
-		abstraction: "Authority-target compatibility proof"
-		fixtures: {canonical: canonical, positive: positive, negative: negative}
-		checks: {pass: ["cue eval patterns/subsumption.cue -e #Patterns.subsumption.positive"], fail: ["cue eval patterns/subsumption.cue -e #Patterns.subsumption.negative.incompatibleField"]}
-		promotion: {source: "docs/patterns.md", reason: "Promotes subsumption tests and projection compatibility."}
-
 		#AuthorityResource: {
 			id:   string
 			path: string

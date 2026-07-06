@@ -5,18 +5,6 @@ import meta "github.com/fatb4f/lattice/meta"
 #Patterns: {
 	"negative-fixtures": {
 
-		name:    "Negative Fixtures"
-		summary: "Keep invalid examples exportable while proving failure through a destructive probe."
-		demonstrates: ["negative fixtures", "bottom", "probe separation"]
-		id:          "negative-fixtures"
-		family:      "fixture"
-		status:      "implemented"
-		problem:     "Invalid examples need to remain exportable while still proving bottom."
-		abstraction: "Exportable negative fixture plus destructive probe"
-		fixtures: {canonical: canonical, positive: positive, negative: negative}
-		checks: {pass: ["cue eval patterns/negative-fixtures.cue -e #Patterns.negative-fixtures.positive"], fail: ["cue eval patterns/negative-fixtures.cue -e #Patterns.negative-fixtures.negative.proof"]}
-		promotion: {source: "docs/patterns.md", reason: "Promotes validator fixture pairs and expected-bottom probes."}
-
 		_authority: {
 			id: "negative-fixtures"
 			resources: {

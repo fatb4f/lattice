@@ -9,18 +9,6 @@ import (
 #Patterns: {
 	"lists": {
 
-		name:    "Lists"
-		summary: "Extract and compare stable key lists from maps."
-		demonstrates: ["lists", "standard library sorting", "key sets"]
-		id:          "lists"
-		family:      "keyset"
-		status:      "implemented"
-		problem:     "Map-derived sets need stable ordering for comparison."
-		abstraction: "Sorted keyset extraction"
-		fixtures: {canonical: canonical, positive: positive, negative: negative}
-		checks: {pass: ["cue eval patterns/lists.cue -e #Patterns.lists.positive"], fail: ["cue eval patterns/lists.cue -e #Patterns.lists.negative.badTuple"]}
-		promotion: {source: "docs/patterns.md", reason: "Promotes sorting and stable projection checks."}
-
 		#NonEmptyKeyList: [...string] & [_, ...]
 		#AuthorityKeyTuple: ["authority-file", "generated-file"]
 

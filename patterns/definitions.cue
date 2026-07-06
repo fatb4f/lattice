@@ -5,18 +5,6 @@ import meta "github.com/fatb4f/lattice/meta"
 #Patterns: {
 	"definitions": {
 
-		name:    "Definitions"
-		summary: "Define reusable schema terms for resource-like records."
-		demonstrates: ["definitions", "closed structs", "enums"]
-		id:          "definitions"
-		family:      "schema"
-		status:      "implemented"
-		problem:     "Repeated record shapes need named reusable schema definitions."
-		abstraction: "Named closed resource definition"
-		fixtures: {canonical: canonical, positive: positive, negative: negative}
-		checks: {pass: ["cue eval patterns/definitions.cue -e #Patterns.definitions.positive"], fail: ["cue eval patterns/definitions.cue -e #Patterns.definitions.negative.invalidRole"]}
-		promotion: {source: "docs/patterns.md", reason: "Promotes reusable CUE data-structure definitions."}
-
 		#KernelResourceRef: close({
 			id:         =~"^[a-z0-9]+(-[a-z0-9]+)*$"
 			path:       string

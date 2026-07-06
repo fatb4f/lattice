@@ -28,44 +28,17 @@ EOF
 	rm -f "$probe"
 }
 
-pattern_files=(
-	patterns/schema.cue
-	patterns/unification.cue
-	patterns/definitions.cue
-	patterns/defaults.cue
-	patterns/disjunctions.cue
-	patterns/comprehensions.cue
-	patterns/closedness.cue
-	patterns/subsumption.cue
-	patterns/negative-fixtures.cue
-	patterns/projections.cue
-	patterns/constructors.cue
-	patterns/top-and-bottom.cue
-	patterns/bounds.cue
-	patterns/hidden-and-let.cue
-	patterns/cycles.cue
-	patterns/lists.cue
-	patterns/attributes.cue
+kg_files=(
+	.kg/codex/model.cue
+	.kg/codex/reference.cue
+	.kg/codex/checks.cue
+	.kg/codex/kg.cue
+	.kg/codex/policy.cue
 )
 
-pattern_entry_files=(
-	patterns/unification.cue
-	patterns/definitions.cue
-	patterns/defaults.cue
-	patterns/disjunctions.cue
-	patterns/comprehensions.cue
-	patterns/closedness.cue
-	patterns/subsumption.cue
-	patterns/negative-fixtures.cue
-	patterns/projections.cue
-	patterns/constructors.cue
-	patterns/top-and-bottom.cue
-	patterns/bounds.cue
-	patterns/hidden-and-let.cue
-	patterns/cycles.cue
-	patterns/lists.cue
-	patterns/attributes.cue
-)
+kg_pattern_paths() {
+	cue export "${kg_files[@]}" -e 'latticeReference.surfaces["pattern-suite"].requiredPaths' --out json | jq -r '.[]'
+}
 
 validate_meta() {
 	cue vet ./meta
@@ -213,33 +186,25 @@ validate_meta() {
 
 validate_patterns() {
 	local expected
-	expected="$(printf '%s\n' "${pattern_files[@]}" | sort)"
+	expected="$(kg_pattern_paths | sort)"
 	local actual
-	actual="$(find patterns -maxdepth 1 -type f -name '*.cue' | sort)"
+	actual="$(find patterns -type f -name '*.cue' | sort)"
 	if [[ "$actual" != "$expected" ]]; then
 		printf 'unexpected patterns/ surface\nexpected:\n%s\nactual:\n%s\n' "$expected" "$actual"
 		return 1
 	fi
 
 	local pattern_file
-	for pattern_file in "${pattern_entry_files[@]}"; do
+	while IFS= read -r pattern_file; do
+		[[ "$pattern_file" == "patterns/schema.cue" ]] && continue
+
 		local pattern_id
 		pattern_id="$(basename "$pattern_file" .cue)"
-		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].name" --out cue >/dev/null
-		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].id" --out cue >/dev/null
-		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].family" --out cue >/dev/null
-		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].status" --out cue >/dev/null
-		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].summary" --out cue >/dev/null
-		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].problem" --out cue >/dev/null
-		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].demonstrates" --out cue >/dev/null
-		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].abstraction" --out cue >/dev/null
-		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].fixtures" --out cue >/dev/null
 		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].checks" --out cue >/dev/null
-		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].promotion" --out cue >/dev/null
 		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].canonical" --out cue >/dev/null
 		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].positive" --out cue >/dev/null
 		cue eval patterns/schema.cue "$pattern_file" -e "#Patterns[\"$pattern_id\"].negative" --out cue >/dev/null
-	done
+	done < <(kg_pattern_paths)
 
 	cue vet ./patterns
 	cue export ./patterns -e 'cueVersionCoverage["v0.17.0"]' --out cue >/dev/null
@@ -290,7 +255,14 @@ validate_profiles() {
 	cue export ./profiles/control -e '#Techniques["fixture-error-signal-loop"].checks' --out cue >/dev/null
 }
 
+validate_kg() {
+	cue vet "${kg_files[@]}"
+	cue export "${kg_files[@]}" -e 'latticeReference.patternClassifications' --out cue >/dev/null
+	cue export "${kg_files[@]}" -e 'latticeReference.surfaces["pattern-suite"].requiredPaths' --out json >/dev/null
+}
+
 validate_meta
+validate_kg
 validate_patterns
 validate_sources
 validate_projections

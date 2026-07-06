@@ -66,6 +66,41 @@ package codexdrift
 	protectedPaths: [...#Path] | *[]
 })
 
+#PatternFamily:
+	"adapter" |
+	"bounds" |
+	"constructor" |
+	"default" |
+	"fixture" |
+	"graph" |
+	"keyset" |
+	"projection" |
+	"schema" |
+	"selector" |
+	"state" |
+	"variant"
+
+#PatternStatus:
+	"implemented" |
+	"partial" |
+	"planned" |
+	"watch"
+
+#PatternClassification: close({
+	id:      #KebabID
+	family:  #PatternFamily
+	status:  #PatternStatus
+	surface: #KebabID
+	path:    #Path
+	summary: #NonEmptyString
+	demonstrates: [...#NonEmptyString] & [_, ...]
+	sourceRefs?: [...#NonEmptyString]
+	promotion?: close({
+		source: #NonEmptyString
+		reason: #NonEmptyString
+	})
+})
+
 #DriftRule: close({
 	id:       #KebabID
 	kind:     #DriftKind
@@ -86,5 +121,9 @@ package codexdrift
 
 	rules: {
 		[#KebabID]: #DriftRule
+	}
+
+	patternClassifications?: {
+		[#KebabID]: #PatternClassification
 	}
 })

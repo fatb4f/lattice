@@ -164,6 +164,169 @@ latticeReference: #DriftModel & {
 		}
 	})
 
+	patternClassifications: close({
+		unification: {
+			id:      "unification"
+			family:  "schema"
+			status:  "implemented"
+			surface: "pattern-suite"
+			path:    "patterns/unification.cue"
+			summary: "Combine schemas and data to derive a more specific value."
+			demonstrates: ["unification", "constraints", "closed structs"]
+			promotion: {source: "docs/patterns.md", reason: "Promotes unification as the base CUE composition pattern."}
+		}
+		definitions: {
+			id:      "definitions"
+			family:  "schema"
+			status:  "implemented"
+			surface: "pattern-suite"
+			path:    "patterns/definitions.cue"
+			summary: "Define reusable schema terms for resource-like records."
+			demonstrates: ["definitions", "closed structs", "enums"]
+			promotion: {source: "docs/patterns.md", reason: "Promotes reusable CUE data-structure definitions."}
+		}
+		defaults: {
+			id:      "defaults"
+			family:  "default"
+			status:  "implemented"
+			surface: "pattern-suite"
+			path:    "patterns/defaults.cue"
+			summary: "Provide default values while still allowing explicit refinement."
+			demonstrates: ["defaults", "disjunctions", "refinement"]
+			promotion: {source: "docs/patterns.md", reason: "Promotes defaults and overrides as reusable CUE pattern material."}
+		}
+		disjunctions: {
+			id:      "disjunctions"
+			family:  "variant"
+			status:  "implemented"
+			surface: "pattern-suite"
+			path:    "patterns/disjunctions.cue"
+			summary: "Represent mutually exclusive operation variants as closed disjunctions."
+			demonstrates: ["disjunctions", "tagged variants", "closed structs"]
+			promotion: {source: "docs/patterns.md", reason: "Promotes strategy-like variant selection as closed disjunctions."}
+		}
+		comprehensions: {
+			id:      "comprehensions"
+			family:  "constructor"
+			status:  "implemented"
+			surface: "pattern-suite"
+			path:    "patterns/comprehensions.cue"
+			summary: "Derive normalized maps from input registries by iterating over keys and values."
+			demonstrates: ["comprehensions", "derived fields", "keyed maps"]
+			promotion: {source: "docs/patterns.md", reason: "Promotes registry transforms and derived key maps."}
+		}
+		closedness: {
+			id:      "closedness"
+			family:  "schema"
+			status:  "implemented"
+			surface: "pattern-suite"
+			path:    "patterns/closedness.cue"
+			summary: "Close public shapes so unexpected fields become validation failures."
+			demonstrates: ["closed structs", "field rejection", "schema boundaries"]
+			promotion: {source: "docs/patterns.md", reason: "Promotes schema boundary enforcement from CUE-native pattern framing."}
+		}
+		subsumption: {
+			id:      "subsumption"
+			family:  "projection"
+			status:  "implemented"
+			surface: "pattern-suite"
+			path:    "patterns/subsumption.cue"
+			summary: "Check compatibility between authority and projected resource shapes."
+			demonstrates: ["subsumption", "compatibility", "refinement"]
+			promotion: {source: "docs/patterns.md", reason: "Promotes subsumption tests and projection compatibility."}
+		}
+		"negative-fixtures": {
+			id:      "negative-fixtures"
+			family:  "fixture"
+			status:  "implemented"
+			surface: "pattern-suite"
+			path:    "patterns/negative-fixtures.cue"
+			summary: "Keep invalid examples exportable while proving failure through a destructive probe."
+			demonstrates: ["negative fixtures", "bottom", "probe separation"]
+			promotion: {source: "docs/patterns.md", reason: "Promotes validator fixture pairs and expected-bottom probes."}
+		}
+		projections: {
+			id:      "projections"
+			family:  "projection"
+			status:  "implemented"
+			surface: "pattern-suite"
+			path:    "patterns/projections.cue"
+			summary: "Project a public view from closed authority while preserving no-widening checks."
+			demonstrates: ["projections", "filters", "no widening"]
+			promotion: {source: "docs/patterns.md", reason: "Promotes adapter/projection boundaries and no-widening checks."}
+		}
+		constructors: {
+			id:      "constructors"
+			family:  "constructor"
+			status:  "implemented"
+			surface: "pattern-suite"
+			path:    "patterns/constructors.cue"
+			summary: "Model reusable builders with explicit input and normalized output fields."
+			demonstrates: ["definitions", "unification", "normalization"]
+			promotion: {source: "docs/patterns.md", reason: "Promotes constructor and builder shape from CUE-native pattern mapping."}
+		}
+		"top-and-bottom": {
+			id:      "top-and-bottom"
+			family:  "fixture"
+			status:  "implemented"
+			surface: "pattern-suite"
+			path:    "patterns/top-and-bottom.cue"
+			summary: "Use top for open inputs and bottom-producing conflicts for proof failures."
+			demonstrates: ["top", "bottom", "conflicts"]
+			promotion: {source: "docs/patterns.md", reason: "Promotes bottom as proof/failure mechanism."}
+		}
+		bounds: {
+			id:      "bounds"
+			family:  "bounds"
+			status:  "implemented"
+			surface: "pattern-suite"
+			path:    "patterns/bounds.cue"
+			summary: "Constrain identifiers and text with regex and standard-library string bounds."
+			demonstrates: ["bounds", "regular expressions", "standard library constraints"]
+			promotion: {source: "docs/patterns.md", reason: "Promotes data-structure and ordering constraints into reusable schema bounds."}
+		}
+		"hidden-and-let": {
+			id:      "hidden-and-let"
+			family:  "graph"
+			status:  "implemented"
+			surface: "pattern-suite"
+			path:    "patterns/hidden-and-let.cue"
+			summary: "Use hidden values and local bindings for internal proof computations."
+			demonstrates: ["hidden fields", "let bindings", "derived proofs"]
+			promotion: {source: "docs/patterns.md", reason: "Promotes graph-state proof internals and derived validation fields."}
+		}
+		cycles: {
+			id:      "cycles"
+			family:  "graph"
+			status:  "partial"
+			surface: "pattern-suite"
+			path:    "patterns/cycles.cue"
+			summary: "Use references for valid graph relationships and isolate invalid cyclic expressions as probes."
+			demonstrates: ["references", "cycles", "bottom"]
+			promotion: {source: "docs/patterns.md", reason: "Promotes graph algorithms and cycle rejection into executable CUE probes."}
+		}
+		lists: {
+			id:      "lists"
+			family:  "keyset"
+			status:  "implemented"
+			surface: "pattern-suite"
+			path:    "patterns/lists.cue"
+			summary: "Extract and compare stable key lists from maps."
+			demonstrates: ["lists", "standard library sorting", "key sets"]
+			promotion: {source: "docs/patterns.md", reason: "Promotes sorting and stable projection checks."}
+		}
+		attributes: {
+			id:      "attributes"
+			family:  "selector"
+			status:  "partial"
+			surface: "pattern-suite"
+			path:    "patterns/attributes.cue"
+			summary: "Attach command-line tags to fields that tooling can select or populate."
+			demonstrates: ["attributes", "field tags", "tool parameters"]
+			promotion: {source: "docs/patterns.md", reason: "Promotes selector and command-surface tagging from pattern framing."}
+		}
+	})
+
 	rules: close({
 		"pattern-suite-required-path-present": {
 			id:       "pattern-suite-required-path-present"
