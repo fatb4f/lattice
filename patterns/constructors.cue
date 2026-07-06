@@ -1,84 +1,42 @@
 package patterns
 
-cueIdiomCatalog: #CueIdiomCatalog & {
-	idioms: {
-		"closed-state-constructor": {
-			family: "constructor"
-			title:  "Use constructor definitions to close and normalize partial input"
-			problem: "Input fixtures are convenient when partial, but validation needs stable IDs, defaults, and derived proof fields."
-			rule:   "Expose a #Make-style constructor with an input shape and a fully constrained output shape."
+import domain "github.com/fatb4f/lattice/domain"
 
-			sourceRefs: [
-				"lattice-domain-kernel",
-				"cue-definitions",
-			]
-
-			cueSurface: {
-				constructs: [
-					"definitions",
-					"let bindings",
-					"field comprehensions",
-					"unification",
-				]
-				exampleExpr: "#MakeClosedObligationState.out"
-			}
-
-			validation: [
-				{
-					id:   "closed-state-exports"
-					mode: "export-passes"
-					expr: "_closedState"
-				},
-			]
-		}
-	}
-}
-
-#ConstructorExample: {
+#MakeService: {
 	in: {
-		id: #KebabIdentifier
-		role?: "authority" | "projection"
+		name: string
+		port: int | *80
 	}
 	out: close({
-		id:   in.id
-		role: "authority" | "projection" | *"authority"
-		if in.role != _|_ {
-			role: in.role
-		}
+		name: in.name
+		port: in.port
 	})
 }
 
-constructorExampleOutput: (#ConstructorExample & {
-	in: id: "constructed-authority"
-}).out
+canonical: {
+	id: "constructors"
+	service: (#MakeService & {in: {
+		name: "api"
+	}}).out
+}
 
-cuePillarSpecs: {
-	pillars: {
-		constructors: {
-			title:  "Constructors"
-			class:  "contract"
-			status: "validated"
-			mechanics: [
-				"Constructors separate partial input from normalized output.",
-				"Output values apply defaults and derived fields.",
-				"Closed output prevents callers from widening the constructed target.",
-			]
-			idioms: {
-				"in-out-normalizer": {
-					title: "Normalize partial input into a closed output"
-					problem: "Partial fixtures are useful inputs but unstable as authority."
-					rule: "Expose an in/out constructor and validate only the constructed output."
-					constructs: ["in/out shape", "defaults", "close"]
-					canonical: {
-						expr:  "constructorExampleOutput"
-						value: constructorExampleOutput
-					}
-					positive: {
-						expr:  "constructorExampleOutput"
-						value: constructorExampleOutput
-					}
-				}
-			}
-		}
+positive: {
+	service: canonical.service & {
+		name: "api"
+		port: 80
 	}
+	validation: (domain.#MakeClosedObligationState & {in: {
+		id: "constructors"
+		resources: {}
+		operations: {}
+		gates: {}
+		witnesses: {}
+	}}).out
+}
+
+negative: {
+	badPort: (#MakeService & {in: {
+		name: "api"
+		port: "80"
+	}}).out
 }

@@ -1,15 +1,7 @@
 # CUE Idioms
 
-The idiom catalog is the canonical lattice surface for reusable CUE patterns.
+`patterns/` is the executable idiom suite: one pillar file with `canonical`,
+`positive`, and `negative` witnesses.
 
-The source registry lives in `idioms/` and records local kernel references,
-official CUE documentation, example corpora, tutorials, and projection
-substrates. Pattern entries in `patterns/` reference those source IDs directly,
-so typos bottom during CUE validation.
-
-Export the catalog with:
-
-```sh
-cue export ./exports -e cueIdiomCatalog
-```
-
+`idioms/` records source references only. It is not a registry for the pattern
+suite.

@@ -1,45 +1,29 @@
 package patterns
 
-#NonEmptyCommandList: [...("vet" | "export" | "eval")] & [_, ...]
+import domain "github.com/fatb4f/lattice/domain"
+
+#CommandList: [...("vet" | "export" | "eval")] & [_, ...]
 #CommandTuple: ["vet", "export", string]
 
-listCanonical: close({
-	open:     [...string]
-	nonEmpty: #NonEmptyCommandList
+canonical: {
+	id:       "lists"
+	commands: #CommandList
 	tuple:    #CommandTuple
-}) & {
-	open:     ["vet", "export", "eval", "fmt"]
-	nonEmpty: ["vet"]
-	tuple:    ["vet", "export", "cueIdiomCatalog"]
 }
 
-cuePillarSpecs: {
-	pillars: {
-		lists: {
-			title:  "Lists"
-			class:  "language"
-			status: "validated"
-			mechanics: [
-				"Open lists admit additional elements through ellipsis.",
-				"Tuples constrain position and length.",
-				"Non-empty lists can be expressed with a lower-bound tuple.",
-			]
-			idioms: {
-				"non-empty-and-tuple-list": {
-					title: "Choose open lists, non-empty lists, or tuples deliberately"
-					problem: "List shape is often underspecified, allowing empty evidence or malformed positional data."
-					rule: "Use ellipsis for open lists, [_, ...] for non-empty lists, and tuples for positional contracts."
-					constructs: ["ellipsis", "tuple", "[_, ...]"]
-					canonical: {
-						expr:  "listCanonical"
-						value: listCanonical
-					}
-					expectedBottom: {
-						probeExpr: "#NonEmptyCommandList & []"
-						reason:    "The list must contain at least one command."
-					}
-				}
-			}
-		}
-	}
+positive: {
+	commands: #CommandList & ["vet", "export"]
+	tuple: #CommandTuple & ["vet", "export", "canonical"]
+	validation: (domain.#MakeClosedObligationState & {in: {
+		id: "lists"
+		resources: {}
+		operations: {}
+		gates: {}
+		witnesses: {}
+	}}).out
+}
+
+negative: {
+	emptyCommands: #CommandList & []
+	badTuple: #CommandTuple & ["vet", "eval", "canonical"]
 }

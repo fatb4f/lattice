@@ -3,23 +3,27 @@ package codeintelprofilefixtures
 import profiles "github.com/fatb4f/lattice/profiles"
 
 validProfileSnapshot: profiles.#CodeIntelProfileExpectation & {
-	requiredIdiomFamilies: [
+	requiredPillars: [
 		"unification",
-		"definition",
-		"default",
-		"disjunction",
-		"comprehension",
+		"definitions",
+		"defaults",
+		"disjunctions",
+		"comprehensions",
 		"closedness",
 		"subsumption",
-		"negative-fixture",
-		"projection",
-		"constructor",
-		"tool-command",
-		"adapter-boundary",
+		"negative-fixtures",
+		"projections",
+		"constructors",
+		"top-and-bottom",
+		"bounds",
+		"hidden-and-let",
+		"cycles",
+		"lists",
+		"attributes",
 	]
 
 	operatorRules: [
-		"Use lattice idioms before inventing local CUE patterns.",
+		"Use lattice pillar files before inventing local CUE patterns.",
 		"Use cue-lsp diagnostics as evidence, not authority.",
 		"Prefer exportable witness surfaces and isolated destructive probes.",
 		"Keep generated plugin references evidence-only.",

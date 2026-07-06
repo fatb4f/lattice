@@ -2,8 +2,8 @@ package codeintelprofilefixtures
 
 invalidMissingIdiomCoverage: {
 	id:          "invalid-missing-idiom-coverage"
-	description: "A projected profile must cover every expected code-intel idiom family"
-	reason:      "requiredIdiomFamilies omits adapter-boundary"
+	description: "A projected profile must cover every expected code-intel pillar"
+	reason:      "requiredPillars omits attributes"
 
 	snapshot: {
 		schema: "factory.plugin-bundle.code-intel.cue-profile.v1"
@@ -11,21 +11,25 @@ invalidMissingIdiomCoverage: {
 		idiomAuthority: {
 			repo:   "fatb4f/lattice"
 			module: "github.com/fatb4f/lattice"
-			export: "cueIdiomCatalog"
+			export: "patterns/*.cue"
 		}
 		providers: validProfileSnapshot.providers
-		requiredIdiomFamilies: [
+		requiredPillars: [
 			"unification",
-			"definition",
-			"default",
-			"disjunction",
-			"comprehension",
+			"definitions",
+			"defaults",
+			"disjunctions",
+			"comprehensions",
 			"closedness",
 			"subsumption",
-			"negative-fixture",
-			"projection",
-			"constructor",
-			"tool-command",
+			"negative-fixtures",
+			"projections",
+			"constructors",
+			"top-and-bottom",
+			"bounds",
+			"hidden-and-let",
+			"cycles",
+			"lists",
 		]
 		operatorRules: validProfileSnapshot.operatorRules
 	}

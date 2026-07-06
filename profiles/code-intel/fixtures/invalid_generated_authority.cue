@@ -11,7 +11,7 @@ invalidGeneratedAuthority: {
 		idiomAuthority: {
 			repo:   "fatb4f/lattice"
 			module: "github.com/fatb4f/lattice"
-			export: "cueIdiomCatalog"
+			export: "patterns/*.cue"
 		}
 		providers: cueLsp: {
 			id:           "cue-lsp"
@@ -20,7 +20,7 @@ invalidGeneratedAuthority: {
 			diagnostics:  true
 			format:       true
 		}
-		requiredIdiomFamilies: validProfileSnapshot.requiredIdiomFamilies
-		operatorRules:         validProfileSnapshot.operatorRules
+		requiredPillars: validProfileSnapshot.requiredPillars
+		operatorRules:   validProfileSnapshot.operatorRules
 	}
 }

@@ -1,19 +1,33 @@
 package profiles
 
-import (
-	"strings"
+import "strings"
 
-	patterns "github.com/fatb4f/lattice/patterns"
-)
-
-#NonEmptyString: string & strings.MinRunes(1)
+#NonEmptyString:  string & strings.MinRunes(1)
 #KebabIdentifier: #NonEmptyString & =~"^[a-z0-9]+(-[a-z0-9]+)*$"
 
 #LatticeIdiomAuthority: close({
 	repo:   "fatb4f/lattice"
 	module: "github.com/fatb4f/lattice"
-	export: "cueIdiomCatalog"
+	export: "patterns/*.cue"
 })
+
+#PillarID:
+	"unification" |
+	"definitions" |
+	"defaults" |
+	"disjunctions" |
+	"comprehensions" |
+	"closedness" |
+	"subsumption" |
+	"negative-fixtures" |
+	"projections" |
+	"constructors" |
+	"top-and-bottom" |
+	"bounds" |
+	"hidden-and-let" |
+	"cycles" |
+	"lists" |
+	"attributes"
 
 #EvidenceProvider: close({
 	id:           #KebabIdentifier
@@ -38,7 +52,6 @@ import (
 	idiomAuthority: #LatticeIdiomAuthority
 	providers:      #CodeIntelProviders
 
-	requiredIdiomFamilies: [...patterns.#CueIdiomFamily] & [_, ...]
+	requiredPillars: [...#PillarID] & [_, ...]
 	operatorRules: [...#NonEmptyString] & [_, ...]
 })
-

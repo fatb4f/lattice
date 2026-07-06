@@ -2,22 +2,17 @@ package patterns
 
 import domain "github.com/fatb4f/lattice/domain"
 
-#LogLevel: "debug" | "info" | "warn" | *"info"
-
 canonical: {
-	id:       "defaults"
-	logLevel: #LogLevel
+	id:  "top-and-bottom"
+	top: _
 }
 
 positive: {
-	explicit: {
-		logLevel: #LogLevel & "debug"
-	}
-	implicit: {
-		logLevel: #LogLevel
+	refinedTop: canonical.top & {
+		port: 8080
 	}
 	validation: (domain.#MakeClosedObligationState & {in: {
-		id: "defaults"
+		id: "top-and-bottom"
 		resources: {}
 		operations: {}
 		gates: {}
@@ -26,5 +21,5 @@ positive: {
 }
 
 negative: {
-	invalidLogLevel: #LogLevel & "trace"
+	conflict: string & int
 }

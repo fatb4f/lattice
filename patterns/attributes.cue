@@ -1,38 +1,34 @@
 package patterns
 
-#AttributedCommand: {
+import domain "github.com/fatb4f/lattice/domain"
+
+#TaggedCommand: {
 	kind:   "vet" | "export" @tag(kind)
-	target: string @tag(target)
+	target: string           @tag(target)
 }
 
-attributedCommand: #AttributedCommand & {
-	kind:   "vet"
-	target: "./patterns"
+canonical: {
+	id:      "attributes"
+	command: #TaggedCommand
 }
 
-cuePillarSpecs: {
-	pillars: {
-		attributes: {
-			title:  "Attributes"
-			class:  "adapter"
-			status: "validated"
-			mechanics: [
-				"Attributes attach metadata to fields.",
-				"Adapter hints can stay beside the CUE contract.",
-				"Attributes should annotate authority rather than replace it.",
-			]
-			idioms: {
-				"tagged-adapter-fields": {
-					title: "Attach adapter metadata to constrained fields"
-					problem: "External tool metadata can drift when tracked separately from the field contract."
-					rule: "Use attributes as metadata on fields that still have normal CUE constraints."
-					constructs: ["attributes", "@tag", "field constraints"]
-					canonical: {
-						expr:  "attributedCommand"
-						value: attributedCommand
-					}
-				}
-			}
-		}
+positive: {
+	command: #TaggedCommand & {
+		kind:   "vet"
+		target: "./patterns/attributes.cue"
+	}
+	validation: (domain.#MakeClosedObligationState & {in: {
+		id: "attributes"
+		resources: {}
+		operations: {}
+		gates: {}
+		witnesses: {}
+	}}).out
+}
+
+negative: {
+	invalidKind: #TaggedCommand & {
+		kind:   "fmt"
+		target: "./patterns"
 	}
 }
