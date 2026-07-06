@@ -26,7 +26,9 @@ sources/
 ## Promotion Contract
 
 Every accepted pattern should satisfy this catalogue shape before it is treated
-as implemented:
+as implemented. The `control` field is optional in the base schema while the
+catalogue is being migrated, but it is the promotion target for any pattern that
+claims to be implemented:
 
 ```cue
 #PatternEntry: close({
@@ -51,8 +53,66 @@ as implemented:
 		target: "meta-kernel" | "patterns" | "profile" | "adapter" | "deferred"
 		reason: #NonEmptyString
 	})
+
+	control?: #ControlSurface
 })
 ```
+
+Minimum closed-loop overlay:
+
+```cue
+#ControlSurface: close({
+	id: #KebabIdentifier
+
+	plant: close({
+		kind:        #NonEmptyString
+		stateRef:    #NonEmptyString
+		boundaryRef: #NonEmptyString
+	})
+
+	setpoint: close({
+		contractRef: #NonEmptyString
+		invariants:  [...#NonEmptyString]
+	})
+
+	sensors: [string]: close({
+		kind:     "selector" | "projection" | "fixture" | "evidence" | "command-output"
+		target:   #NonEmptyString
+		coverage: "full" | "partial" | "sentinel"
+	})
+
+	controller: close({
+		kind:       "constructor" | "validator" | "transition" | "gate" | "adapter"
+		policyRef:  #NonEmptyString
+		errorModes: [...#NonEmptyString]
+	})
+
+	actuators?: [string]: close({
+		kind:   "command" | "adapter" | "codegen" | "mutation" | "publication"
+		target: #NonEmptyString
+		effect: "read" | "write" | "create" | "delete" | "publish"
+	})
+
+	feedback: close({
+		errorSignal: #NonEmptyString
+		proofRef:    #NonEmptyString
+		stability:   "idempotent" | "monotone" | "convergent" | "bounded" | "unchecked"
+	})
+})
+```
+
+Every promoted pattern should be explainable as:
+
+```text
+authority state
+  -> projection / adapter / transition
+  -> observed output
+  -> proof / fixture / evidence
+  -> admissibility decision
+```
+
+That makes each pattern a closed-loop feedback system without forcing every
+existing entry to carry a full populated overlay during the migration.
 
 Canonical families:
 
