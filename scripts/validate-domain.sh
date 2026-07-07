@@ -36,6 +36,16 @@ kg_files=(
 	.kg/codex/policy.cue
 )
 
+kg_role_dirs=(
+	.kg/codex/core
+	.kg/codex/vocab
+	.kg/codex/ext
+	.kg/codex/aggregate
+	.kg/codex/mcp
+	.kg/codex/tests/valid
+	.kg/codex/tests/invalid
+)
+
 kg_pattern_paths() {
 	cue export "${kg_files[@]}" -e 'latticeReference.surfaces["pattern-suite"].requiredPaths' --out json | jq -r '.[]'
 }
@@ -257,8 +267,14 @@ validate_profiles() {
 
 validate_kg() {
 	cue vet "${kg_files[@]}"
+	local kg_dir
+	for kg_dir in "${kg_role_dirs[@]}"; do
+		cue vet -c "$kg_dir"/*.cue
+	done
 	cue export "${kg_files[@]}" -e 'latticeReference.patternClassifications' --out cue >/dev/null
 	cue export "${kg_files[@]}" -e 'latticeReference.surfaces["pattern-suite"].requiredPaths' --out json >/dev/null
+	cue export .kg/codex/aggregate/*.cue -e promotionStatus --out json >/dev/null
+	cue export .kg/codex/mcp/*.cue -e mcpPolicy --out json >/dev/null
 }
 
 validate_meta

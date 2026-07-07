@@ -14,7 +14,7 @@ UserPromptSubmit | Stop | SessionEnd | TurnEnd | AgentTurnEnd | unknown) ;;
 esac
 
 repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-"$repo_root/.kg/codex/scripts/drift-check" --format json --mode full >"$findings_json"
+"$repo_root/.kg/codex/tools/drift-check" --format json --mode full >"$findings_json"
 
 max_response=$(
 	jq -r '

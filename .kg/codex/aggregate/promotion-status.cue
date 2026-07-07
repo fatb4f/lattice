@@ -1,0 +1,3 @@
+package codexdrift
+
+codexPromotionStatus: promotionStatus

@@ -121,28 +121,64 @@ latticeReference: #DriftModel & {
 		"codex-drift-kg": {
 			id:          "codex-drift-kg"
 			kind:        "policy"
-			description: "Codex drift policy outside the pattern validation path."
+			description: "Codex KG package outside the pattern validation path."
 
 			requiredPaths: [
+				".kg/codex/README.md",
 				".kg/codex/model.cue",
 				".kg/codex/reference.cue",
 				".kg/codex/checks.cue",
 				".kg/codex/kg.cue",
 				".kg/codex/policy.cue",
-				".kg/codex/scripts/drift-facts",
-				".kg/codex/scripts/drift-check",
-				".kg/codex/scripts/drift-hook",
+				".kg/codex/core/control-surface.cue",
+				".kg/codex/core/drift-rule.cue",
+				".kg/codex/core/finding.cue",
+				".kg/codex/core/phase.cue",
+				".kg/codex/core/promotion.cue",
+				".kg/codex/core/watchdog.cue",
+				".kg/codex/vocab/context.cue",
+				".kg/codex/vocab/ids.cue",
+				".kg/codex/vocab/phases.cue",
+				".kg/codex/vocab/responses.cue",
+				".kg/codex/vocab/severity.cue",
+				".kg/codex/vocab/surfaces.cue",
+				".kg/codex/ext/codex-hook.cue",
+				".kg/codex/ext/graph-state.cue",
+				".kg/codex/ext/meta-promotion.cue",
+				".kg/codex/ext/patch-observation.cue",
+				".kg/codex/ext/repo-observation.cue",
+				".kg/codex/aggregate/drift.cue",
+				".kg/codex/aggregate/index.cue",
+				".kg/codex/aggregate/jsonld.cue",
+				".kg/codex/aggregate/lint.cue",
+				".kg/codex/aggregate/phase-watchdog.cue",
+				".kg/codex/aggregate/promotion-status.cue",
+				".kg/codex/mcp/policy.cue",
+				".kg/codex/mcp/prompts.cue",
+				".kg/codex/mcp/resources.cue",
+				".kg/codex/mcp/server.cue",
+				".kg/codex/mcp/tools.cue",
+				".kg/codex/tools/drift-facts",
+				".kg/codex/tools/drift-check",
+				".kg/codex/tools/drift-hook",
 			]
 
 			protectedPaths: [
+				".kg/codex/README.md",
 				".kg/codex/model.cue",
 				".kg/codex/reference.cue",
 				".kg/codex/checks.cue",
 				".kg/codex/kg.cue",
 				".kg/codex/policy.cue",
-				".kg/codex/scripts/drift-facts",
-				".kg/codex/scripts/drift-check",
-				".kg/codex/scripts/drift-hook",
+				".kg/codex/core",
+				".kg/codex/vocab",
+				".kg/codex/ext",
+				".kg/codex/aggregate",
+				".kg/codex/mcp",
+				".kg/codex/tests",
+				".kg/codex/tools/drift-facts",
+				".kg/codex/tools/drift-check",
+				".kg/codex/tools/drift-hook",
 			]
 
 			forbiddenPaths: [

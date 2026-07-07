@@ -53,7 +53,7 @@ trap 'rm -f "$facts_json" "$facts_cue"' EXIT HUP INT TERM
 if [ -n "$facts" ]; then
 	cp "$facts" "$facts_json"
 else
-	"$repo_root/.kg/codex/scripts/drift-facts" >"$facts_json"
+	"$repo_root/.kg/codex/tools/drift-facts" >"$facts_json"
 fi
 
 {
