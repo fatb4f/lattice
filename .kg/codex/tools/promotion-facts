@@ -1,0 +1,115 @@
+#!/usr/bin/env sh
+set -eu
+
+repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+
+bindings_json=$(mktemp "${TMPDIR:-/tmp}/codex-promotion-bindings.XXXXXX.json")
+phases_jsonl=$(mktemp "${TMPDIR:-/tmp}/codex-promotion-phases.XXXXXX.jsonl")
+selector_err=$(mktemp "${TMPDIR:-/tmp}/codex-promotion-selector.XXXXXX.err")
+trap 'rm -f "$bindings_json" "$phases_jsonl" "$selector_err"' EXIT HUP INT TERM
+
+cue_files=
+for cue_dir in \
+	"$repo_root/.kg/codex" \
+	"$repo_root/.kg/codex/core" \
+	"$repo_root/.kg/codex/vocab" \
+	"$repo_root/.kg/codex/ext" \
+	"$repo_root/.kg/codex/aggregate"; do
+	for cue_file in "$cue_dir"/*.cue; do
+		[ -e "$cue_file" ] || continue
+		cue_files="$cue_files $cue_file"
+	done
+done
+
+cue export $cue_files -e metaPromotionBindings --out json >"$bindings_json"
+
+target_args="$repo_root/meta"
+if [ -d "$repo_root/projections/graph-state" ]; then
+	target_args="$target_args $repo_root/projections/graph-state"
+fi
+
+positive_check() {
+	selector=$1
+	: >"$selector_err"
+	if cue export $target_args -e "$selector" --out json >/dev/null 2>"$selector_err"; then
+		jq -n --arg selector "$selector" '{selector: $selector, ok: true}'
+	else
+		jq -n --arg selector "$selector" --rawfile error "$selector_err" \
+			'{selector: $selector, ok: false, error: $error}'
+	fi
+}
+
+target_loads() {
+	: >"$selector_err"
+	cue eval $target_args >/dev/null 2>"$selector_err"
+}
+
+negative_check() {
+	selector=$1
+	: >"$selector_err"
+	if ! target_loads; then
+		jq -n --arg selector "$selector" --rawfile error "$selector_err" \
+			'{selector: $selector, bottoms: false, error: $error}'
+		return
+	fi
+
+	if cue export $target_args -e "$selector" --out json >/dev/null 2>"$selector_err"; then
+		jq -n --arg selector "$selector" '{selector: $selector, bottoms: false}'
+	else
+		if grep -Eq 'reference .* not found|cannot find package|no CUE files|build constraints exclude all CUE files|found packages .* in|import failed|cannot determine module root|expected .* found|illegal character|missing "," in struct literal' "$selector_err"; then
+			jq -n --arg selector "$selector" --rawfile error "$selector_err" \
+				'{selector: $selector, bottoms: false, error: $error}'
+		else
+			jq -n --arg selector "$selector" --rawfile error "$selector_err" \
+				'{selector: $selector, bottoms: true, error: $error}'
+		fi
+	fi
+}
+
+: >"$phases_jsonl"
+jq -c 'to_entries[]' "$bindings_json" | while IFS= read -r entry; do
+	phase=$(printf '%s\n' "$entry" | jq -r '.key')
+	plan_selector=$(printf '%s\n' "$entry" | jq -r '.value.planSelector')
+	implementation_selector=$(printf '%s\n' "$entry" | jq -r '.value.implementationSelector')
+	no_widening_selector=$(printf '%s\n' "$entry" | jq -r '.value.noWideningSelector // empty')
+
+	plan=$(positive_check "$plan_selector")
+	implementation=$(positive_check "$implementation_selector")
+
+	no_widening_arg='{}'
+	if [ -n "$no_widening_selector" ]; then
+		no_widening=$(positive_check "$no_widening_selector")
+		no_widening_arg=$(jq -n --argjson noWidening "$no_widening" '{noWidening: $noWidening}')
+	fi
+
+	negative_probes=$(
+		printf '%s\n' "$entry" |
+			jq -r '.value.negativeProbeSelectors[]?' |
+			while IFS= read -r selector; do
+				negative_check "$selector"
+			done |
+			jq -s '.'
+	)
+
+	jq -n \
+		--arg phase "$phase" \
+		--argjson plan "$plan" \
+		--argjson implementation "$implementation" \
+		--argjson noWideningArg "$no_widening_arg" \
+		--argjson negativeProbes "$negative_probes" \
+		'{
+			phase: $phase,
+			selectorResults: ({
+				plan: $plan,
+				implementation: $implementation,
+				negativeProbes: $negativeProbes
+			} + $noWideningArg)
+		}' >>"$phases_jsonl"
+done
+
+jq -n --slurpfile phases "$phases_jsonl" '{
+	schema: "codex-promotion-facts.v1",
+	phases: (
+		reduce $phases[] as $phase ({}; .[$phase.phase] = $phase)
+	)
+}'

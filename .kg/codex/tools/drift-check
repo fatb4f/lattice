@@ -4,6 +4,7 @@ set -eu
 format=json
 mode=full
 facts=
+phase=
 
 while [ "$#" -gt 0 ]; do
 	case "$1" in
@@ -22,6 +23,11 @@ while [ "$#" -gt 0 ]; do
 		facts=$2
 		shift 2
 		;;
+	--phase)
+		[ "$#" -ge 2 ] || exit 2
+		phase=$2
+		shift 2
+		;;
 	*)
 		printf 'drift-check: unknown argument: %s\n' "$1" >&2
 		exit 2
@@ -38,17 +44,29 @@ json | cue) ;;
 esac
 
 case "$mode" in
-full | repo | patch) ;;
+full | gate | repo | patch | phase | promotion) ;;
 *)
 	printf 'drift-check: unsupported --mode %s\n' "$mode" >&2
 	exit 2
 	;;
 esac
 
+if [ -n "$phase" ]; then
+	case "$phase" in
+	graph-state-phase-one | graph-state-phase-two) ;;
+	*)
+		printf 'drift-check: unsupported --phase %s\n' "$phase" >&2
+		exit 2
+		;;
+	esac
+fi
+
 repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 facts_json=$(mktemp "${TMPDIR:-/tmp}/codex-drift-facts.XXXXXX.json")
 facts_cue=$(mktemp "${TMPDIR:-/tmp}/codex-drift-facts.XXXXXX.cue")
-trap 'rm -f "$facts_json" "$facts_cue"' EXIT HUP INT TERM
+promotion_json=$(mktemp "${TMPDIR:-/tmp}/codex-promotion-facts.XXXXXX.json")
+promotion_cue=$(mktemp "${TMPDIR:-/tmp}/codex-promotion-facts.XXXXXX.cue")
+trap 'rm -f "$facts_json" "$facts_cue" "$promotion_json" "$promotion_cue"' EXIT HUP INT TERM
 
 if [ -n "$facts" ]; then
 	cp "$facts" "$facts_json"
@@ -63,8 +81,40 @@ fi
 } >"$facts_cue"
 
 case "$mode" in
+gate | promotion)
+	"$repo_root/.kg/codex/tools/promotion-facts" >"$promotion_json"
+	{
+		printf 'package codexdrift\n\n_observedPromotionFacts: '
+		cat "$promotion_json"
+		printf '\n'
+	} >"$promotion_cue"
+	;;
+*)
+	{
+		printf 'package codexdrift\n\n_observedPromotionFacts: {schema: "codex-promotion-facts.v1", phases: {}}\n'
+	} >"$promotion_cue"
+	;;
+esac
+
+cue_files=
+for cue_dir in \
+	"$repo_root/.kg/codex" \
+	"$repo_root/.kg/codex/core" \
+	"$repo_root/.kg/codex/vocab" \
+	"$repo_root/.kg/codex/ext" \
+	"$repo_root/.kg/codex/aggregate"; do
+	for cue_file in "$cue_dir"/*.cue; do
+		[ -e "$cue_file" ] || continue
+		cue_files="$cue_files $cue_file"
+	done
+done
+
+case "$mode" in
 full)
 	expr='(#FullDriftKG & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo, patch: _observedFacts.patch}}).findings'
+	;;
+gate)
+	expr='(#FullDriftGate & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo, patch: _observedFacts.patch, promotion: _observedPromotionFacts}}).findings'
 	;;
 repo)
 	expr='(#RepoDriftKG & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo}}).findings'
@@ -72,6 +122,16 @@ repo)
 patch)
 	expr='(#PatchDriftKG & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {patch: _observedFacts.patch}}).findings'
 	;;
+phase)
+	if [ -n "$phase" ]; then
+		expr='(#PhaseWatchdogStatus & {findings: (#FullDriftKG & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo, patch: _observedFacts.patch}}).findings}).promotionStatus.phases["'"$phase"'"]'
+	else
+		expr='(#PhaseWatchdogStatus & {findings: (#FullDriftKG & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo, patch: _observedFacts.patch}}).findings}).promotionStatus'
+	fi
+	;;
+promotion)
+	expr='(#PromotionGateStatus & {facts: _observedPromotionFacts}).findings'
+	;;
 esac
 
-cue export "$repo_root/.kg/codex" "$facts_cue" -e "$expr" --out "$format"
+cue export $cue_files "$facts_cue" "$promotion_cue" -e "$expr" --out "$format"

@@ -1,11 +1,12 @@
 package codexdrift
 
 blockedPhaseWatchdog: #PhaseWatchdogEvaluation & {
-	phase: graphStatePhases["graph-state-phase-one"]
+	phase:    graphStatePhases["graph-state-phase-one"]
 	watchdog: phaseWatchdogs["graph-state-phase-one"]
 	findings: [{
 		kind:     "policy-violated"
 		surface:  "codex-drift-kg"
+		path:     "projections/graph-state/primitives/node.cue"
 		severity: "violation"
 		response: "block"
 		reason:   "Protected graph-state promotion surface changed without review."
@@ -16,11 +17,12 @@ blockedPhaseWatchdog: #PhaseWatchdogEvaluation & {
 }
 
 admissiblePhaseWatchdog: #PhaseWatchdogEvaluation & {
-	phase: graphStatePhases["graph-state-phase-one"]
+	phase:    graphStatePhases["graph-state-phase-one"]
 	watchdog: phaseWatchdogs["graph-state-phase-one"]
 	findings: [{
 		kind:     "interface-contract-changed"
 		surface:  "codex-drift-kg"
+		path:     "projections/graph-state/primitives/node.cue"
 		severity: "warning"
 		response: "require-review"
 		reason:   "Non-blocking observation remains reviewable."

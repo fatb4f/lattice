@@ -306,6 +306,11 @@ validate_kg() {
 }
 
 validate_project_kg() {
+	if ! command -v kg >/dev/null 2>&1; then
+		printf 'kg CLI required for .kb validation\n' >&2
+		return 1
+	fi
+
 	local expected_project_kg_paths
 	expected_project_kg_paths="$(project_kg_declared_paths | sort)"
 	local actual_project_kg_paths

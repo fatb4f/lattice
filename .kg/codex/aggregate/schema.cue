@@ -52,7 +52,7 @@ import "list"
 	id:          #KebabID
 	phase:       #PhaseID
 	description: #NonEmptyString
-	watches:     [...#Path]
+	watches: [...#Path]
 	blockingKinds: [...#DriftKind]
 })
 
@@ -67,12 +67,23 @@ import "list"
 	phase?:   #PhaseID
 })
 
+#PhaseFinding: close({
+	rule?:    #KebabID
+	kind:     #DriftKind
+	surface:  #KebabID
+	path:     #Path
+	severity: "info" | "warning" | "violation" | "critical"
+	response: "allow" | "warn" | "require-review" | "block"
+	reason:   #NonEmptyString
+	phase:    #PhaseID
+})
+
 #PhaseWatchdogEvaluation: close({
 	let Phase = phase
 
-	phase:    #Phase
+	phase: #Phase
 	watchdog: #Watchdog & {phase: Phase.id}
-	findings: [...#KGFinding & {phase: Phase.id}] | *[]
+	findings: [...#PhaseFinding & {phase: Phase.id}] | *[]
 
 	blockingFindings: [
 		for finding in findings
@@ -91,10 +102,71 @@ import "list"
 	}
 })
 
+#PhaseWatchdogStatus: close({
+	let Findings = findings
+
+	findings: [...#CheckFinding & {path: #Path}] | *[]
+
+	phaseFindings: {
+		"graph-state-phase-one": (#PhaseFindings & {phaseID: "graph-state-phase-one", findings: Findings}).output
+		"graph-state-phase-two": (#PhaseFindings & {phaseID: "graph-state-phase-two", findings: Findings}).output
+	}
+
+	phaseWatchdogEvaluations: {
+		"graph-state-phase-one": #PhaseWatchdogEvaluation & {
+			phase:    graphStatePhases["graph-state-phase-one"]
+			watchdog: phaseWatchdogs["graph-state-phase-one"]
+			findings: phaseFindings["graph-state-phase-one"]
+		}
+		"graph-state-phase-two": #PhaseWatchdogEvaluation & {
+			phase:    graphStatePhases["graph-state-phase-two"]
+			watchdog: phaseWatchdogs["graph-state-phase-two"]
+			findings: phaseFindings["graph-state-phase-two"]
+		}
+	}
+
+	promotionStatus: {
+		schema: "codex-phase-promotion-status.v1"
+		phases: {
+			"graph-state-phase-one": {
+				phase:      graphStatePhases["graph-state-phase-one"]
+				promotion:  metaPromotionBindings["graph-state-phase-one"]
+				watchdog:   phaseWatchdogs["graph-state-phase-one"]
+				evaluation: phaseWatchdogEvaluations["graph-state-phase-one"]
+			}
+			"graph-state-phase-two": {
+				phase:      graphStatePhases["graph-state-phase-two"]
+				promotion:  metaPromotionBindings["graph-state-phase-two"]
+				watchdog:   phaseWatchdogs["graph-state-phase-two"]
+				evaluation: phaseWatchdogEvaluations["graph-state-phase-two"]
+			}
+		}
+	}
+})
+
+#PhaseFindings: close({
+	phaseID: #PhaseID
+	findings: [...#CheckFinding & {path: #Path}] | *[]
+
+	output: [
+		for finding in findings
+		for watchedPath in graphStatePhases[phaseID].watchedPaths
+		if (#PathMatches & {path: finding.path, pattern: watchedPath}).matches == true {
+			kind:     finding.kind
+			surface:  finding.surface
+			path:     finding.path
+			severity: finding.severity
+			response: finding.response
+			reason:   finding.reason
+			phase:    phaseID
+		},
+	]
+})
+
 graphStatePhases: {
 	"graph-state-phase-one": #Phase & {
-		id: "graph-state-phase-one"
-		status: "planned"
+		id:          "graph-state-phase-one"
+		status:      "planned"
 		description: "Graph-state primitive ontology phase."
 		watchedPaths: [
 			"docs/graph-state-promotion-plan.md",
@@ -105,8 +177,8 @@ graphStatePhases: {
 	}
 
 	"graph-state-phase-two": #Phase & {
-		id: "graph-state-phase-two"
-		status: "planned"
+		id:          "graph-state-phase-two"
+		status:      "planned"
 		description: "Graph-state operational kernel phase."
 		watchedPaths: [
 			"docs/graph-state-promotion-plan.md",
@@ -120,20 +192,20 @@ graphStatePhases: {
 
 metaPromotionBindings: {
 	"graph-state-phase-one": #PromotionBinding & {
-		id: "graph-state-phase-one-promotion"
-		phase: "graph-state-phase-one"
-		description: "Phase 1 closes through meta.#MakeClosedObligationState."
-		planSelector: "closedPhaseOnePromotion"
+		id:                     "graph-state-phase-one-promotion"
+		phase:                  "graph-state-phase-one"
+		description:            "Phase 1 closes through meta.#MakeClosedObligationState."
+		planSelector:           "closedPhaseOnePromotion"
 		implementationSelector: "closedPhaseOnePromotion"
 	}
 
 	"graph-state-phase-two": #PromotionBinding & {
-		id: "graph-state-phase-two-promotion"
-		phase: "graph-state-phase-two"
-		description: "Phase 2 closes, proves no-widening, and bottoms negative probes."
-		planSelector: "closedPhaseTwoPlan"
+		id:                     "graph-state-phase-two-promotion"
+		phase:                  "graph-state-phase-two"
+		description:            "Phase 2 closes, proves no-widening, and bottoms negative probes."
+		planSelector:           "closedPhaseTwoPlan"
 		implementationSelector: "closedPhaseTwoImplementation"
-		noWideningSelector: "phaseTwoNoWidening"
+		noWideningSelector:     "phaseTwoNoWidening"
 		negativeProbeSelectors: [
 			"danglingEdgeNegative.out.probe.proof",
 			"illegalEdgeTypeNegative.out.probe.proof",

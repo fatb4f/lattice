@@ -88,6 +88,33 @@ function driftFindings(mode = 'full') {
   return run(driftCheck, ['--format', 'json', '--mode', mode], { timeout: 20000 });
 }
 
+function phaseStatus(phase = 'all') {
+  if (phase === 'phase-one') {
+    return run(
+      driftCheck,
+      ['--format', 'json', '--mode', 'phase', '--phase', 'graph-state-phase-one'],
+      { timeout: 20000 },
+    );
+  }
+
+  if (phase === 'phase-two') {
+    return run(
+      driftCheck,
+      ['--format', 'json', '--mode', 'phase', '--phase', 'graph-state-phase-two'],
+      { timeout: 20000 },
+    );
+  }
+
+  return run(driftCheck, ['--format', 'json', '--mode', 'phase'], { timeout: 20000 });
+}
+
+function queryExpression(expression) {
+  if (expression === expressions.phaseOne) return phaseStatus('phase-one');
+  if (expression === expressions.phaseTwo) return phaseStatus('phase-two');
+  if (expression === expressions.promotionStatus) return phaseStatus('all');
+  return exportCue(expression);
+}
+
 function content(result) {
   return {
     content: [{ type: 'text', text: result.output || '{}' }],
@@ -141,14 +168,17 @@ server.tool(
       .default('policy')
       .describe('Named expression to evaluate.'),
   },
-  async ({ expression }) => content(exportCue(expressions[expression])),
+  async ({ expression }) => content(queryExpression(expressions[expression])),
 );
 
 server.tool(
   'kg_drift_scan',
-  'Scan repository and patch facts for Codex KG drift findings.',
+  'Scan Codex KG drift findings by scope.',
   {
-    mode: z.enum(['full', 'repo', 'patch']).default('full').describe('Drift scan scope.'),
+    mode: z
+      .enum(['full', 'repo', 'patch', 'phase', 'promotion', 'gate'])
+      .default('full')
+      .describe('Drift scan scope.'),
   },
   async ({ mode }) => content(driftFindings(mode)),
 );
@@ -159,11 +189,7 @@ server.tool(
   {
     phase: z.enum(['all', 'phase-one', 'phase-two']).default('all').describe('Phase status scope.'),
   },
-  async ({ phase }) => {
-    if (phase === 'phase-one') return content(exportCue(expressions.phaseOne));
-    if (phase === 'phase-two') return content(exportCue(expressions.phaseTwo));
-    return content(exportCue(expressions.promotionStatus));
-  },
+  async ({ phase }) => content(phaseStatus(phase)),
 );
 
 server.tool(
@@ -193,7 +219,7 @@ server.tool(
 
 for (const [uri, expression] of Object.entries(resourceExpressions)) {
   server.resource(uri, uri, async () => {
-    const result = expression === 'drift-findings' ? driftFindings() : exportCue(expression);
+    const result = expression === 'drift-findings' ? driftFindings() : queryExpression(expression);
     return {
       contents: [
         {

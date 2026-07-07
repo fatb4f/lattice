@@ -3,7 +3,10 @@ set -eu
 
 input_json=$(mktemp "${TMPDIR:-/tmp}/codex-drift-hook.XXXXXX.json")
 findings_json=$(mktemp "${TMPDIR:-/tmp}/codex-drift-findings.XXXXXX.json")
-trap 'rm -f "$input_json" "$findings_json"' EXIT HUP INT TERM
+phase_status_json=$(mktemp "${TMPDIR:-/tmp}/codex-drift-phase-status.XXXXXX.json")
+kg_index_json=$(mktemp "${TMPDIR:-/tmp}/codex-drift-kg-index.XXXXXX.json")
+kg_err=$(mktemp "${TMPDIR:-/tmp}/codex-drift-kg.XXXXXX.err")
+trap 'rm -f "$input_json" "$findings_json" "$phase_status_json" "$kg_index_json" "$kg_err"' EXIT HUP INT TERM
 
 cat >"$input_json"
 
@@ -14,11 +17,74 @@ UserPromptSubmit | Stop | SessionEnd | TurnEnd | AgentTurnEnd | unknown) ;;
 esac
 
 repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-"$repo_root/.kg/codex/tools/drift-check" --format json --mode full >"$findings_json"
+check_mode=gate
+if [ "$event_name" = "UserPromptSubmit" ]; then
+	check_mode=full
+fi
+
+"$repo_root/.kg/codex/tools/drift-check" --format json --mode "$check_mode" >"$findings_json"
+"$repo_root/.kg/codex/tools/drift-check" --format json --mode phase >"$phase_status_json"
+
+if command -v kg >/dev/null 2>&1 && [ -d "$repo_root/.kb" ]; then
+	if (cd "$repo_root" && kg vet) >"$kg_err" 2>&1; then
+		if (cd "$repo_root" && kg index --full) >"$kg_index_json" 2>>"$kg_err"; then
+			kg_cli_context=$(
+				jq -cn --slurpfile index "$kg_index_json" '{
+					schema: "kg-cli-hook-context.v1",
+					authority: ".kb",
+					cli: "kg",
+					available: true,
+					vet: "pass",
+					indexAvailable: true,
+					summary: ($index[0].summary // null)
+				}'
+			)
+		else
+			kg_cli_context=$(
+				jq -cn --rawfile error "$kg_err" '{
+					schema: "kg-cli-hook-context.v1",
+					authority: ".kb",
+					cli: "kg",
+					available: true,
+					vet: "pass",
+					indexAvailable: false,
+					error: $error
+				}'
+			)
+		fi
+	else
+		kg_cli_context=$(
+			jq -cn --rawfile error "$kg_err" '{
+				schema: "kg-cli-hook-context.v1",
+				authority: ".kb",
+				cli: "kg",
+				available: true,
+				vet: "fail",
+				indexAvailable: false,
+				error: $error
+			}'
+		)
+	fi
+else
+	kg_cli_context=$(
+		jq -cn '{
+			schema: "kg-cli-hook-context.v1",
+			authority: ".kb",
+			cli: "kg",
+			available: false,
+			vet: "not-run",
+			indexAvailable: false,
+			reason: "kg CLI or .kb directory unavailable"
+		}'
+	)
+fi
 
 max_response=$(
-	jq -r '
-		if any(.[]; .response == "block") then "block"
+	jq -r --slurpfile phases "$phase_status_json" --argjson kgCli "$kg_cli_context" '
+		if any(.[]; .response == "block")
+			or any($phases[0].phases[]?; .evaluation.status == "blocked")
+			or $kgCli.vet == "fail"
+		then "block"
 		elif any(.[]; .response == "require-review") then "require-review"
 		elif any(.[]; .response == "warn") then "warn"
 		else "allow"
@@ -27,15 +93,18 @@ max_response=$(
 )
 
 if [ "$event_name" = "UserPromptSubmit" ]; then
-	jq -cn --slurpfile findings "$findings_json" --arg maxResponse "$max_response" '{
+	jq -cn --slurpfile findings "$findings_json" --slurpfile phases "$phase_status_json" --argjson kgCli "$kg_cli_context" --arg maxResponse "$max_response" --arg checkMode "$check_mode" '{
 		hookSpecificOutput: {
 			hookEventName: "UserPromptSubmit",
 			additionalContext: ({
 				schema: "codex-drift-context.v1",
 				authority: ".kg/codex",
+				checkMode: $checkMode,
 				findingCount: ($findings[0] | length),
 				maxResponse: $maxResponse,
-				findings: $findings[0]
+				findings: $findings[0],
+				phaseStatus: $phases[0],
+				kgCli: $kgCli
 			} | tojson)
 		}
 	}'
@@ -43,27 +112,33 @@ if [ "$event_name" = "UserPromptSubmit" ]; then
 fi
 
 if [ "$max_response" = "block" ]; then
-	jq -cn --slurpfile findings "$findings_json" --arg maxResponse "$max_response" '{
+	jq -cn --slurpfile findings "$findings_json" --slurpfile phases "$phase_status_json" --argjson kgCli "$kg_cli_context" --arg maxResponse "$max_response" --arg checkMode "$check_mode" '{
 		decision: "block",
 		reason: "Codex drift KG found blocking drift.",
 		drift: {
 			schema: "codex-drift-context.v1",
 			authority: ".kg/codex",
+			checkMode: $checkMode,
 			findingCount: ($findings[0] | length),
 			maxResponse: $maxResponse,
-			findings: $findings[0]
+			findings: $findings[0],
+			phaseStatus: $phases[0],
+			kgCli: $kgCli
 		}
 	}'
 	exit 1
 fi
 
-jq -cn --slurpfile findings "$findings_json" --arg maxResponse "$max_response" '{
+jq -cn --slurpfile findings "$findings_json" --slurpfile phases "$phase_status_json" --argjson kgCli "$kg_cli_context" --arg maxResponse "$max_response" --arg checkMode "$check_mode" '{
 	decision: "allow",
 	drift: {
 		schema: "codex-drift-context.v1",
 		authority: ".kg/codex",
+		checkMode: $checkMode,
 		findingCount: ($findings[0] | length),
 		maxResponse: $maxResponse,
-		findings: $findings[0]
+		findings: $findings[0],
+		phaseStatus: $phases[0],
+		kgCli: $kgCli
 	}
 }'

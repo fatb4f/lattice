@@ -9,6 +9,10 @@ latticeReference: #DriftModel & {
 		"source-registry",
 		"meta-kernel",
 		"validation-controller",
+		"graph-state-phase-one",
+		"graph-state-phase-two",
+		"graph-state-promotion",
+		"graph-state-drift-reports",
 		"codex-drift-kg",
 		"project-knowledge-kg",
 		"kg-agent-skill",
@@ -158,6 +162,7 @@ latticeReference: #DriftModel & {
 				".kg/codex/aggregate/jsonld.cue",
 				".kg/codex/aggregate/lint.cue",
 				".kg/codex/aggregate/phase-watchdog.cue",
+				".kg/codex/aggregate/promotion-gate.cue",
 				".kg/codex/aggregate/promotion-status.cue",
 				".kg/codex/mcp/schema.cue",
 				".kg/codex/mcp/policy.cue",
@@ -172,6 +177,7 @@ latticeReference: #DriftModel & {
 				".kg/codex/tools/drift-facts",
 				".kg/codex/tools/drift-check",
 				".kg/codex/tools/drift-hook",
+				".kg/codex/tools/promotion-facts",
 			]
 
 			protectedPaths: [
@@ -190,6 +196,7 @@ latticeReference: #DriftModel & {
 				".kg/codex/tools/drift-facts",
 				".kg/codex/tools/drift-check",
 				".kg/codex/tools/drift-hook",
+				".kg/codex/tools/promotion-facts",
 			]
 
 			forbiddenPaths: [
@@ -197,6 +204,62 @@ latticeReference: #DriftModel & {
 				"patterns/kg",
 				"meta/kg.cue",
 				"meta/kg",
+			]
+		}
+
+		"graph-state-phase-one": {
+			id:          "graph-state-phase-one"
+			kind:        "authority"
+			description: "Graph-state primitive ontology promotion phase surface."
+
+			requiredPaths: [
+				"docs/graph-state-promotion-plan.md",
+			]
+
+			protectedPaths: [
+				"docs/graph-state-promotion-plan.md",
+				"projections/graph-state/README.md",
+				"projections/graph-state/primitives",
+				"projections/graph-state/promotion",
+			]
+		}
+
+		"graph-state-phase-two": {
+			id:          "graph-state-phase-two"
+			kind:        "authority"
+			description: "Graph-state operational kernel promotion phase surface."
+
+			requiredPaths: [
+				"docs/graph-state-promotion-plan.md",
+			]
+
+			protectedPaths: [
+				"docs/graph-state-promotion-plan.md",
+				"projections/graph-state/kernel",
+				"projections/graph-state/fixtures",
+				"projections/graph-state/promotion",
+				"generated/codex/graph-state",
+			]
+		}
+
+		"graph-state-promotion": {
+			id:          "graph-state-promotion"
+			kind:        "verification"
+			description: "Graph-state promotion proof and admission surface."
+
+			protectedPaths: [
+				"docs/graph-state-promotion-plan.md",
+				"projections/graph-state/promotion",
+			]
+		}
+
+		"graph-state-drift-reports": {
+			id:          "graph-state-drift-reports"
+			kind:        "generated"
+			description: "Generated graph-state drift reports and observations."
+
+			protectedPaths: [
+				"generated/codex/graph-state",
 			]
 		}
 
@@ -512,6 +575,24 @@ latticeReference: #DriftModel & {
 			severity: "warning"
 			response: "require-review"
 			reason:   "Codex drift KG changes alter advisory and enforcement behavior."
+		}
+
+		"graph-state-phase-one-required-path-present": {
+			id:       "graph-state-phase-one-required-path-present"
+			kind:     "missing-required-surface"
+			surface:  "graph-state-phase-one"
+			severity: "violation"
+			response: "block"
+			reason:   "The graph-state Phase 1 promotion plan must remain present."
+		}
+
+		"graph-state-phase-two-required-path-present": {
+			id:       "graph-state-phase-two-required-path-present"
+			kind:     "missing-required-surface"
+			surface:  "graph-state-phase-two"
+			severity: "violation"
+			response: "block"
+			reason:   "The graph-state Phase 2 promotion plan must remain present."
 		}
 
 		"project-knowledge-kg-required-path-present": {
