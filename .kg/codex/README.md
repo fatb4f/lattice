@@ -23,4 +23,9 @@ tools/      drift fact, check, and hook helpers
 ```text
 meta/kernel.cue owns promotion admission.
 .kg/codex owns drift observation and read-only reporting surfaces.
+.kb owns the repo-local project knowledge graph.
+kg/ owns reusable schema packages and examples.
 ```
+
+`.kg` is not a project knowledge alias in this repository. The only `.kg`
+authority is `.kg/codex`, which belongs to Codex drift control.

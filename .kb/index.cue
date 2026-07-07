@@ -8,6 +8,7 @@ _index: aggregate.#KGIndex & {
 	decisions: {
 		(d001.id): d001
 		(d002.id): d002
+		(d003.id): d003
 	}
 
 	insights: {
@@ -18,6 +19,7 @@ _index: aggregate.#KGIndex & {
 	rejected: {
 		(r001.id): r001
 		(r002.id): r002
+		(r003.id): r003
 	}
 
 	patterns: {

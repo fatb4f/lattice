@@ -130,21 +130,21 @@ function text(value) {
 
 const server = new McpServer(
   {
-    name: 'lattice-kg',
+    name: 'lattice-codex-kg',
     version: '0.1.0',
   },
   {
     instructions: [
-      'Read-only Codex KG server for this lattice repository.',
+      'Read-only Codex drift KG server for this lattice repository.',
       'Use it to inspect declared surfaces, drift findings, and phase promotion status.',
-      'The server does not mutate repository files.',
+      'It exposes .kg/codex, not the repo-local .kb project knowledge graph, and does not mutate repository files.',
     ].join(' '),
   },
 );
 
 server.tool(
   'kg_status',
-  'Show whether the lattice Codex KG and drift tooling are available.',
+  'Show whether the lattice Codex drift KG and drift tooling are available.',
   {},
   async () => {
     const checks = {
@@ -161,7 +161,7 @@ server.tool(
 
 server.tool(
   'kg_query',
-  'Evaluate an allowed read-only Codex KG CUE expression and return JSON.',
+  'Evaluate an allowed read-only Codex drift KG CUE expression and return JSON.',
   {
     expression: z
       .enum(Object.keys(expressions))
@@ -194,7 +194,7 @@ server.tool(
 
 server.tool(
   'kg_surface_explain',
-  'Read declared Codex KG control surfaces.',
+  'Read declared Codex drift KG control surfaces.',
   {},
   async () => content(exportCue(expressions.surfaces)),
 );
@@ -208,11 +208,11 @@ server.tool(
 
 server.tool(
   'kg_vet',
-  'Validate the lattice Codex KG CUE package.',
+  'Validate the lattice Codex drift KG CUE package.',
   {},
   async () => {
     const result = run('cue', ['vet', ...topLevelCueFiles]);
-    if (result.ok) return text('OK: .kg/codex CUE package is valid');
+    if (result.ok) return text('OK: .kg/codex Codex drift KG CUE package is valid');
     return content(result);
   },
 );
@@ -235,7 +235,7 @@ for (const [uri, expression] of Object.entries(resourceExpressions)) {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('lattice-kg MCP server running');
+  console.error('lattice-codex-kg MCP server running');
 }
 
 main().catch((error) => {
