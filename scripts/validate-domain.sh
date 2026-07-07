@@ -50,6 +50,14 @@ kg_pattern_paths() {
 	cue export "${kg_files[@]}" -e 'latticeReference.surfaces["pattern-suite"].requiredPaths' --out json | jq -r '.[]'
 }
 
+kg_declared_paths() {
+	cue export "${kg_files[@]}" -e 'latticeReference.surfaces["codex-drift-kg"].requiredPaths' --out json | jq -r '.[]'
+}
+
+project_kg_declared_paths() {
+	cue export "${kg_files[@]}" -e 'latticeReference.surfaces["project-knowledge-kg"].requiredPaths' --out json | jq -r '.[]'
+}
+
 validate_meta() {
 	cue vet ./meta
 	cue export ./meta -e _closedState --out cue >/dev/null
@@ -269,16 +277,52 @@ validate_kg() {
 	cue vet "${kg_files[@]}"
 	local kg_dir
 	for kg_dir in "${kg_role_dirs[@]}"; do
-		cue vet -c "$kg_dir"/*.cue
+		if [[ "$kg_dir" == ".kg/codex/aggregate" ]]; then
+			cue vet -c "${kg_files[@]}" "$kg_dir"/*.cue
+		elif [[ "$kg_dir" == ".kg/codex/tests/valid" ]]; then
+			cue vet -c "${kg_files[@]}" .kg/codex/aggregate/*.cue "$kg_dir"/*.cue
+		else
+			cue vet -c "$kg_dir"/*.cue
+		fi
 	done
+
+	local expected_kg_paths
+	expected_kg_paths="$(kg_declared_paths | sort)"
+	local actual_kg_paths
+	actual_kg_paths="$(find .kg/codex -type f | sort)"
+	if [[ "$actual_kg_paths" != "$expected_kg_paths" ]]; then
+		printf 'unexpected .kg/codex surface\nexpected:\n%s\nactual:\n%s\n' "$expected_kg_paths" "$actual_kg_paths"
+		return 1
+	fi
+
 	cue export "${kg_files[@]}" -e 'latticeReference.patternClassifications' --out cue >/dev/null
 	cue export "${kg_files[@]}" -e 'latticeReference.surfaces["pattern-suite"].requiredPaths' --out json >/dev/null
-	cue export .kg/codex/aggregate/*.cue -e promotionStatus --out json >/dev/null
+	cue export "${kg_files[@]}" .kg/codex/aggregate/*.cue -e promotionStatus --out json >/dev/null
+	cue export "${kg_files[@]}" .kg/codex/aggregate/*.cue -e codexKGIndex --out json >/dev/null
+	cue export "${kg_files[@]}" .kg/codex/aggregate/*.cue .kg/codex/tests/valid/*.cue -e blockedPhaseWatchdog --out json >/dev/null
+	cue export "${kg_files[@]}" .kg/codex/aggregate/*.cue .kg/codex/tests/valid/*.cue -e admissiblePhaseWatchdog --out json >/dev/null
 	cue export .kg/codex/mcp/*.cue -e mcpPolicy --out json >/dev/null
+	expect_failure cue export .kg/codex/mcp/*.cue .kg/codex/tests/invalid/mutation-tool.cue -e '(#ReadOnlyMCPTool & invalidMutationTool)' --out cue
+}
+
+validate_project_kg() {
+	local expected_project_kg_paths
+	expected_project_kg_paths="$(project_kg_declared_paths | sort)"
+	local actual_project_kg_paths
+	actual_project_kg_paths="$(find .kb -type f | sort)"
+	if [[ "$actual_project_kg_paths" != "$expected_project_kg_paths" ]]; then
+		printf 'unexpected .kb surface\nexpected:\n%s\nactual:\n%s\n' "$expected_project_kg_paths" "$actual_project_kg_paths"
+		return 1
+	fi
+
+	kg vet >/dev/null
+	kg index --full >/dev/null
+	kg settle >/dev/null
 }
 
 validate_meta
 validate_kg
+validate_project_kg
 validate_patterns
 validate_sources
 validate_projections

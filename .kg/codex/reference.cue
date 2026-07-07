@@ -10,6 +10,8 @@ latticeReference: #DriftModel & {
 		"meta-kernel",
 		"validation-controller",
 		"codex-drift-kg",
+		"project-knowledge-kg",
+		"kg-agent-skill",
 		"generated-codex-facts",
 	]
 
@@ -130,34 +132,43 @@ latticeReference: #DriftModel & {
 				".kg/codex/checks.cue",
 				".kg/codex/kg.cue",
 				".kg/codex/policy.cue",
+				".kg/codex/core/schema.cue",
 				".kg/codex/core/control-surface.cue",
 				".kg/codex/core/drift-rule.cue",
 				".kg/codex/core/finding.cue",
 				".kg/codex/core/phase.cue",
 				".kg/codex/core/promotion.cue",
 				".kg/codex/core/watchdog.cue",
+				".kg/codex/vocab/schema.cue",
 				".kg/codex/vocab/context.cue",
 				".kg/codex/vocab/ids.cue",
 				".kg/codex/vocab/phases.cue",
 				".kg/codex/vocab/responses.cue",
 				".kg/codex/vocab/severity.cue",
 				".kg/codex/vocab/surfaces.cue",
+				".kg/codex/ext/schema.cue",
 				".kg/codex/ext/codex-hook.cue",
 				".kg/codex/ext/graph-state.cue",
 				".kg/codex/ext/meta-promotion.cue",
 				".kg/codex/ext/patch-observation.cue",
 				".kg/codex/ext/repo-observation.cue",
+				".kg/codex/aggregate/schema.cue",
 				".kg/codex/aggregate/drift.cue",
 				".kg/codex/aggregate/index.cue",
 				".kg/codex/aggregate/jsonld.cue",
 				".kg/codex/aggregate/lint.cue",
 				".kg/codex/aggregate/phase-watchdog.cue",
 				".kg/codex/aggregate/promotion-status.cue",
+				".kg/codex/mcp/schema.cue",
 				".kg/codex/mcp/policy.cue",
 				".kg/codex/mcp/prompts.cue",
 				".kg/codex/mcp/resources.cue",
 				".kg/codex/mcp/server.cue",
 				".kg/codex/mcp/tools.cue",
+				".kg/codex/tests/valid/schema.cue",
+				".kg/codex/tests/valid/phase-watchdog.cue",
+				".kg/codex/tests/valid/phase-watchdog-admission.cue",
+				".kg/codex/tests/invalid/mutation-tool.cue",
 				".kg/codex/tools/drift-facts",
 				".kg/codex/tools/drift-check",
 				".kg/codex/tools/drift-hook",
@@ -196,6 +207,46 @@ latticeReference: #DriftModel & {
 
 			protectedPaths: [
 				"generated/codex",
+			]
+		}
+
+		"project-knowledge-kg": {
+			id:          "project-knowledge-kg"
+			kind:        "authority"
+			description: "Repo-local quicue kg CLI knowledge graph under .kb."
+
+			requiredPaths: [
+				".kb/cue.mod/module.cue",
+				".kb/project.cue",
+				".kb/index.cue",
+				".kb/001-untitled.cue",
+				".kb/002-untitled.cue",
+				".kb/insight-001.cue",
+				".kb/insight-002.cue",
+				".kb/rejected-001.cue",
+				".kb/rejected-002.cue",
+				".kb/new-pattern.cue",
+				".kb/new-pattern-1.cue",
+				".kb/new-pattern-2.cue",
+			]
+
+			protectedPaths: [
+				".kb",
+			]
+		}
+
+		"kg-agent-skill": {
+			id:          "kg-agent-skill"
+			kind:        "interface"
+			description: "Repo-local Codex skill that routes agents through the kg CLI."
+
+			requiredPaths: [
+				".codex/skills/kg-agent/SKILL.md",
+				".codex/skills/kg-agent/agents/openai.yaml",
+			]
+
+			protectedPaths: [
+				".codex/skills/kg-agent",
 			]
 		}
 	})
@@ -461,6 +512,24 @@ latticeReference: #DriftModel & {
 			severity: "warning"
 			response: "require-review"
 			reason:   "Codex drift KG changes alter advisory and enforcement behavior."
+		}
+
+		"project-knowledge-kg-required-path-present": {
+			id:       "project-knowledge-kg-required-path-present"
+			kind:     "missing-required-surface"
+			surface:  "project-knowledge-kg"
+			severity: "violation"
+			response: "block"
+			reason:   "A required repo-local kg CLI knowledge graph file is missing."
+		}
+
+		"kg-agent-skill-required-path-present": {
+			id:       "kg-agent-skill-required-path-present"
+			kind:     "missing-required-surface"
+			surface:  "kg-agent-skill"
+			severity: "violation"
+			response: "block"
+			reason:   "A required repo-local KG agent skill file is missing."
 		}
 
 		"kernel-change-review": {

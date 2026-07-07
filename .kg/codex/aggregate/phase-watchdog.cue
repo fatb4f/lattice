@@ -35,12 +35,28 @@ promotionStatus: {
 			phase: graphStatePhases["graph-state-phase-one"]
 			promotion: metaPromotionBindings["graph-state-phase-one"]
 			watchdog: phaseWatchdogs["graph-state-phase-one"]
+			evaluation: phaseWatchdogEvaluations["graph-state-phase-one"]
 		}
 		"graph-state-phase-two": {
 			phase: graphStatePhases["graph-state-phase-two"]
 			promotion: metaPromotionBindings["graph-state-phase-two"]
 			watchdog: phaseWatchdogs["graph-state-phase-two"]
+			evaluation: phaseWatchdogEvaluations["graph-state-phase-two"]
 		}
+	}
+}
+
+phaseWatchdogEvaluations: {
+	"graph-state-phase-one": #PhaseWatchdogEvaluation & {
+		phase: graphStatePhases["graph-state-phase-one"]
+		watchdog: phaseWatchdogs["graph-state-phase-one"]
+		findings: []
+	}
+
+	"graph-state-phase-two": #PhaseWatchdogEvaluation & {
+		phase: graphStatePhases["graph-state-phase-two"]
+		watchdog: phaseWatchdogs["graph-state-phase-two"]
+		findings: []
 	}
 }
 

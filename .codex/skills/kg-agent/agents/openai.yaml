@@ -1,0 +1,4 @@
+interface:
+  display_name: "KG Agent"
+  short_description: "Query and maintain the repo-local kg CLI knowledge graph."
+  default_prompt: "Use $kg-agent to inspect .kb entries, run kg validation, and update knowledge graph records safely."

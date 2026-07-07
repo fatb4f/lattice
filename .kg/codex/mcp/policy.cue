@@ -1,6 +1,6 @@
 package codexdrift
 
-mcpPolicy: {
+mcpPolicy: #MCPPolicy & {
 	mode: "read-only"
 	mutationToolsAllowed: false
 	resources: mcpResources

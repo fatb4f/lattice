@@ -1,5 +1,7 @@
 package codexdrift
 
+import "list"
+
 #NonEmptyString: string & !=""
 #Path:           #NonEmptyString
 #KebabID:        #NonEmptyString & =~"^[a-z0-9]+(-[a-z0-9]+)*$"
@@ -65,6 +67,30 @@ package codexdrift
 	phase?:   #PhaseID
 })
 
+#PhaseWatchdogEvaluation: close({
+	let Phase = phase
+
+	phase:    #Phase
+	watchdog: #Watchdog & {phase: Phase.id}
+	findings: [...#KGFinding & {phase: Phase.id}] | *[]
+
+	blockingFindings: [
+		for finding in findings
+		if list.Contains(watchdog.blockingKinds, finding.kind) == true {
+			finding
+		},
+	]
+
+	admissible: len(blockingFindings) == 0
+	status:     "admissible" | "blocked"
+	if len(blockingFindings) == 0 {
+		status: "admissible"
+	}
+	if len(blockingFindings) > 0 {
+		status: "blocked"
+	}
+})
+
 graphStatePhases: {
 	"graph-state-phase-one": #Phase & {
 		id: "graph-state-phase-one"
@@ -117,9 +143,4 @@ metaPromotionBindings: {
 			"widenedProducerOutputNegative.out.probe.proof",
 		]
 	}
-}
-
-latticeReference: {
-	surfaces: {}
-	surfaceIDs: []
 }
