@@ -1,0 +1,14 @@
+{
+  "name": "lattice-kg-mcp-server",
+  "version": "0.1.0",
+  "description": "Read-only MCP server for the lattice Codex knowledge graph",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "bun server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "zod": "^4.1.13"
+  }
+}
