@@ -1,0 +1,5 @@
+{
+  "name": "agent-context-resolver",
+  "version": "1.0.0",
+  "description": "Resolve repository contract fragments and compile bounded route plans."
+}

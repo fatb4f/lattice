@@ -1,0 +1,83 @@
+{
+  "agent-context-resolver": {
+    "BeforeAgent": [
+      {
+        "type": "command",
+        "command": "sh -c 'd=$PWD; while [ \"$d\" != / ]; do p=$d/.codex/plugins/agent-context-resolver/scripts/agent-context-resolver-hook; [ -f \"$p\" ] && exec sh \"$p\"; d=${d%/*}; done; exit 0'",
+        "timeout": 10
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "type": "command",
+        "command": "sh -c 'd=$PWD; while [ \"$d\" != / ]; do p=$d/.codex/plugins/agent-context-resolver/scripts/agent-context-resolver-hook; [ -f \"$p\" ] && exec sh \"$p\"; d=${d%/*}; done; exit 0'",
+        "timeout": 10
+      }
+    ],
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "sh -c 'd=$PWD; while [ \"$d\" != / ]; do p=$d/.codex/plugins/agent-context-resolver/scripts/agent-context-resolver-hook; [ -f \"$p\" ] && exec sh \"$p\"; d=${d%/*}; done; exit 0'",
+        "timeout": 10
+      }
+    ],
+    "AfterAgent": [
+      {
+        "type": "command",
+        "command": "sh -c 'd=$PWD; while [ \"$d\" != / ]; do p=$d/.codex/plugins/agent-context-resolver/scripts/agent-context-resolver-hook; [ -f \"$p\" ] && exec sh \"$p\"; d=${d%/*}; done; exit 0'",
+        "timeout": 10
+      }
+    ]
+  },
+  "drift-control": {
+    "BeforeAgent": [
+      {
+        "type": "command",
+        "command": "sh -c 'd=$PWD; while [ \"$d\" != / ]; do p=$d/.kg/codex/tools/drift-hook; [ -f \"$p\" ] && exec sh \"$p\"; d=${d%/*}; done; exit 0'",
+        "timeout": 15
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "type": "command",
+        "command": "sh -c 'd=$PWD; while [ \"$d\" != / ]; do p=$d/.kg/codex/tools/drift-hook; [ -f \"$p\" ] && exec sh \"$p\"; d=${d%/*}; done; exit 0'",
+        "timeout": 15
+      }
+    ],
+    "TurnEnd": [
+      {
+        "type": "command",
+        "command": "sh -c 'd=$PWD; while [ \"$d\" != / ]; do p=$d/.kg/codex/tools/drift-hook; [ -f \"$p\" ] && exec sh \"$p\"; d=${d%/*}; done; exit 0'",
+        "timeout": 30
+      }
+    ],
+    "AfterAgent": [
+      {
+        "type": "command",
+        "command": "sh -c 'd=$PWD; while [ \"$d\" != / ]; do p=$d/.kg/codex/tools/drift-hook; [ -f \"$p\" ] && exec sh \"$p\"; d=${d%/*}; done; exit 0'",
+        "timeout": 30
+      }
+    ],
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "sh -c 'd=$PWD; while [ \"$d\" != / ]; do p=$d/.kg/codex/tools/drift-hook; [ -f \"$p\" ] && exec sh \"$p\"; d=${d%/*}; done; exit 0'",
+        "timeout": 30
+      }
+    ],
+    "SessionEnd": [
+      {
+        "type": "command",
+        "command": "sh -c 'd=$PWD; while [ \"$d\" != / ]; do p=$d/.kg/codex/tools/drift-hook; [ -f \"$p\" ] && exec sh \"$p\"; d=${d%/*}; done; exit 0'",
+        "timeout": 30
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "sh -c 'd=$PWD; while [ \"$d\" != / ]; do p=$d/.kg/codex/tools/drift-hook; [ -f \"$p\" ] && exec sh \"$p\"; d=${d%/*}; done; exit 0'",
+        "timeout": 30
+      }
+    ]
+  }
+}

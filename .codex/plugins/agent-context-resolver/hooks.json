@@ -1,0 +1,18 @@
+{
+  "agent-context-resolver": {
+    "BeforeAgent": [
+      {
+        "type": "command",
+        "command": "/home/_404/src/lattice/.codex/plugins/agent-context-resolver/scripts/agent-context-resolver-hook",
+        "timeout": 10
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "type": "command",
+        "command": "/home/_404/src/lattice/.codex/plugins/agent-context-resolver/scripts/agent-context-resolver-hook",
+        "timeout": 10
+      }
+    ]
+  }
+}
