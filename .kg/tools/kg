@@ -136,11 +136,14 @@ jq -n \
 		budget: {
 			maxInlineEntities: $policy.maxInlineEntities,
 			maxInlineBytes: $budget.routePacketMaxBytes,
+			maxResourceHandles: $policy.maxResourceHandles,
+			maxAutoReadBytes: $policy.maxAutoReadBytes,
+			allowExpensiveReads: $policy.allowExpensiveReads,
 			preferMCP: $budget.mcpPreferred
 		},
 		selection: ({
 			entities: ($policy.defaultEntities[0:$policy.maxInlineEntities]),
-			resources: ($policy.mcpResources[0:$budget.inlineResourceMax]),
+			resources: ($policy.mcpResources[0:([($budget.inlineResourceMax), ($policy.maxResourceHandles)] | min)]),
 			files: ($policy.files // [])
 		}),
 		gates: {

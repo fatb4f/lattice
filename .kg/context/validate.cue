@@ -45,6 +45,9 @@ import "list"
 	budget: {
 		maxInlineEntities: <=defaultTokenBudget.inlineEntityMax
 		maxInlineBytes:    <=defaultTokenBudget.routePacketMaxBytes
+		maxResourceHandles: <=defaultTokenBudget.inlineResourceMax
+		maxAutoReadBytes: <=defaultTokenBudget.maxAutoReadBytes
+		allowExpensiveReads: defaultTokenBudget.allowExpensiveReads
 		preferMCP:         true
 	}
 	gates: {
@@ -67,6 +70,9 @@ import "list"
 
 	budget: {
 		maxInlineEntities: <=_policy.maxInlineEntities
+		maxResourceHandles: <=_policy.maxResourceHandles
+		maxAutoReadBytes: <=_policy.maxAutoReadBytes
+		allowExpensiveReads: _policy.allowExpensiveReads
 	}
 
 	selection: {

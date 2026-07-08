@@ -70,7 +70,10 @@ while IFS='	' read -r expected_route route_prompt; do
 		>>"$out/route/all-routes.jsonl"
 done <"$out/route/route-prompts.tsv"
 
-abs_out="$repo_root/$out"
+case "$out" in
+/*) abs_out=$out ;;
+*) abs_out="$repo_root/$out" ;;
+esac
 
 (
 cd "$repo_root/.kg/mcp"
@@ -111,7 +114,7 @@ try {
   await client.connect(transport);
 
   const tools = await client.listTools();
-  save('tools.json', tools);
+  save('tools.json', { tools: (tools.tools ?? []).map((tool) => tool.name).sort() });
 
   const status = await client.callTool({ name: 'kg_status', arguments: {} });
   save('status.json', firstText(status));
@@ -126,19 +129,19 @@ try {
     name: 'kg_query',
     arguments: { expression: 'resources' },
   });
-  save('resources.json', firstText(resources));
+  save('resources.json', Object.keys(JSON.parse(firstText(resources) || '{}')).sort());
 
   const readTargets = [
-    'codex://surfaces',
+    'codex://surfaces/index',
+    'codex://surface/codex-drift-kg/summary',
     'codex://drift/findings',
-    'codex://graph-state/phase-one',
-    'codex://graph-state/phase-two',
-    'codex://promotion/status',
-    'kg://query/selfContext',
+    'codex://graph-state/phase-one/summary',
+    'codex://graph-state/phase-two/summary',
+    'codex://promotion/status/summary',
+    'kg://context/fingerprint',
+    'kg://context/summary',
+    'kg://context/invariants',
     'kg://index/summary',
-    'kg://index/full',
-    'kg://entity/project-context',
-    'kg://related/project-context',
   ];
 
   const readSummary = {};
@@ -192,36 +195,42 @@ jq -s -e --slurpfile policy "$out/route/route-policy.json" '
 ' "$out/route/all-routes.jsonl" >"$out/route/assert-all-routes-policy-selection.ok"
 
 jq -e '
-	has("kg://query/selfContext")
-	and has("codex://surfaces")
+	index("kg://context/fingerprint") != null
+	and index("kg://context/summary") != null
+	and index("kg://context/invariants") != null
+	and index("kg://query/selfContext") != null
+	and index("codex://surfaces/index") != null
+	and index("codex://surfaces") != null
+	and index("codex://promotion/status/summary") != null
 ' "$out/mcp/resources.json" >"$out/mcp/assert-selected-resources-declared.ok"
 
 jq -e '
 	.schema == "lattice.context-route-packet.v1"
-	and .selection.resources == ["kg://query/selfContext", "codex://surfaces"]
+	and .selection.resources == ["kg://context/summary", "codex://surfaces/index"]
 ' "$out/mcp/context-match.json" >"$out/mcp/assert-context-match.ok"
 
 jq -e '
-	.schema == "lattice-self-context.v1"
-' "$out/mcp/kg-query-selfContext.json" >"$out/mcp/assert-self-context-resource.ok"
+	.schema == "lattice-self-context-summary.v1"
+' "$out/mcp/kg-context-summary.json" >"$out/mcp/assert-self-context-resource.ok"
 
 jq -e '
-	has("codex-drift-kg")
-	and has("kg-hook-runtime")
-	and has("project-knowledge-kg")
-' "$out/mcp/codex-surfaces.json" >"$out/mcp/assert-codex-surfaces-resource.ok"
+	.schema == "codex-surfaces-index.v1"
+	and (.surfaces | any(.id == "codex-drift-kg"))
+	and (.surfaces | any(.id == "kg-hook-runtime"))
+	and (.surfaces | any(.id == "project-knowledge-kg"))
+' "$out/mcp/codex-surfaces-index.json" >"$out/mcp/assert-codex-surfaces-resource.ok"
 
 jq -e '
-	has("codex://surfaces")
+	has("codex://surfaces/index")
+	and has("codex://surface/codex-drift-kg/summary")
 	and has("codex://drift/findings")
-	and has("codex://graph-state/phase-one")
-	and has("codex://graph-state/phase-two")
-	and has("codex://promotion/status")
-	and has("kg://query/selfContext")
+	and has("codex://graph-state/phase-one/summary")
+	and has("codex://graph-state/phase-two/summary")
+	and has("codex://promotion/status/summary")
+	and has("kg://context/fingerprint")
+	and has("kg://context/summary")
+	and has("kg://context/invariants")
 	and has("kg://index/summary")
-	and has("kg://index/full")
-	and has("kg://entity/project-context")
-	and has("kg://related/project-context")
 ' "$out/mcp/resource-read-summary.json" >"$out/mcp/assert-all-resource-classes-read.ok"
 
 OUT_DIR="$abs_out" node --input-type=module <<'EOF'

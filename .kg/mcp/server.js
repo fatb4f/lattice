@@ -44,17 +44,28 @@ const expressions = {
 
 const resourceExpressions = {
   'codex://surfaces': expressions.surfaces,
+  'codex://surfaces/index': 'surfaces-index',
   'codex://drift/findings': 'gate-findings',
   'codex://graph-state/phase-one': expressions.phaseOne,
+  'codex://graph-state/phase-one/summary': 'phase-one-summary',
   'codex://graph-state/phase-two': expressions.phaseTwo,
+  'codex://graph-state/phase-two/summary': 'phase-two-summary',
   'codex://promotion/status': expressions.promotionStatus,
+  'codex://promotion/status/summary': 'promotion-summary',
 };
 
 const kgResourceCommands = {
   'kg://query/selfContext': ['query', 'selfContext'],
+  'kg://context/full': ['query', 'selfContext'],
   'kg://index/summary': ['index'],
   'kg://index/full': ['index', '--full'],
 };
+
+const kgContextProjections = new Set([
+  'kg://context/fingerprint',
+  'kg://context/summary',
+  'kg://context/invariants',
+]);
 
 function resolveExecutable(command) {
   if (command.includes('/')) return resolve(repoRoot, command);
@@ -177,6 +188,160 @@ function fullIndex() {
   } catch (error) {
     return { ok: false, output: `failed to parse kg index --full: ${error.message}` };
   }
+}
+
+function parseJSONResult(result, label) {
+  if (!result.ok) return result;
+
+  try {
+    return { ok: true, value: JSON.parse(result.output || '{}') };
+  } catch (error) {
+    return { ok: false, output: `failed to parse ${label}: ${error.message}` };
+  }
+}
+
+function jsonOutput(value) {
+  return {
+    ok: true,
+    output: JSON.stringify(value, null, 2),
+  };
+}
+
+function surfaceIndex() {
+  const result = parseJSONResult(exportCue(expressions.surfaces), 'codex surfaces');
+  if (!result.ok) return result;
+
+  const surfaces = Object.entries(result.value || {}).map(([id, surface]) => ({
+    id,
+    kind: surface.kind,
+  }));
+
+  return jsonOutput({
+    schema: 'codex-surfaces-index.v1',
+    count: surfaces.length,
+    surfaces,
+  });
+}
+
+function surfaceProjection(id, projection) {
+  const result = parseJSONResult(exportCue(expressions.surfaces), 'codex surfaces');
+  if (!result.ok) return result;
+
+  const surface = result.value?.[id];
+  if (!surface) return { ok: false, output: `Codex surface not found: ${id}` };
+
+  if (projection === 'summary') {
+    return jsonOutput({
+      schema: 'codex-surface-summary.v1',
+      id,
+      kind: surface.kind,
+      role: surface.role,
+      path: surface.path,
+      description: surface.description,
+      reads: surface.reads,
+      forbids: surface.forbids,
+    });
+  }
+
+  if (projection === 'paths') {
+    return jsonOutput({
+      schema: 'codex-surface-paths.v1',
+      id,
+      path: surface.path,
+      requiredPaths: surface.requiredPaths || [],
+      forbiddenPaths: surface.forbiddenPaths || [],
+      protectedPaths: surface.protectedPaths || [],
+      watchedPaths: surface.watchedPaths || [],
+    });
+  }
+
+  return jsonOutput({
+    schema: 'codex-surface-full.v1',
+    id,
+    surface,
+  });
+}
+
+function summarizePhase(id, status) {
+  const findings = status?.evaluation?.findings || status?.findings || [];
+  const blockingFindings = status?.evaluation?.blockingFindings || status?.blockingFindings || [];
+  return {
+    id,
+    status: status?.phase?.status,
+    description: status?.phase?.description,
+    watchedPathCount: status?.phase?.watchedPaths?.length || 0,
+    findingCount: findings.length,
+    blockingFindingCount: blockingFindings.length,
+    blockingKinds: [...new Set(blockingFindings.map((finding) => finding.kind).filter(Boolean))].sort(),
+  };
+}
+
+function promotionSummary(scope) {
+  const result = parseJSONResult(phaseStatus('all'), 'promotion status');
+  if (!result.ok) return result;
+
+  const phases = result.value?.phases || {};
+  if (scope) {
+    return jsonOutput({
+      schema: 'codex-phase-status-summary.v1',
+      phase: summarizePhase(scope, phases[scope]),
+    });
+  }
+
+  return jsonOutput({
+    schema: 'codex-promotion-status-summary.v1',
+    phases: Object.fromEntries(
+      Object.entries(phases).map(([id, status]) => [id, summarizePhase(id, status)]),
+    ),
+  });
+}
+
+function selfContextProjection(projection) {
+  const result = parseJSONResult(kgCommand(['query', 'selfContext']), 'kg query selfContext');
+  if (!result.ok) return result;
+
+  const context = result.value || {};
+  const surfaces = context.surfaces || {};
+  const invariants = context.invariants || {};
+
+  if (projection === 'fingerprint') {
+    return jsonOutput({
+      schema: 'lattice-self-context-fingerprint.v1',
+      authority: context.authority,
+      surfaceCount: Object.keys(surfaces).length,
+      invariantCount: Object.keys(invariants).length,
+    });
+  }
+
+  if (projection === 'summary') {
+    return jsonOutput({
+      schema: 'lattice-self-context-summary.v1',
+      surfaces: Object.fromEntries(
+        Object.entries(surfaces).map(([id, surface]) => [
+          id,
+          {
+            role: surface.role,
+            path: surface.path,
+          },
+        ]),
+      ),
+      invariantIDs: Object.keys(invariants),
+    });
+  }
+
+  return jsonOutput({
+    schema: 'lattice-self-context-invariants.v1',
+    authority: context.authority,
+    invariants: Object.fromEntries(
+      Object.entries(invariants).map(([id, invariant]) => [
+        id,
+        {
+          statement: invariant.statement,
+          enforcedBy: invariant.enforcedBy,
+        },
+      ]),
+    ),
+  });
 }
 
 function entityByID(id) {
@@ -359,7 +524,35 @@ server.tool(
 
 for (const [uri, expression] of Object.entries(resourceExpressions)) {
   server.resource(uri, uri, async () => {
-    const result = expression === 'gate-findings' ? driftFindings('gate') : queryExpression(expression);
+    let result;
+    if (expression === 'gate-findings') {
+      result = driftFindings('gate');
+    } else if (expression === 'surfaces-index') {
+      result = surfaceIndex();
+    } else if (expression === 'promotion-summary') {
+      result = promotionSummary();
+    } else if (expression === 'phase-one-summary') {
+      result = promotionSummary('graph-state-phase-one');
+    } else if (expression === 'phase-two-summary') {
+      result = promotionSummary('graph-state-phase-two');
+    } else {
+      result = queryExpression(expression);
+    }
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: 'application/json',
+          text: result.output || '{}',
+        },
+      ],
+    };
+  });
+}
+
+for (const uri of kgContextProjections) {
+  server.resource(uri, uri, async () => {
+    const result = selfContextProjection(uri.split('/').at(-1));
     return {
       contents: [
         {
@@ -422,6 +615,27 @@ server.resource(
     };
   },
 );
+
+for (const projection of ['summary', 'paths', 'full']) {
+  const template = `codex://surface/{id}/${projection}`;
+  server.resource(
+    template,
+    new ResourceTemplate(template, { list: undefined }),
+    async (uri, variables) => {
+      const id = String(variables.id || '');
+      const result = surfaceProjection(id, projection);
+      return {
+        contents: [
+          {
+            uri: uri.href,
+            mimeType: 'application/json',
+            text: result.output || '{}',
+          },
+        ],
+      };
+    },
+  );
+}
 
 async function main() {
   const transport = new StdioServerTransport();

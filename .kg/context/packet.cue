@@ -126,6 +126,9 @@ package context
 	budget: close({
 		maxInlineEntities: int & >=0 & <=3
 		maxInlineBytes:    int & >=0 & <=4096
+		maxResourceHandles: int & >=0 & <=8
+		maxAutoReadBytes: int & >=0 & <=4096
+		allowExpensiveReads: bool
 		preferMCP:         true
 	})
 

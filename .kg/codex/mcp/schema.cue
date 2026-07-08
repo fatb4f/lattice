@@ -10,6 +10,10 @@ package codexdrift
 	command?: [...#NonEmptyString]
 	readOnly?: bool
 	expensive?: bool
+	defaultInject?: bool
+	autoRead?: bool
+	maxBytes?: int & >=0
+	projection?: "index" | "summary" | "fingerprint" | "invariants" | "full" | "template"
 })
 
 #ReadOnlyMCPTool: #MCPEntry & {

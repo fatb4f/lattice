@@ -15,6 +15,9 @@ package context
 
 #RoutePolicy: close({
 	maxInlineEntities: int & >=0 & <=3
+	maxResourceHandles: int & >=0 & <=8 | *8
+	maxAutoReadBytes: int & >=0 & <=4096 | *1024
+	allowExpensiveReads: bool | *false
 	allowedEntities: {
 		[#EntityID]: bool
 	}
@@ -31,6 +34,7 @@ package context
 routePolicy: {
 	"evidence-gather": #RoutePolicy & {
 		maxInlineEntities: 2
+		maxAutoReadBytes: 4096
 		allowedEntities: {
 			"ADR-002": true
 			"ADR-003": true
@@ -44,14 +48,14 @@ routePolicy: {
 			"INSIGHT-002",
 		]
 		mcpResources: [
-			"kg://entity/project-context",
-			"kg://query/selfContext",
+			"kg://context/summary",
 			"codex://drift/findings",
 		]
 	}
 
 	"promotion-review": #RoutePolicy & {
 		maxInlineEntities: 1
+		maxAutoReadBytes: 4096
 		allowedEntities: {
 			"project-context": true
 		}
@@ -59,15 +63,16 @@ routePolicy: {
 			"project-context",
 		]
 		mcpResources: [
-			"codex://promotion/status",
-			"codex://graph-state/phase-one",
-			"codex://graph-state/phase-two",
+			"codex://promotion/status/summary",
+			"codex://graph-state/phase-one/summary",
+			"codex://graph-state/phase-two/summary",
 			"codex://drift/findings",
 		]
 	}
 
 	"graph-state-review": #RoutePolicy & {
 		maxInlineEntities: 1
+		maxAutoReadBytes: 4096
 		allowedEntities: {
 			"project-context": true
 		}
@@ -75,9 +80,9 @@ routePolicy: {
 			"project-context",
 		]
 		mcpResources: [
-			"codex://graph-state/phase-one",
-			"codex://graph-state/phase-two",
-			"codex://promotion/status",
+			"codex://graph-state/phase-one/summary",
+			"codex://graph-state/phase-two/summary",
+			"codex://promotion/status/summary",
 		]
 		files: [
 			"projections/graph-state",
@@ -87,6 +92,7 @@ routePolicy: {
 
 	"kg-maintenance": #RoutePolicy & {
 		maxInlineEntities: 1
+		maxAutoReadBytes: 2048
 		allowedEntities: {
 			"project-context": true
 		}
@@ -94,7 +100,7 @@ routePolicy: {
 			"project-context",
 		]
 		mcpResources: [
-			"kg://query/selfContext",
+			"kg://context/invariants",
 			"kg://index/summary",
 		]
 		files: [
@@ -105,6 +111,7 @@ routePolicy: {
 
 	"resolver-maintenance": #RoutePolicy & {
 		maxInlineEntities: 1
+		maxAutoReadBytes: 2048
 		allowedEntities: {
 			"project-context": true
 		}
@@ -112,13 +119,14 @@ routePolicy: {
 			"project-context",
 		]
 		mcpResources: [
-			"kg://query/selfContext",
-			"codex://surfaces",
+			"kg://context/summary",
+			"codex://surfaces/index",
 		]
 	}
 
 	"repo-inspection": #RoutePolicy & {
 		maxInlineEntities: 1
+		maxAutoReadBytes: 2048
 		allowedEntities: {
 			"project-context": true
 		}
@@ -126,16 +134,17 @@ routePolicy: {
 			"project-context",
 		]
 		mcpResources: [
-			"kg://query/selfContext",
+			"kg://context/summary",
 		]
 	}
 
 	"default-minimal": #RoutePolicy & {
 		maxInlineEntities: 0
+		maxAutoReadBytes: 512
 		allowedEntities: {}
 		defaultEntities: []
 		mcpResources: [
-			"kg://query/selfContext",
+			"kg://context/fingerprint",
 		]
 	}
 }
