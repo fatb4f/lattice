@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+set -eu
+
+repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+vocab=$repo_root/.kb/cue.mod/pkg/quicue.ca/kg/vocab/context.cue
+[ -f "$vocab" ] || vocab=$repo_root/.kg/vocab/context.cue
+
+event_json=$(mktemp "${TMPDIR:-/tmp}/kg-hook.XXXXXX.json")
+trap 'rm -f "$event_json"' EXIT HUP INT TERM
+cat >"$event_json"
+
+exec "$repo_root/.kg/tools/kg" hook codex user-prompt-submit \
+	--event "$event_json" \
+	--kb "$repo_root/.kb" \
+	--vocab "$vocab" \
+	--out codex-hook-json

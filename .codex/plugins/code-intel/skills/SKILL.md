@@ -11,7 +11,7 @@ This plugin projection is the installable scaffold shell for the code-intel bund
 
 - Treat generated plugin projection files as evidence only.
 - Do not treat MCP output, LSP diagnostics, generated type stubs, or generated workflow JSON as source authority.
-- Do not import or depend on the agent-context-resolver bundle.
+- Do not import or depend on the retired agent-context-resolver bundle.
 - Do not place `contracts`, `generated`, or `manifest.json` under the installable generated root.
 
 ## Validation

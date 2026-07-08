@@ -12,7 +12,7 @@ This installed plugin contains one operator skill and read-only reference materi
 - Load reference/type overlays as read-only operator context.
 - Do not treat reference files as source authority.
 - Do not treat MCP output, LSP diagnostics, type stubs, or workflow JSON as source authority.
-- Do not import or depend on the agent-context-resolver bundle.
+- Do not import or depend on the retired agent-context-resolver bundle.
 - Do not place `contracts`, `generated`, `skills`, or `manifest.json` under the installed plugin root.
 - All CUE authority remains in factory/plugin-bundle contracts.
 - All dotfiles source authority remains in dotfiles source paths.

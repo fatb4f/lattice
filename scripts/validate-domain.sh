@@ -58,6 +58,44 @@ project_kg_declared_paths() {
 	cue export "${kg_files[@]}" -e 'latticeReference.surfaces["project-knowledge-kg"].requiredPaths' --out json | jq -r '.[]'
 }
 
+validate_kg_runtime() {
+	cue vet ./.kg/context/*.cue
+	cue export ./.kg/vocab/context.cue -e context --out json >/dev/null
+	cue export ./.kb/cue.mod/pkg/quicue.ca/kg/vocab/context.cue -e context --out json >/dev/null
+	cue export ./.kg/context/*.cue -e selectionPolicy --out json >/dev/null
+	cue export ./.kg/context/*.cue -e contextRuntimeClosed --out json >/dev/null
+	expect_failure cue export ./.kg/context/*.cue -e '(#GeneratedArtifact & {path: ".kg/generated/context/prompt-routes.json", role: "static-export", runtimeInput: true})' --out cue
+
+	local generated_context_input
+	for generated_context_input in \
+		.kg/generated/context/context-index.json \
+		.kg/generated/context/resolver-fragments.json \
+		.kg/generated/context/prompt-routes.json \
+		.kg/generated/context/route-inventory.json; do
+		if [[ -e "$generated_context_input" ]]; then
+			printf 'forbidden generated runtime context input exists: %s\n' "$generated_context_input"
+			return 1
+		fi
+	done
+
+	printf '{"hook_event_name":"UserPromptSubmit","prompt":"project knowledge graph context"}' |
+		.kg/hooks/codex/user-prompt-submit |
+		jq -e '.hookSpecificOutput.hookEventName == "UserPromptSubmit"
+			and (.hookSpecificOutput.additionalContext | fromjson
+				| .schema == "lattice.context-packet.v1"
+				and .selection.selector == "kg-native-context-json-ld"
+				and .vocab.kind == "jsonld-context"
+				and .vocab.source == ".kb/cue.mod/pkg/quicue.ca/kg/vocab/context.cue"
+				and (.graph["@context"] | type) == "object"
+				and (.graph["@context"].context_text == "kg:context")
+				and (.vocab.context["@graph"] | length) > 0
+				and (.graph["@graph"] | length) > 0
+				and (.graph["@graph"] | all(has("@id") and has("@type")))
+				and (.graph | has("nodes") | not)
+				and (.graph | has("edges") | not)
+				and (.resources | map(select(.readOnly == true)) | length) == (.resources | length))' >/dev/null
+}
+
 validate_meta() {
 	cue vet ./meta
 	cue export ./meta -e _closedState --out cue >/dev/null
@@ -303,6 +341,8 @@ validate_kg() {
 	cue export "${kg_files[@]}" .kg/codex/aggregate/*.cue .kg/codex/tests/valid/*.cue -e admissiblePhaseWatchdog --out json >/dev/null
 	cue export .kg/codex/mcp/*.cue -e mcpPolicy --out json >/dev/null
 	expect_failure cue export .kg/codex/mcp/*.cue .kg/codex/tests/invalid/mutation-tool.cue -e '(#ReadOnlyMCPTool & invalidMutationTool)' --out cue
+	cue export "${kg_files[@]}" .kg/codex/tests/invalid/self-context-fixtures.cue -e '(#SelfContextChecks & {selfContext: invalidGeneratedAuthoritySelfContext}).findings[0] & {kind: "generated-promoted-to-authority", response: "block"}' --out cue >/dev/null
+	cue export "${kg_files[@]}" .kg/codex/tests/invalid/self-context-fixtures.cue -e '(#SelfContextChecks & {selfContext: invalidProviderRoleSelfContext}).findings[0] & {kind: "policy-violated", response: "block"}' --out cue >/dev/null
 }
 
 validate_project_kg() {
@@ -323,11 +363,21 @@ validate_project_kg() {
 	kg vet >/dev/null
 	kg index --full >/dev/null
 	kg settle >/dev/null
+	(cd .kb && cue vet .)
+	(cd .kb/decisions && cue vet .)
+	(cd .kb/insights && cue vet .)
+	(cd .kb/patterns && cue vet .)
+	(cd .kb/rejected && cue vet .)
+	(cd .kb/tasks && cue vet .)
+	(cd .kb/workspace && cue vet .)
+	(cd .kb/sources && cue vet .)
+	(cd .kb && cue export . -e kb --out json >/dev/null)
 }
 
 validate_meta
 validate_kg
 validate_project_kg
+validate_kg_runtime
 validate_patterns
 validate_sources
 validate_projections

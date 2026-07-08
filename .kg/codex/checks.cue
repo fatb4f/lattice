@@ -36,6 +36,11 @@ import (
 	facts: close({
 		repo?:  #ObservedRepo
 		patch?: #ObservedPatch
+		selfContext: #SelfContextFacts | *{
+			schema:     "lattice-self-context.v1"
+			surfaces:   {}
+			invariants: {}
+		}
 	})
 }
 
@@ -81,6 +86,11 @@ import (
 	facts: close({
 		repo:  #ObservedRepo
 		patch: #ObservedPatch
+		selfContext: #SelfContextFacts | *{
+			schema:     "lattice-self-context.v1"
+			surfaces:   {}
+			invariants: {}
+		}
 	})
 
 	let Model = model
@@ -97,10 +107,41 @@ import (
 		patch: Patch
 	}).output
 
+	selfContextCheck: (#SelfContextChecks & {
+		selfContext: facts.selfContext
+	})
+
 	findings: list.Concat([
 		[for finding in repoCheck.findings {finding}],
 		[for finding in patchCheck.findings {finding}],
+		[for finding in selfContextCheck.findings {finding}],
 	])
+})
+
+#SelfContextChecks: close({
+	selfContext: #SelfContextFacts
+
+	findings: [
+		for id, declaredSurface in selfContext.surfaces
+		if declaredSurface.kind == "provider" && declaredSurface.role != "authority" {
+			kind:     "policy-violated"
+			surface:  id
+			path:     declaredSurface.path
+			severity: "violation"
+			response: "block"
+			reason:   "Provider surfaces must be authority surfaces."
+		},
+
+		for id, declaredSurface in selfContext.surfaces
+		if declaredSurface.kind == "generated" && declaredSurface.role == "authority" {
+			kind:     "generated-promoted-to-authority"
+			surface:  id
+			path:     declaredSurface.path
+			severity: "critical"
+			response: "block"
+			reason:   "Generated surfaces cannot be authority surfaces."
+		},
+	]
 })
 
 #RepoSurfaceChecks: close({

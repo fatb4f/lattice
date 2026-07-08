@@ -64,9 +64,11 @@ fi
 repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 facts_json=$(mktemp "${TMPDIR:-/tmp}/codex-drift-facts.XXXXXX.json")
 facts_cue=$(mktemp "${TMPDIR:-/tmp}/codex-drift-facts.XXXXXX.cue")
+self_context_json=$(mktemp "${TMPDIR:-/tmp}/lattice-self-context.XXXXXX.json")
+self_context_cue=$(mktemp "${TMPDIR:-/tmp}/lattice-self-context.XXXXXX.cue")
 promotion_json=$(mktemp "${TMPDIR:-/tmp}/codex-promotion-facts.XXXXXX.json")
 promotion_cue=$(mktemp "${TMPDIR:-/tmp}/codex-promotion-facts.XXXXXX.cue")
-trap 'rm -f "$facts_json" "$facts_cue" "$promotion_json" "$promotion_cue"' EXIT HUP INT TERM
+trap 'rm -f "$facts_json" "$facts_cue" "$self_context_json" "$self_context_cue" "$promotion_json" "$promotion_cue"' EXIT HUP INT TERM
 
 if [ -n "$facts" ]; then
 	cp "$facts" "$facts_json"
@@ -74,11 +76,23 @@ else
 	"$repo_root/.kg/codex/tools/drift-facts" >"$facts_json"
 fi
 
+if command -v kg >/dev/null 2>&1 && [ -d "$repo_root/.kb" ]; then
+	(cd "$repo_root" && kg query selfContext) >"$self_context_json"
+else
+	printf '{"schema":"lattice-self-context.v1","surfaces":{},"invariants":{}}' >"$self_context_json"
+fi
+
 {
 	printf 'package codexdrift\n\n_observedFacts: '
 	cat "$facts_json"
 	printf '\n'
 } >"$facts_cue"
+
+{
+	printf 'package codexdrift\n\n_observedSelfContext: '
+	cat "$self_context_json"
+	printf '\n'
+} >"$self_context_cue"
 
 case "$mode" in
 gate | promotion)
@@ -111,10 +125,10 @@ done
 
 case "$mode" in
 full)
-	expr='(#FullDriftKG & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo, patch: _observedFacts.patch}}).findings'
+	expr='(#FullDriftKG & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo, patch: _observedFacts.patch, selfContext: _observedSelfContext}}).findings'
 	;;
 gate)
-	expr='(#FullDriftGate & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo, patch: _observedFacts.patch, promotion: _observedPromotionFacts}}).findings'
+	expr='(#FullDriftGate & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo, patch: _observedFacts.patch, promotion: _observedPromotionFacts, selfContext: _observedSelfContext}}).findings'
 	;;
 repo)
 	expr='(#RepoDriftKG & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo}}).findings'
@@ -124,9 +138,9 @@ patch)
 	;;
 phase)
 	if [ -n "$phase" ]; then
-		expr='(#PhaseWatchdogStatus & {findings: (#FullDriftKG & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo, patch: _observedFacts.patch}}).findings}).promotionStatus.phases["'"$phase"'"]'
+		expr='(#PhaseWatchdogStatus & {findings: (#FullDriftKG & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo, patch: _observedFacts.patch, selfContext: _observedSelfContext}}).findings}).promotionStatus.phases["'"$phase"'"]'
 	else
-		expr='(#PhaseWatchdogStatus & {findings: (#FullDriftKG & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo, patch: _observedFacts.patch}}).findings}).promotionStatus'
+		expr='(#PhaseWatchdogStatus & {findings: (#FullDriftKG & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo, patch: _observedFacts.patch, selfContext: _observedSelfContext}}).findings}).promotionStatus'
 	fi
 	;;
 promotion)
@@ -134,4 +148,4 @@ promotion)
 	;;
 esac
 
-cue export $cue_files "$facts_cue" "$promotion_cue" -e "$expr" --out "$format"
+cue export $cue_files "$facts_cue" "$self_context_cue" "$promotion_cue" -e "$expr" --out "$format"

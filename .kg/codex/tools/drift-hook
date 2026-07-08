@@ -5,20 +5,21 @@ input_json=$(mktemp "${TMPDIR:-/tmp}/codex-drift-hook.XXXXXX.json")
 findings_json=$(mktemp "${TMPDIR:-/tmp}/codex-drift-findings.XXXXXX.json")
 phase_status_json=$(mktemp "${TMPDIR:-/tmp}/codex-drift-phase-status.XXXXXX.json")
 kg_index_json=$(mktemp "${TMPDIR:-/tmp}/codex-drift-kg-index.XXXXXX.json")
+self_context_json=$(mktemp "${TMPDIR:-/tmp}/lattice-self-context.XXXXXX.json")
 kg_err=$(mktemp "${TMPDIR:-/tmp}/codex-drift-kg.XXXXXX.err")
-trap 'rm -f "$input_json" "$findings_json" "$phase_status_json" "$kg_index_json" "$kg_err"' EXIT HUP INT TERM
+trap 'rm -f "$input_json" "$findings_json" "$phase_status_json" "$kg_index_json" "$self_context_json" "$kg_err"' EXIT HUP INT TERM
 
 cat >"$input_json"
 
 event_name=$(jq -r '.hook_event_name // .hookEventName // "unknown"' "$input_json")
 case "$event_name" in
-UserPromptSubmit | Stop | SessionEnd | TurnEnd | AgentTurnEnd | unknown) ;;
+UserPromptSubmit | PreInvocation | Stop | SessionEnd | TurnEnd | AgentTurnEnd | PostInvocation | unknown) ;;
 *) exit 0 ;;
 esac
 
 repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 check_mode=gate
-if [ "$event_name" = "UserPromptSubmit" ]; then
+if [ "$event_name" = "UserPromptSubmit" ] || [ "$event_name" = "PreInvocation" ]; then
 	check_mode=full
 fi
 
@@ -27,6 +28,9 @@ fi
 
 if command -v kg >/dev/null 2>&1 && [ -d "$repo_root/.kb" ]; then
 	if (cd "$repo_root" && kg vet) >"$kg_err" 2>&1; then
+		if ! (cd "$repo_root" && kg query selfContext) >"$self_context_json" 2>>"$kg_err"; then
+			printf '{"schema":"lattice-self-context.v1","surfaces":{},"invariants":{}}' >"$self_context_json"
+		fi
 		if (cd "$repo_root" && kg index --full) >"$kg_index_json" 2>>"$kg_err"; then
 			kg_cli_context=$(
 				jq -cn --slurpfile index "$kg_index_json" '{
@@ -53,6 +57,7 @@ if command -v kg >/dev/null 2>&1 && [ -d "$repo_root/.kb" ]; then
 			)
 		fi
 	else
+		printf '{"schema":"lattice-self-context.v1","surfaces":{},"invariants":{}}' >"$self_context_json"
 		kg_cli_context=$(
 			jq -cn --rawfile error "$kg_err" '{
 				schema: "kg-cli-hook-context.v1",
@@ -66,6 +71,7 @@ if command -v kg >/dev/null 2>&1 && [ -d "$repo_root/.kb" ]; then
 		)
 	fi
 else
+	printf '{"schema":"lattice-self-context.v1","surfaces":{},"invariants":{}}' >"$self_context_json"
 	kg_cli_context=$(
 		jq -cn '{
 			schema: "kg-cli-hook-context.v1",
@@ -93,7 +99,7 @@ max_response=$(
 )
 
 if [ "$event_name" = "UserPromptSubmit" ]; then
-	jq -cn --slurpfile findings "$findings_json" --slurpfile phases "$phase_status_json" --argjson kgCli "$kg_cli_context" --arg maxResponse "$max_response" --arg checkMode "$check_mode" '{
+	jq -cn --slurpfile findings "$findings_json" --slurpfile phases "$phase_status_json" --slurpfile selfContext "$self_context_json" --argjson kgCli "$kg_cli_context" --arg maxResponse "$max_response" --arg checkMode "$check_mode" '{
 		hookSpecificOutput: {
 			hookEventName: "UserPromptSubmit",
 			additionalContext: ({
@@ -104,7 +110,25 @@ if [ "$event_name" = "UserPromptSubmit" ]; then
 				maxResponse: $maxResponse,
 				findings: $findings[0],
 				phaseStatus: $phases[0],
-				kgCli: $kgCli
+				kgCli: $kgCli,
+				selfContext: $selfContext[0],
+				codexContext: {
+					schema: "codex-context.v1",
+					authority: {
+						projectKnowledge: ($selfContext[0].surfaces["project-kg"].path // ".kb"),
+						codexProvider: ($selfContext[0].surfaces["codex-provider"].path // ".kg/codex"),
+						kernel: ($selfContext[0].surfaces["lattice-kernel"].path // "meta/kernel.cue"),
+						patterns: ($selfContext[0].surfaces["idiomatic-patterns"].path // "patterns")
+					},
+					surfaceMap: (
+						reduce ($selfContext[0].surfaces // {} | to_entries[]) as $surface ({};
+							.[$surface.value.path] = (
+								if $surface.value.kind == "kg" then $surface.value.id else $surface.value.kind end
+							)
+						)
+					),
+					rules: [($selfContext[0].invariants // {} | to_entries[] | .value.statement)]
+				}
 			} | tojson)
 		}
 	}'
@@ -112,7 +136,7 @@ if [ "$event_name" = "UserPromptSubmit" ]; then
 fi
 
 if [ "$max_response" = "block" ]; then
-	jq -cn --slurpfile findings "$findings_json" --slurpfile phases "$phase_status_json" --argjson kgCli "$kg_cli_context" --arg maxResponse "$max_response" --arg checkMode "$check_mode" '{
+	jq -cn --slurpfile findings "$findings_json" --slurpfile phases "$phase_status_json" --slurpfile selfContext "$self_context_json" --argjson kgCli "$kg_cli_context" --arg maxResponse "$max_response" --arg checkMode "$check_mode" '{
 		decision: "block",
 		reason: "Codex drift KG found blocking drift.",
 		drift: {
@@ -123,13 +147,31 @@ if [ "$max_response" = "block" ]; then
 			maxResponse: $maxResponse,
 			findings: $findings[0],
 			phaseStatus: $phases[0],
-			kgCli: $kgCli
+			kgCli: $kgCli,
+			selfContext: $selfContext[0],
+			codexContext: {
+				schema: "codex-context.v1",
+				authority: {
+					projectKnowledge: ($selfContext[0].surfaces["project-kg"].path // ".kb"),
+					codexProvider: ($selfContext[0].surfaces["codex-provider"].path // ".kg/codex"),
+					kernel: ($selfContext[0].surfaces["lattice-kernel"].path // "meta/kernel.cue"),
+					patterns: ($selfContext[0].surfaces["idiomatic-patterns"].path // "patterns")
+				},
+				surfaceMap: (
+					reduce ($selfContext[0].surfaces // {} | to_entries[]) as $surface ({};
+						.[$surface.value.path] = (
+							if $surface.value.kind == "kg" then $surface.value.id else $surface.value.kind end
+						)
+					)
+				),
+				rules: [($selfContext[0].invariants // {} | to_entries[] | .value.statement)]
+			}
 		}
 	}'
 	exit 1
 fi
 
-jq -cn --slurpfile findings "$findings_json" --slurpfile phases "$phase_status_json" --argjson kgCli "$kg_cli_context" --arg maxResponse "$max_response" --arg checkMode "$check_mode" '{
+jq -cn --slurpfile findings "$findings_json" --slurpfile phases "$phase_status_json" --slurpfile selfContext "$self_context_json" --argjson kgCli "$kg_cli_context" --arg maxResponse "$max_response" --arg checkMode "$check_mode" '{
 	decision: "allow",
 	drift: {
 		schema: "codex-drift-context.v1",
@@ -139,6 +181,24 @@ jq -cn --slurpfile findings "$findings_json" --slurpfile phases "$phase_status_j
 		maxResponse: $maxResponse,
 		findings: $findings[0],
 		phaseStatus: $phases[0],
-		kgCli: $kgCli
+		kgCli: $kgCli,
+		selfContext: $selfContext[0],
+		codexContext: {
+			schema: "codex-context.v1",
+			authority: {
+				projectKnowledge: ($selfContext[0].surfaces["project-kg"].path // ".kb"),
+				codexProvider: ($selfContext[0].surfaces["codex-provider"].path // ".kg/codex"),
+				kernel: ($selfContext[0].surfaces["lattice-kernel"].path // "meta/kernel.cue"),
+				patterns: ($selfContext[0].surfaces["idiomatic-patterns"].path // "patterns")
+			},
+			surfaceMap: (
+				reduce ($selfContext[0].surfaces // {} | to_entries[]) as $surface ({};
+					.[$surface.value.path] = (
+						if $surface.value.kind == "kg" then $surface.value.id else $surface.value.kind end
+					)
+				)
+			),
+			rules: [($selfContext[0].invariants // {} | to_entries[] | .value.statement)]
+		}
 	}
 }'

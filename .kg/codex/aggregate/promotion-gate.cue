@@ -135,14 +135,20 @@ import "list"
 		repo:      #ObservedRepo
 		patch:     #ObservedPatch
 		promotion: #PromotionGateFacts
+		selfContext: #SelfContextFacts | *{
+			schema:     "lattice-self-context.v1"
+			surfaces:   {}
+			invariants: {}
+		}
 	})
 
 	drift: (#FullDriftKG & {
 		schema: "codex-drift-kg.v1"
 		model:  Model
 		facts: {
-			repo:  Facts.repo
-			patch: Facts.patch
+			repo:        Facts.repo
+			patch:       Facts.patch
+			selfContext: Facts.selfContext
 		}
 	})
 

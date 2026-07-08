@@ -21,4 +21,9 @@ mcpTools: {
 		description: "Explain a declared Codex KG control surface."
 		readOnly: true
 	}
+	kg_context_match: {
+		name: "kg_context_match"
+		description: "Return the JSON-LD project KG context packet that UserPromptSubmit would inject for a prompt."
+		readOnly: true
+	}
 }

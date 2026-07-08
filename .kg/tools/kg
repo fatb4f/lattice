@@ -1,0 +1,307 @@
+#!/usr/bin/env sh
+set -eu
+
+usage() {
+	printf 'usage: kg hook codex user-prompt-submit --event FILE --kb DIR --vocab FILE --out codex-hook-json\n' >&2
+	exit 2
+}
+
+[ "$#" -ge 4 ] || usage
+[ "$1" = "hook" ] || usage
+[ "$2" = "codex" ] || usage
+[ "$3" = "user-prompt-submit" ] || usage
+shift 3
+
+event=
+kb=
+vocab=
+out=
+
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+	--event)
+		[ "$#" -ge 2 ] || usage
+		event=$2
+		shift 2
+		;;
+	--kb)
+		[ "$#" -ge 2 ] || usage
+		kb=$2
+		shift 2
+		;;
+	--vocab)
+		[ "$#" -ge 2 ] || usage
+		vocab=$2
+		shift 2
+		;;
+	--out)
+		[ "$#" -ge 2 ] || usage
+		out=$2
+		shift 2
+		;;
+	*)
+		usage
+		;;
+	esac
+done
+
+[ -n "$event" ] && [ -f "$event" ] || usage
+[ -n "$kb" ] && [ -d "$kb" ] || usage
+[ -n "$vocab" ] && [ -f "$vocab" ] || usage
+[ "$out" = "codex-hook-json" ] || usage
+
+case "$kb" in
+*..*) printf 'kg hook: --kb must not contain parent traversal\n' >&2; exit 2 ;;
+esac
+case "$vocab" in
+*..*) printf 'kg hook: --vocab must not contain parent traversal\n' >&2; exit 2 ;;
+esac
+
+event_name=$(jq -r '.hook_event_name // .hookEventName // "UserPromptSubmit"' "$event")
+[ "$event_name" = "UserPromptSubmit" ] || exit 0
+
+prompt=$(jq -r '.prompt // .userPrompt // .message // empty' "$event")
+[ -n "$prompt" ] || exit 0
+
+repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+kg_bin=$(command -v kg || true)
+[ -n "$kg_bin" ] || { printf 'kg hook: external kg CLI required\n' >&2; exit 2; }
+case "$kg_bin" in
+/*) kg_bin_abs=$kg_bin ;;
+*) kg_bin_abs=$(cd "$(dirname "$kg_bin")" && pwd -P)/$(basename "$kg_bin") ;;
+esac
+self_bin=$repo_root/.kg/tools/kg
+self_bin_abs=$(cd "$(dirname "$self_bin")" && pwd -P)/$(basename "$self_bin")
+[ "$kg_bin_abs" != "$self_bin_abs" ] || {
+	printf 'kg hook: external kg CLI resolves to local shim; refusing recursion\n' >&2
+	exit 2
+}
+kg_bin=$kg_bin_abs
+
+index_json=$(mktemp "${TMPDIR:-/tmp}/lattice-kg-index.XXXXXX.json")
+vocab_json=$(mktemp "${TMPDIR:-/tmp}/lattice-kg-vocab.XXXXXX.json")
+entities_json=$(mktemp "${TMPDIR:-/tmp}/lattice-context-entities.XXXXXX.json")
+packet_json=$(mktemp "${TMPDIR:-/tmp}/lattice-context-packet.XXXXXX.json")
+packet_cue=$(mktemp "${TMPDIR:-/tmp}/lattice-context-packet.XXXXXX.cue")
+trap 'rm -f "$index_json" "$vocab_json" "$entities_json" "$packet_json" "$packet_cue"' EXIT HUP INT TERM
+
+cue export "$vocab" -e context --out json >"$vocab_json"
+vocab_source=${vocab#"$repo_root/"}
+
+if [ "$kb" != "$repo_root/.kb" ]; then
+	printf 'kg hook: this runtime only accepts the repo-local .kb authority\n' >&2
+	exit 2
+fi
+
+(cd "$repo_root" && "$kg_bin" vet) >/dev/null
+(cd "$repo_root" && "$kg_bin" settle) >/dev/null
+(cd "$repo_root" && "$kg_bin" index --full) >"$index_json"
+
+jq -c --arg prompt "$prompt" '
+	def text: tostring | ascii_downcase;
+	def words:
+		$prompt
+		| ascii_downcase
+		| gsub("[^a-z0-9_-]+"; " ")
+		| split(" ")
+		| map(select(length > 3))
+		| unique;
+	def matches($entry):
+		($entry | text) as $haystack
+		| (words | length) == 0 or any(words[]; . as $word | $haystack | contains($word));
+
+	[
+		{
+			id: "project-context",
+			type: "Context",
+			source: ".kb/manifest.cue",
+			summary: "lattice: CUE lattice patterns, validation profiles, graph-state projections, and Codex KG hook controls."
+		},
+		(.decisions // {} | to_entries[] | select(matches(.value)) | {
+			id: .value.id,
+			type: "Decision",
+			source: ".kb/decisions",
+			summary: (.value.title // .value.decision)
+		}),
+		(.insights // {} | to_entries[] | select(matches(.value)) | {
+			id: .value.id,
+			type: "Insight",
+			source: ".kb/insights",
+			summary: .value.statement
+		}),
+		(.rejected // {} | to_entries[] | select(matches(.value)) | {
+			id: .value.id,
+			type: "Rejected",
+			source: ".kb/rejected",
+			summary: (.value.approach + " - " + .value.reason)
+		}),
+		(.patterns // {} | to_entries[] | select(matches(.value)) | {
+			id: .key,
+			type: "Pattern",
+			source: ".kb/patterns",
+			summary: (.value.name + ": " + .value.problem)
+		})
+	] | unique_by(.id) | .[0:12]
+' "$index_json" >"$entities_json"
+
+jq -n \
+	--arg query "$prompt" \
+	--arg vocab_source "$vocab_source" \
+	--slurpfile entities "$entities_json" \
+	--slurpfile index "$index_json" \
+	--slurpfile vocab "$vocab_json" \
+	'
+	def selected_ids:
+		$entities[0]
+		| map(.id)
+		| map(select(. != "project-context"));
+	def selected($id):
+		selected_ids | index($id);
+	def related_ids($entry):
+		($entry.related // {})
+		| to_entries
+		| map(select(.value == true) | {"@id": ("kg:" + .key)});
+	def decision_node:
+		(.decisions // {})
+		| to_entries[]
+		| .value
+		| select(selected(.id))
+		| {
+			"@id": ("kg:" + .id),
+			"@type": ["prov:Activity", "kg:Decision"],
+			id: .id,
+			title: .title,
+			"rdfs:label": .title,
+			status: .status,
+			date: .date,
+			context_text: .context,
+			decision: .decision,
+			rationale: .rationale,
+			consequences: .consequences,
+			related: related_ids(.)
+		};
+	def insight_node:
+		(.insights // {})
+		| to_entries[]
+		| .value
+		| select(selected(.id))
+		| {
+			"@id": ("kg:" + .id),
+			"@type": ["prov:Entity", "kg:Insight"],
+			id: .id,
+			"rdfs:label": .statement,
+			statement: .statement,
+			evidence: .evidence,
+			method: .method,
+			confidence: .confidence,
+			discovered: .discovered,
+			implication: .implication,
+			related: related_ids(.)
+		};
+	def rejected_node:
+		(.rejected // {})
+		| to_entries[]
+		| .value
+		| select(selected(.id))
+		| {
+			"@id": ("kg:" + .id),
+			"@type": ["oa:Annotation", "kg:Rejected"],
+			id: .id,
+			"rdfs:label": .approach,
+			approach: .approach,
+			reason: .reason,
+			date: .date,
+			alternative: .alternative,
+			related: related_ids(.)
+		};
+	def pattern_node:
+		(.patterns // {})
+		| to_entries[]
+		| {key: .key, value: .value}
+		| select(selected(.key))
+		| {
+			"@id": ("kg:" + .key),
+			"@type": "kg:Pattern",
+			id: .key,
+			title: .value.name,
+			"rdfs:label": .value.name,
+			category: .value.category,
+			problem: .value.problem,
+			solution: .value.solution,
+			context_text: .value.context,
+			example: .value.example,
+			related: related_ids(.value)
+		};
+	{
+		schema: "lattice.context-packet.v1",
+		host: "codex",
+		event: "UserPromptSubmit",
+		kb: {root: ".kb"},
+		selection: {
+			query: $query,
+			selector: "kg-native-context-json-ld"
+		},
+		entities: $entities[0],
+		resources: (
+			[
+				($entities[0][] | {
+					uri: ("kg://project/" + .id),
+					path: .source,
+					source: "kg",
+					readOnly: true
+				}),
+				{
+					uri: "codex://surfaces",
+					path: ".kg/codex/mcp/resources.cue",
+					source: "mcp",
+					readOnly: true
+				},
+				{
+					uri: "codex://drift/findings",
+					path: ".kg/codex/tools/drift-check",
+					source: "mcp",
+					readOnly: true
+				}
+			] | unique_by(.uri)
+		),
+		vocab: {
+			kind: "jsonld-context",
+			source: $vocab_source,
+			namespace: "https://quicue.ca/kg#",
+			context: $vocab[0]
+		},
+		graph: {
+			"@context": $vocab[0]["@context"],
+			"@graph": (
+				$index[0]
+				| [decision_node, insight_node, rejected_node, pattern_node]
+				| map(with_entries(select(.value != null and .value != [])))
+			)
+		},
+		output: {target: "codex.additionalContext"},
+		gates: {
+			vocabMapped: true,
+			kbValid: true,
+			noDanglingRefs: true,
+			noGeneratedInput: true,
+			noParentTraversal: true,
+			transientProjection: true
+		},
+		generated: true,
+		authority: false
+	}' >"$packet_json"
+
+{
+	printf 'package context\n\n_packet: '
+	cat "$packet_json"
+	printf '\n'
+} >"$packet_cue"
+
+cue export "$repo_root/.kg/context"/*.cue "$packet_cue" -e '(_packet & #ValidatedContextPacket)' --out json >/dev/null
+
+jq -cn --slurpfile packet "$packet_json" '{
+	hookSpecificOutput: {
+		hookEventName: "UserPromptSubmit",
+		additionalContext: ($packet[0] | tojson)
+	}
+}'

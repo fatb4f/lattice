@@ -14,6 +14,7 @@ latticeReference: #DriftModel & {
 		"graph-state-promotion",
 		"graph-state-drift-reports",
 		"codex-drift-kg",
+		"kg-hook-runtime",
 		"project-knowledge-kg",
 		"kg-agent-skill",
 		"generated-codex-facts",
@@ -174,6 +175,7 @@ latticeReference: #DriftModel & {
 				".kg/codex/tests/valid/phase-watchdog.cue",
 				".kg/codex/tests/valid/phase-watchdog-admission.cue",
 				".kg/codex/tests/invalid/mutation-tool.cue",
+				".kg/codex/tests/invalid/self-context-fixtures.cue",
 				".kg/codex/tools/drift-facts",
 				".kg/codex/tools/drift-check",
 				".kg/codex/tools/drift-hook",
@@ -204,6 +206,30 @@ latticeReference: #DriftModel & {
 				"patterns/kg",
 				"meta/kg.cue",
 				"meta/kg",
+			]
+		}
+
+		"kg-hook-runtime": {
+			id:          "kg-hook-runtime"
+			kind:        "adapter"
+			description: "KG hook runtime for dynamic .kb context selection and transient Codex context packets."
+
+			requiredPaths: [
+				".kg/context/emit.cue",
+				".kg/context/kernel.cue",
+				".kg/context/packet.cue",
+				".kg/context/select.cue",
+				".kg/context/validate.cue",
+				".kg/hooks/codex/user-prompt-submit",
+				".kg/tools/kg",
+				".kg/vocab/context.cue",
+			]
+
+			protectedPaths: [
+				".kg/context",
+				".kg/hooks",
+				".kg/tools/kg",
+				".kg/vocab/context.cue",
 			]
 		}
 
@@ -280,8 +306,17 @@ latticeReference: #DriftModel & {
 
 			requiredPaths: [
 				".kb/cue.mod/module.cue",
+				".kb/manifest.cue",
 				".kb/project.cue",
 				".kb/index.cue",
+				".kb/self-context.cue",
+				".kb/decisions/decisions.cue",
+				".kb/insights/insights.cue",
+				".kb/patterns/patterns.cue",
+				".kb/rejected/rejected.cue",
+				".kb/tasks/tasks.cue",
+				".kb/workspace/workspace.cue",
+				".kb/sources/sources.cue",
 				".kb/001-untitled.cue",
 				".kb/002-untitled.cue",
 				".kb/003-directory-contract.cue",

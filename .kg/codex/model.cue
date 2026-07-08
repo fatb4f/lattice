@@ -56,6 +56,21 @@ package codexdrift
 	changes: [...#ObservedChange]
 })
 
+#SelfContextFacts: close({
+	schema: "lattice-self-context.v1"
+	surfaces: {
+		[#KebabID]: {
+			id:          #KebabID
+			kind:        string
+			role:        string
+			path:        #Path
+			description: #NonEmptyString
+			...
+		}
+	}
+	invariants?: _
+})
+
 #ControlSurface: close({
 	id:          #KebabID
 	kind:        #ControlSurfaceKind

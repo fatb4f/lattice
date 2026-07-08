@@ -10,6 +10,7 @@ const serverDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(serverDir, '../..');
 const kgDir = resolve(repoRoot, '.kg/codex');
 const driftCheck = resolve(kgDir, 'tools/drift-check');
+const contextHook = resolve(repoRoot, '.kg/hooks/codex/user-prompt-submit');
 const topLevelCueFiles = [
   'model.cue',
   'reference.cue',
@@ -54,7 +55,8 @@ function run(command, args, options = {}) {
       cwd: options.cwd || repoRoot,
       timeout: options.timeout || 15000,
       encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
+      input: options.input,
+      stdio: [options.input === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
     }).trim();
 
     return { ok: true, output: output || '{}'};
@@ -108,6 +110,23 @@ function phaseStatus(phase = 'all') {
   return run(driftCheck, ['--format', 'json', '--mode', 'phase'], { timeout: 20000 });
 }
 
+function contextMatch(prompt) {
+  const event = JSON.stringify({
+    hook_event_name: 'UserPromptSubmit',
+    prompt,
+  });
+  const result = run('sh', [contextHook], { input: event, timeout: 20000 });
+  if (!result.ok) return result;
+
+  try {
+    const hookEnvelope = JSON.parse(result.output);
+    const packet = JSON.parse(hookEnvelope.hookSpecificOutput?.additionalContext || '{}');
+    return { ok: true, output: JSON.stringify(packet, null, 2) };
+  } catch (error) {
+    return { ok: false, output: `failed to parse context hook output: ${error.message}` };
+  }
+}
+
 function queryExpression(expression) {
   if (expression === expressions.phaseOne) return phaseStatus('phase-one');
   if (expression === expressions.phaseTwo) return phaseStatus('phase-two');
@@ -152,6 +171,7 @@ server.tool(
       kgDir,
       kgDirExists: existsSync(kgDir),
       driftCheckExists: existsSync(driftCheck),
+      contextHookExists: existsSync(contextHook),
       cuePolicy: exportCue(expressions.policy).ok,
     };
 
@@ -204,6 +224,15 @@ server.tool(
   'Read the declared MCP read-only policy, resources, tools, and prompts.',
   {},
   async () => content(exportCue(expressions.policy)),
+);
+
+server.tool(
+  'kg_context_match',
+  'Return the read-only JSON-LD project KG context packet that UserPromptSubmit would inject for a prompt.',
+  {
+    prompt: z.string().min(1).describe('Prompt text to match against the repo-local .kb project KG.'),
+  },
+  async ({ prompt }) => content(contextMatch(prompt)),
 );
 
 server.tool(
