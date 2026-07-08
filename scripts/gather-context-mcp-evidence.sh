@@ -44,8 +44,31 @@ printf '{"hook_event_name":"UserPromptSubmit","prompt":%s}\n' \
 cue export ./.kg/codex/mcp -e mcpResources --out json \
 	>"$out/mcp/resources-declared.json"
 
+cue export ./.kg/context -e '#RoutePolicyProjection' --out json \
+	>"$out/route/route-policy.json"
+
 cue export ./.kg/context -e selectionPolicy --out json \
 	>"$out/route/selection-policy.json" 2>"$out/route/selection-policy.err" || true
+
+cat >"$out/route/route-prompts.tsv" <<'EOF'
+promotion-review	Inspect promotion status and targetPackage bindings.
+graph-state-review	Review graph-state phase one and phase two contracts.
+kg-maintenance	Run kg maintenance with kg vet, kg index, and kg settle.
+resolver-maintenance	Check resolver route policy and context packet selection.
+repo-inspection	Inspect files and repo diff for this change.
+default-minimal	Hello.
+EOF
+
+: >"$out/route/all-routes.jsonl"
+while IFS='	' read -r expected_route route_prompt; do
+	[ -n "$expected_route" ] || continue
+	route_file="$out/route/packet-$expected_route.json"
+	printf '%s\n' "$route_prompt" \
+		| .kg/hooks/codex/user-prompt-submit \
+		>"$route_file"
+	jq -c --arg expected "$expected_route" '. + {expectedRoute: $expected}' "$route_file" \
+		>>"$out/route/all-routes.jsonl"
+done <"$out/route/route-prompts.tsv"
 
 abs_out="$repo_root/$out"
 
@@ -105,16 +128,34 @@ try {
   });
   save('resources.json', firstText(resources));
 
-  const selfContext = await client.readResource({ uri: 'kg://query/selfContext' });
-  save('kg-query-selfContext.json', firstResourceText(selfContext));
+  const readTargets = [
+    'codex://surfaces',
+    'codex://drift/findings',
+    'codex://graph-state/phase-one',
+    'codex://graph-state/phase-two',
+    'codex://promotion/status',
+    'kg://query/selfContext',
+    'kg://index/summary',
+    'kg://index/full',
+    'kg://entity/project-context',
+    'kg://related/project-context',
+  ];
 
-  const codexSurfaces = await client.readResource({ uri: 'codex://surfaces' });
-  save('codex-surfaces.json', firstResourceText(codexSurfaces));
+  const readSummary = {};
+  for (const uri of readTargets) {
+    const result = await client.readResource({ uri });
+    const resourceText = firstResourceText(result);
+    const name = uri.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '');
+    save(`${name}.json`, resourceText);
+    const parsed = JSON.parse(resourceText || '{}');
+    readSummary[uri] = {
+      bytes: Buffer.byteLength(resourceText),
+      schema: parsed.schema ?? 'unknown',
+      keys: Object.keys(parsed).slice(0, 12),
+    };
+  }
 
-  save('resource-read-summary.json', {
-    'kg://query/selfContext': JSON.parse(firstResourceText(selfContext)).schema ?? 'unknown',
-    'codex://surfaces': Object.keys(JSON.parse(firstResourceText(codexSurfaces))).length,
-  });
+  save('resource-read-summary.json', readSummary);
 } finally {
   await client.close();
 }
@@ -129,6 +170,26 @@ jq -e '
 	and (.selection.entities | length) <= .budget.maxInlineEntities
 	and (.hardExclusions | index("raw .kb body injection") != null)
 ' "$out/route/user-prompt-submit.json" >"$out/route/assert-route-packet.ok"
+
+jq -s -e '
+	all(.route == .expectedRoute)
+' "$out/route/all-routes.jsonl" >"$out/route/assert-all-routes-classified.ok"
+
+jq -s -e --slurpfile policy "$out/route/route-policy.json" '
+	($policy[0].routes) as $routes
+	| all(. as $packet |
+		(.budget.maxInlineEntities <= $routes[.route].maxInlineEntities)
+		and (($packet.selection.entities // []) | all($routes[$packet.route].allowedEntities[.] == true))
+	)
+' "$out/route/all-routes.jsonl" >"$out/route/assert-all-routes-policy-entities.ok"
+
+jq -s -e --slurpfile policy "$out/route/route-policy.json" '
+	($policy[0].routes) as $routes
+	| all(. as $packet |
+		(($packet.selection.resources // []) | all(. as $resource | ($routes[$packet.route].mcpResources | index($resource) != null)))
+		and (($packet.selection.files // []) | all(. as $file | ($routes[$packet.route].files | index($file) != null)))
+	)
+' "$out/route/all-routes.jsonl" >"$out/route/assert-all-routes-policy-selection.ok"
 
 jq -e '
 	has("kg://query/selfContext")
@@ -149,6 +210,19 @@ jq -e '
 	and has("kg-hook-runtime")
 	and has("project-knowledge-kg")
 ' "$out/mcp/codex-surfaces.json" >"$out/mcp/assert-codex-surfaces-resource.ok"
+
+jq -e '
+	has("codex://surfaces")
+	and has("codex://drift/findings")
+	and has("codex://graph-state/phase-one")
+	and has("codex://graph-state/phase-two")
+	and has("codex://promotion/status")
+	and has("kg://query/selfContext")
+	and has("kg://index/summary")
+	and has("kg://index/full")
+	and has("kg://entity/project-context")
+	and has("kg://related/project-context")
+' "$out/mcp/resource-read-summary.json" >"$out/mcp/assert-all-resource-classes-read.ok"
 
 {
 	printf 'Context MCP evidence bundle\n'

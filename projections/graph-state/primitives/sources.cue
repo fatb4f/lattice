@@ -40,6 +40,19 @@ sourceLedger: {
 	}
 }
 
+phaseOnePrimitiveKinds: close({
+	target:     true
+	workspace:  true
+	stream:     true
+	fragment:   true
+	assignment: true
+	dependency: true
+	conflict:   true
+	projection: true
+	context:    true
+	producer:   true
+})
+
 primitiveSourceLedger: {
 	target: {
 		"go-git-storage":   true
@@ -79,13 +92,15 @@ primitiveSourceLedger: {
 }
 
 sourceLedgerComplete: close({
-	for primitive, witnesses in primitiveSourceLedger {
-		"\(primitive)-has-witness": true & (len([for _, _ in witnesses {true}]) > 0)
+	for primitive, _ in phaseOnePrimitiveKinds {
+		"\(primitive)-has-witness": true & (len([for _, _ in primitiveSourceLedger[primitive] {true}]) > 0)
 	}
 })
 
 sourceRolesSeparated: close({
-	"gitbutler-stack-primary":  true & (sourceLedger["gitbutler-stack"].role == "primary-state-and-intent")
-	"go-git-storage-substrate": true & (sourceLedger["go-git-storage"].role == "storage-and-substrate")
-	"pro-git-conceptual":       true & (sourceLedger["pro-git-concepts"].role == "conceptual-model")
+	"gitbutler-stack-primary":           true & (sourceLedger["gitbutler-stack"].role == "primary-state-and-intent")
+	"gitbutler-hunk-assignment-primary": true & (sourceLedger["gitbutler-hunk-assignment"].role == "primary-state-and-intent")
+	"gitbutler-hunk-dependency-primary": true & (sourceLedger["gitbutler-hunk-dependency"].role == "primary-state-and-intent")
+	"go-git-storage-substrate":          true & (sourceLedger["go-git-storage"].role == "storage-and-substrate")
+	"pro-git-conceptual":                true & (sourceLedger["pro-git-concepts"].role == "conceptual-model")
 })

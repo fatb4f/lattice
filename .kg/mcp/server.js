@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, realpathSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -11,6 +11,7 @@ const repoRoot = resolve(serverDir, '../..');
 const kgDir = resolve(repoRoot, '.kg/codex');
 const driftCheck = resolve(kgDir, 'tools/drift-check');
 const contextHook = resolve(repoRoot, '.kg/hooks/codex/user-prompt-submit');
+const localKgShim = resolve(repoRoot, '.kg/tools/kg');
 const topLevelCueFiles = [
   'model.cue',
   'reference.cue',
@@ -54,6 +55,34 @@ const kgResourceCommands = {
   'kg://index/summary': ['index'],
   'kg://index/full': ['index', '--full'],
 };
+
+function resolveExecutable(command) {
+  if (command.includes('/')) return resolve(repoRoot, command);
+
+  for (const dir of (process.env.PATH || '').split(':')) {
+    if (!dir) continue;
+    const candidate = resolve(dir, command);
+    if (existsSync(candidate)) return candidate;
+  }
+
+  return '';
+}
+
+function resolveExternalKg() {
+  const configured = process.env.KG_BIN || 'kg';
+  const resolved = resolveExecutable(configured);
+  if (!resolved) {
+    return { ok: false, error: `external kg CLI not found: ${configured}` };
+  }
+
+  const resolvedReal = realpathSync(resolved);
+  const localReal = existsSync(localKgShim) ? realpathSync(localKgShim) : localKgShim;
+  if (resolvedReal === localReal) {
+    return { ok: false, error: 'external kg CLI resolves to local shim; refusing recursion' };
+  }
+
+  return { ok: true, path: resolvedReal };
+}
 
 function run(command, args, options = {}) {
   try {
@@ -134,7 +163,9 @@ function contextMatch(prompt) {
 }
 
 function kgCommand(args, options = {}) {
-  return run('kg', args, { timeout: options.timeout || 20000 });
+  const kg = resolveExternalKg();
+  if (!kg.ok) return { ok: false, output: kg.error };
+  return run(kg.path, args, { timeout: options.timeout || 20000 });
 }
 
 function fullIndex() {
@@ -252,6 +283,7 @@ server.tool(
       driftCheckExists: existsSync(driftCheck),
       contextHookExists: existsSync(contextHook),
       cuePolicy: exportCue(expressions.policy).ok,
+      kg: resolveExternalKg(),
     };
 
     return text(JSON.stringify(checks, null, 2));

@@ -90,7 +90,8 @@ kg_bin=$kg_bin_abs
 
 packet_json=$(mktemp "${TMPDIR:-/tmp}/lattice-context-packet.XXXXXX.json")
 packet_cue=$(mktemp "${TMPDIR:-/tmp}/lattice-context-packet.XXXXXX.cue")
-trap 'rm -f "$packet_json" "$packet_cue"' EXIT HUP INT TERM
+policy_json=$(mktemp "${TMPDIR:-/tmp}/lattice-route-policy.XXXXXX.json")
+trap 'rm -f "$packet_json" "$packet_cue" "$policy_json"' EXIT HUP INT TERM
 
 if [ "$kb" != "$repo_root/.kb" ]; then
 	printf 'kg hook: this runtime only accepts the repo-local .kb authority\n' >&2
@@ -99,10 +100,16 @@ fi
 
 (cd "$repo_root" && "$kg_bin" vet) >/dev/null
 (cd "$repo_root" && "$kg_bin" settle) >/dev/null
+cue export "$repo_root/.kg/context" -e '#RoutePolicyProjection' --out json >"$policy_json"
 
 jq -n \
 	--arg query "$prompt" \
+	--slurpfile projection "$policy_json" \
 	'
+	($projection[0]) as $projection
+	| ($projection.routes) as $routes
+	| ($projection.budget) as $budget
+	|
 	def q: $query | ascii_downcase;
 	def route:
 		if q | test("promotion|promoted|promote|status") then "promotion-review"
@@ -113,48 +120,8 @@ jq -n \
 		elif q | test("repo|inspect files|file inspection|diff") then "repo-inspection"
 		else "default-minimal"
 		end;
-	def policy($route):
-		{
-			"evidence-gather": {
-				maxInlineEntities: 2,
-				entities: ["project-context", "INSIGHT-002"],
-				resources: ["kg://entity/project-context", "kg://query/selfContext", "codex://drift/findings"]
-			},
-			"promotion-review": {
-				maxInlineEntities: 1,
-				entities: ["project-context"],
-				resources: ["codex://promotion/status", "codex://graph-state/phase-one", "codex://graph-state/phase-two", "codex://drift/findings"]
-			},
-			"graph-state-review": {
-				maxInlineEntities: 1,
-				entities: ["project-context"],
-				resources: ["codex://graph-state/phase-one", "codex://graph-state/phase-two", "codex://promotion/status"],
-				files: ["projections/graph-state", "meta/kernel.cue"]
-			},
-			"kg-maintenance": {
-				maxInlineEntities: 1,
-				entities: ["project-context"],
-				resources: ["kg://query/selfContext", "kg://index/summary"],
-				files: [".kb", ".kg/context"]
-			},
-			"resolver-maintenance": {
-				maxInlineEntities: 1,
-				entities: ["project-context"],
-				resources: ["kg://query/selfContext", "codex://surfaces"]
-			},
-			"repo-inspection": {
-				maxInlineEntities: 1,
-				entities: ["project-context"],
-				resources: ["kg://query/selfContext"]
-			},
-			"default-minimal": {
-				maxInlineEntities: 0,
-				entities: [],
-				resources: ["kg://query/selfContext"]
-			}
-	}[$route];
 	(route) as $route
-	| (policy($route)) as $policy
+	| ($routes[$route]) as $policy
 	|
 	{
 		schema: "lattice.context-route-packet.v1",
@@ -168,13 +135,14 @@ jq -n \
 		transient: true,
 		budget: {
 			maxInlineEntities: $policy.maxInlineEntities,
-			maxInlineBytes: 4096,
-			preferMCP: true
+			maxInlineBytes: $budget.routePacketMaxBytes,
+			preferMCP: $budget.mcpPreferred
 		},
 		selection: ({
-			entities: ($policy.entities[0:$policy.maxInlineEntities]),
-			resources: ($policy.resources[0:8])
-		} + (if ($policy.files // []) | length > 0 then {files: $policy.files} else {} end)),
+			entities: ($policy.defaultEntities[0:$policy.maxInlineEntities]),
+			resources: ($policy.mcpResources[0:$budget.inlineResourceMax]),
+			files: ($policy.files // [])
+		}),
 		gates: {
 			kbValid:              true,
 			noDanglingRefs:       true,
@@ -199,7 +167,7 @@ jq -n \
 	printf '\n'
 } >"$packet_cue"
 
-cue export "$repo_root/.kg/context"/*.cue "$packet_cue" -e '(_packet & #ValidatedContextRoutePacket)' --out json >/dev/null
+cue export "$repo_root/.kg/context"/*.cue "$packet_cue" -e '(_packet & #RoutePolicyBoundPacket)' --out json >/dev/null
 
 jq -cn --slurpfile packet "$packet_json" '{
 	hookSpecificOutput: {

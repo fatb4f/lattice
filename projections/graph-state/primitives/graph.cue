@@ -29,7 +29,17 @@ package primitives
 	sources:     #SourceRefSet
 }
 
-#Node: close(#NodeFields)
+#Node:
+	#Target |
+	#Workspace |
+	#Stream |
+	#Fragment |
+	#Assignment |
+	#Dependency |
+	#Conflict |
+	#Projection |
+	#Context |
+	#ProducerSurface
 
 #Edge: close({
 	id:          #EdgeID

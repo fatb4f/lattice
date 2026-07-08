@@ -20,7 +20,12 @@ package context
 	}
 	defaultEntities: [...#EntityID]
 	mcpResources: [...#MCPResourceURI]
-	files?: [...#RepoPath]
+	files: [...#RepoPath] | *[]
+})
+
+#RoutePolicyProjection: close({
+	routes: routePolicy
+	budget: defaultTokenBudget
 })
 
 routePolicy: {

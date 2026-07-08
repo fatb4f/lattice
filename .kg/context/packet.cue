@@ -132,7 +132,7 @@ package context
 	selection: close({
 		entities: [...#EntityID]
 		resources: [...#MCPResourceURI]
-		files?: [...#RepoPath]
+		files: [...#RepoPath] | *[]
 	})
 
 	gates: close({

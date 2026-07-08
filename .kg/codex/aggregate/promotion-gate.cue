@@ -60,12 +60,21 @@ import "list"
 
 	findings: [
 		for phaseID, phaseFacts in Facts.phases
+		if phaseFacts.targetPackage != metaPromotionBindings[phaseID].targetPackage {
+			kind:     "verification-weakened"
+			surface:  "meta-kernel"
+			severity: "critical"
+			response: "block"
+			reason:   "Promotion facts targetPackage does not match promotion binding."
+			phase:    phaseID
+		},
+		for phaseID, phaseFacts in Facts.phases
 		if phaseFacts.selectorResults.plan.ok == false {
 			kind:     "verification-weakened"
 			surface:  "meta-kernel"
 			severity: "critical"
 			response: "block"
-			reason:   "Promotion plan selector does not export from the meta authority."
+			reason:   "Promotion plan selector does not export from the bound target package."
 			phase:    phaseID
 		},
 		for phaseID, phaseFacts in Facts.phases
@@ -74,7 +83,7 @@ import "list"
 			surface:  "meta-kernel"
 			severity: "critical"
 			response: "block"
-			reason:   "Promotion implementation selector does not export from the meta authority."
+			reason:   "Promotion implementation selector does not export from the bound target package."
 			phase:    phaseID
 		},
 		for phaseID, phaseFacts in Facts.phases
@@ -84,7 +93,7 @@ import "list"
 				surface:  "meta-kernel"
 				severity: "critical"
 				response: "block"
-				reason:   "Promotion no-widening selector does not export from the meta authority."
+				reason:   "Promotion no-widening selector does not export from the bound target package."
 				phase:    phaseID
 			}
 		},
