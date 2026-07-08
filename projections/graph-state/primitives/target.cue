@@ -1,8 +1,8 @@
 package primitives
 
 #Target: close({
-	#NodeFields
-	kind:    "target"
+	#TypedNode
+	type:    "target"
 	object?: #ObjectID
 	ref?:    #RefName
 })

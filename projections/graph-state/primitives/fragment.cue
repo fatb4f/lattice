@@ -3,8 +3,8 @@ package primitives
 #LineNumber: int & >=0
 
 #Fragment: close({
-	#NodeFields
-	kind:    "fragment"
+	#TypedNode
+	type:    "fragment"
 	hunkID:  #NonEmptyString
 	path:    #PathID
 	header?: #NonEmptyString

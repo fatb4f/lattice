@@ -1,8 +1,8 @@
 package primitives
 
 #Workspace: close({
-	#NodeFields
-	kind:    "workspace"
+	#TypedNode
+	type:    "workspace"
 	target?: #NodeID
 	streams: #NodeRefSet | *{}
 	paths: {

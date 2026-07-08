@@ -1,6 +1,6 @@
 package primitives
 
-#NodeKind:
+#NodeType:
 	"target" |
 	"workspace" |
 	"stream" |
@@ -22,12 +22,12 @@ package primitives
 	"produces" |
 	"observes"
 
-#NodeFields: {
+#TypedNode: close({
 	id:          #NodeID
-	kind:        #NodeKind
+	type:        #NodeType
 	description: #NonEmptyString
 	sources:     #SourceRefSet
-}
+})
 
 #Node:
 	#Target |
@@ -51,9 +51,41 @@ package primitives
 })
 
 #NodeMap: {
-	[#NodeID]: #Node
-	[ID=#NodeID]: {
+	[ID=#NodeID]: #Node & {
 		id: ID
+	}
+}
+
+#NodesByType: {
+	target: {
+		[#NodeID]: #Target
+	}
+	workspace: {
+		[#NodeID]: #Workspace
+	}
+	stream: {
+		[#NodeID]: #Stream
+	}
+	fragment: {
+		[#NodeID]: #Fragment
+	}
+	assignment: {
+		[#NodeID]: #Assignment
+	}
+	dependency: {
+		[#NodeID]: #Dependency
+	}
+	conflict: {
+		[#NodeID]: #Conflict
+	}
+	projection: {
+		[#NodeID]: #Projection
+	}
+	context: {
+		[#NodeID]: #Context
+	}
+	producer: {
+		[#NodeID]: #ProducerSurface
 	}
 }
 
@@ -68,5 +100,6 @@ package primitives
 	id:          #GraphID
 	description: #NonEmptyString
 	nodes:       #NodeMap
+	typedNodes?: #NodesByType
 	edges:       #EdgeMap
 })

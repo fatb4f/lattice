@@ -1,8 +1,8 @@
 package primitives
 
 #Projection: close({
-	#NodeFields
-	kind:        "projection"
+	#TypedNode
+	type:        "projection"
 	description: #NonEmptyString
 	selects: close({
 		nodes: #NodeRefSet | *{}

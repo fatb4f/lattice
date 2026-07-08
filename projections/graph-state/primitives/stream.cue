@@ -1,8 +1,8 @@
 package primitives
 
 #Stream: close({
-	#NodeFields
-	kind:      "stream"
+	#TypedNode
+	type:      "stream"
 	sourceRef: #RefName
 	upstream?: #RefName
 	order?:    int & >=0

@@ -1,8 +1,8 @@
 package primitives
 
 #ProducerSurface: close({
-	#NodeFields
-	kind: "producer"
+	#TypedNode
+	type: "producer"
 	name: #NonEmptyString
 	inputs: close({
 		nodes: #NodeRefSet | *{}

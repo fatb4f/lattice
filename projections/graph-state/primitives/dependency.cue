@@ -1,8 +1,8 @@
 package primitives
 
 #Dependency: close({
-	#NodeFields
-	kind:        "dependency"
+	#TypedNode
+	type:        "dependency"
 	predecessor: #NodeID
 	successor:   #NodeID
 	constraints: close({

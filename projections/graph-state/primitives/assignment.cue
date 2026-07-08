@@ -1,8 +1,8 @@
 package primitives
 
 #Assignment: close({
-	#NodeFields
-	kind:      "assignment"
+	#TypedNode
+	type:      "assignment"
 	fragment:  #NodeID
 	stream?:   #NodeID
 	branchRef: #RefName

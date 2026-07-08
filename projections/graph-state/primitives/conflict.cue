@@ -1,8 +1,8 @@
 package primitives
 
 #Conflict: close({
-	#NodeFields
-	kind:         "conflict"
+	#TypedNode
+	type:         "conflict"
 	participants: #NodeRefSet
 	reason:       #NonEmptyString
 })

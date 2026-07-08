@@ -1,8 +1,8 @@
 package primitives
 
 #Context: close({
-	#NodeFields
-	kind:      "context"
+	#TypedNode
+	type:      "context"
 	workspace: #NodeID
 	target?:   #NodeID
 	sources:   #SourceRefSet
