@@ -224,12 +224,124 @@ jq -e '
 	and has("kg://related/project-context")
 ' "$out/mcp/resource-read-summary.json" >"$out/mcp/assert-all-resource-classes-read.ok"
 
+OUT_DIR="$abs_out" node --input-type=module <<'EOF'
+import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { basename, join, relative } from 'node:path';
+
+const outDir = process.env.OUT_DIR;
+const generated = new Set(['MANIFEST.txt', 'token-stats.json', 'token-summary.tsv']);
+
+function walk(dir) {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) return walk(path);
+    if (generated.has(basename(path))) return [];
+    return [path];
+  });
+}
+
+function estimateTokens(text) {
+  const compact = text.trim();
+  if (!compact) return 0;
+  const wordish = compact.match(/[A-Za-z0-9_]+|[^\sA-Za-z0-9_]/g)?.length ?? 0;
+  return Math.max(wordish, Math.ceil(Buffer.byteLength(compact, 'utf8') / 4));
+}
+
+function sectionFor(path) {
+  return relative(outDir, path).split('/')[0] || 'root';
+}
+
+const files = walk(outDir).sort();
+const perFile = files.map((path) => {
+  const text = readFileSync(path, 'utf8');
+  const rel = relative(outDir, path);
+  return {
+    path: rel,
+    section: sectionFor(path),
+    bytes: statSync(path).size,
+    chars: [...text].length,
+    lines: text.length === 0 ? 0 : text.split(/\n/).length - (text.endsWith('\n') ? 1 : 0),
+    words: text.trim() ? text.trim().split(/\s+/).length : 0,
+    estimatedTokens: estimateTokens(text),
+  };
+});
+
+const bySection = {};
+for (const item of perFile) {
+  bySection[item.section] ??= { files: 0, bytes: 0, chars: 0, lines: 0, words: 0, estimatedTokens: 0 };
+  const section = bySection[item.section];
+  section.files += 1;
+  section.bytes += item.bytes;
+  section.chars += item.chars;
+  section.lines += item.lines;
+  section.words += item.words;
+  section.estimatedTokens += item.estimatedTokens;
+}
+
+const routePackets = perFile
+  .filter((item) => item.path.startsWith('route/packet-') && item.path.endsWith('.json'))
+  .map((item) => ({ route: item.path.slice('route/packet-'.length, -'.json'.length), ...item }));
+
+const totals = perFile.reduce(
+  (acc, item) => ({
+    files: acc.files + 1,
+    bytes: acc.bytes + item.bytes,
+    chars: acc.chars + item.chars,
+    lines: acc.lines + item.lines,
+    words: acc.words + item.words,
+    estimatedTokens: acc.estimatedTokens + item.estimatedTokens,
+  }),
+  { files: 0, bytes: 0, chars: 0, lines: 0, words: 0, estimatedTokens: 0 },
+);
+
+const stats = {
+  schema: 'lattice.context-mcp-evidence-token-stats.v1',
+  estimator: {
+    kind: 'repo-local-heuristic',
+    rule: 'max(regex token-like segments, ceil(utf8 bytes / 4))',
+  },
+  totals,
+  bySection,
+  routePackets,
+  files: perFile,
+};
+
+writeFileSync(join(outDir, 'token-stats.json'), `${JSON.stringify(stats, null, 2)}\n`);
+writeFileSync(
+  join(outDir, 'token-summary.tsv'),
+  [
+    'section\tfiles\tbytes\tchars\tlines\twords\testimatedTokens',
+    ...Object.entries(bySection)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([section, value]) => [
+        section,
+        value.files,
+        value.bytes,
+        value.chars,
+        value.lines,
+        value.words,
+        value.estimatedTokens,
+      ].join('\t')),
+    ['total', totals.files, totals.bytes, totals.chars, totals.lines, totals.words, totals.estimatedTokens].join('\t'),
+  ].join('\n') + '\n',
+);
+EOF
+
+jq -e '
+	.schema == "lattice.context-mcp-evidence-token-stats.v1"
+	and .totals.estimatedTokens > 0
+	and (.routePackets | length) == 6
+	and (.bySection.route.estimatedTokens > 0)
+	and (.bySection.mcp.estimatedTokens > 0)
+' "$out/token-stats.json" >"$out/assert-token-stats.ok"
+
 {
 	printf 'Context MCP evidence bundle\n'
 	printf '===========================\n\n'
 	printf 'created_utc: %s\n' "$stamp"
 	printf 'prompt: %s\n' "$prompt"
 	printf 'head: %s\n' "$(cat "$out/repo/head.txt")"
+	printf 'estimated_tokens: %s\n' "$(jq -r '.totals.estimatedTokens' "$out/token-stats.json")"
 	printf 'output: %s\n\n' "$out"
 	printf 'files:\n'
 	find "$out" -type f | sort | while IFS= read -r file; do
