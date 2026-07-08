@@ -38,3 +38,22 @@ package context
 	generated: true
 	authority: false
 }
+
+#ValidatedContextRoutePacket: #ContextRoutePacket & {
+	budget: {
+		maxInlineEntities: <=defaultTokenBudget.inlineEntityMax
+		maxInlineBytes:    <=defaultTokenBudget.routePacketMaxBytes
+		preferMCP:         true
+	}
+	gates: {
+		kbValid:              true
+		noDanglingRefs:       true
+		noGeneratedInput:     true
+		noPluginCacheInput:   true
+		noRawTranscriptInput: true
+		transientProjection:  true
+	}
+	generated: true
+	authority: false
+	transient: true
+}

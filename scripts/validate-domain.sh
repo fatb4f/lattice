@@ -82,18 +82,17 @@ validate_kg_runtime() {
 		.kg/hooks/codex/user-prompt-submit |
 		jq -e '.hookSpecificOutput.hookEventName == "UserPromptSubmit"
 			and (.hookSpecificOutput.additionalContext | fromjson
-				| .schema == "lattice.context-packet.v1"
-				and .selection.selector == "kg-native-context-json-ld"
-				and .vocab.kind == "jsonld-context"
-				and .vocab.source == ".kb/cue.mod/pkg/quicue.ca/kg/vocab/context.cue"
-				and (.graph["@context"] | type) == "object"
-				and (.graph["@context"].context_text == "kg:context")
-				and (.vocab.context["@graph"] | length) > 0
-				and (.graph["@graph"] | length) > 0
-				and (.graph["@graph"] | all(has("@id") and has("@type")))
-				and (.graph | has("nodes") | not)
-				and (.graph | has("edges") | not)
-				and (.resources | map(select(.readOnly == true)) | length) == (.resources | length))' >/dev/null
+				| .schema == "lattice.context-route-packet.v1"
+				and .budget.preferMCP == true
+				and .budget.maxInlineEntities <= 3
+				and .budget.maxInlineBytes <= 4096
+				and (.selection.entities | length) <= .budget.maxInlineEntities
+				and (.selection.resources | length) <= 8
+				and (.selection.resources | all(test("^(kg|codex)://")))
+				and (.gates.noGeneratedInput == true)
+				and (.gates.noPluginCacheInput == true)
+				and (.gates.noRawTranscriptInput == true)
+				and (.instruction | test("Use MCP resources")))' >/dev/null
 }
 
 validate_meta() {

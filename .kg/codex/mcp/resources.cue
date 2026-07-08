@@ -31,4 +31,35 @@ mcpResources: {
 		selector: "promotionStatus"
 		readOnly: true
 	}
+	"kg://query/selfContext": {
+		uri: "kg://query/selfContext"
+		description: "Project self-context from kg query selfContext."
+		command: ["kg", "query", "selfContext"]
+		readOnly: true
+	}
+	"kg://index/summary": {
+		uri: "kg://index/summary"
+		description: "Compact KG index summary."
+		command: ["kg", "index"]
+		readOnly: true
+	}
+	"kg://index/full": {
+		uri: "kg://index/full"
+		description: "Full KG index; use only on explicit KG inspection."
+		command: ["kg", "index", "--full"]
+		readOnly: true
+		expensive: true
+	}
+	"kg://entity/{id}": {
+		uri: "kg://entity/{id}"
+		description: "Fetch one KG entity by stable ID."
+		command: ["kg", "query", "entityByID"]
+		readOnly: true
+	}
+	"kg://related/{id}": {
+		uri: "kg://related/{id}"
+		description: "Fetch bounded neighbors for one KG entity."
+		command: ["kg", "query", "related"]
+		readOnly: true
+	}
 }

@@ -37,10 +37,11 @@ import "list"
 })
 
 #PromotionBinding: close({
-	id:          #KebabID
-	phase:       #PhaseID
-	authority:   "meta/kernel.cue"
-	description: #NonEmptyString
+	id:            #KebabID
+	phase:         #PhaseID
+	authority:     "meta/kernel.cue"
+	description:   #NonEmptyString
+	targetPackage: #NonEmptyString
 
 	planSelector:           #NonEmptyString
 	implementationSelector: #NonEmptyString
@@ -195,6 +196,7 @@ metaPromotionBindings: {
 		id:                     "graph-state-phase-one-promotion"
 		phase:                  "graph-state-phase-one"
 		description:            "Phase 1 closes through meta.#MakeClosedObligationState."
+		targetPackage:          "projections/graph-state"
 		planSelector:           "closedPhaseOnePromotion"
 		implementationSelector: "closedPhaseOnePromotion"
 	}
@@ -203,6 +205,7 @@ metaPromotionBindings: {
 		id:                     "graph-state-phase-two-promotion"
 		phase:                  "graph-state-phase-two"
 		description:            "Phase 2 closes, proves no-widening, and bottoms negative probes."
+		targetPackage:          "meta"
 		planSelector:           "closedPhaseTwoPlan"
 		implementationSelector: "closedPhaseTwoImplementation"
 		noWideningSelector:     "phaseTwoNoWidening"

@@ -2,7 +2,7 @@
 set -eu
 
 usage() {
-	printf 'usage: kg hook codex user-prompt-submit --event FILE --kb DIR --vocab FILE --out codex-hook-json\n' >&2
+	printf 'usage: kg hook codex user-prompt-submit --event FILE --kb DIR --vocab FILE --out codex-hook-json [--mode route-packet]\n' >&2
 	exit 2
 }
 
@@ -16,6 +16,7 @@ event=
 kb=
 vocab=
 out=
+mode=route-packet
 
 while [ "$#" -gt 0 ]; do
 	case "$1" in
@@ -39,6 +40,11 @@ while [ "$#" -gt 0 ]; do
 		out=$2
 		shift 2
 		;;
+	--mode)
+		[ "$#" -ge 2 ] || usage
+		mode=$2
+		shift 2
+		;;
 	*)
 		usage
 		;;
@@ -49,6 +55,7 @@ done
 [ -n "$kb" ] && [ -d "$kb" ] || usage
 [ -n "$vocab" ] && [ -f "$vocab" ] || usage
 [ "$out" = "codex-hook-json" ] || usage
+[ "$mode" = "route-packet" ] || usage
 
 case "$kb" in
 *..*) printf 'kg hook: --kb must not contain parent traversal\n' >&2; exit 2 ;;
@@ -57,10 +64,13 @@ case "$vocab" in
 *..*) printf 'kg hook: --vocab must not contain parent traversal\n' >&2; exit 2 ;;
 esac
 
-event_name=$(jq -r '.hook_event_name // .hookEventName // "UserPromptSubmit"' "$event")
-[ "$event_name" = "UserPromptSubmit" ] || exit 0
-
-prompt=$(jq -r '.prompt // .userPrompt // .message // empty' "$event")
+if jq -e . "$event" >/dev/null 2>&1; then
+	event_name=$(jq -r '.hook_event_name // .hookEventName // "UserPromptSubmit"' "$event")
+	[ "$event_name" = "UserPromptSubmit" ] || exit 0
+	prompt=$(jq -r '.prompt // .userPrompt // .message // empty' "$event")
+else
+	prompt=$(cat "$event")
+fi
 [ -n "$prompt" ] || exit 0
 
 repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
@@ -78,15 +88,9 @@ self_bin_abs=$(cd "$(dirname "$self_bin")" && pwd -P)/$(basename "$self_bin")
 }
 kg_bin=$kg_bin_abs
 
-index_json=$(mktemp "${TMPDIR:-/tmp}/lattice-kg-index.XXXXXX.json")
-vocab_json=$(mktemp "${TMPDIR:-/tmp}/lattice-kg-vocab.XXXXXX.json")
-entities_json=$(mktemp "${TMPDIR:-/tmp}/lattice-context-entities.XXXXXX.json")
 packet_json=$(mktemp "${TMPDIR:-/tmp}/lattice-context-packet.XXXXXX.json")
 packet_cue=$(mktemp "${TMPDIR:-/tmp}/lattice-context-packet.XXXXXX.cue")
-trap 'rm -f "$index_json" "$vocab_json" "$entities_json" "$packet_json" "$packet_cue"' EXIT HUP INT TERM
-
-cue export "$vocab" -e context --out json >"$vocab_json"
-vocab_source=${vocab#"$repo_root/"}
+trap 'rm -f "$packet_json" "$packet_cue"' EXIT HUP INT TERM
 
 if [ "$kb" != "$repo_root/.kb" ]; then
 	printf 'kg hook: this runtime only accepts the repo-local .kb authority\n' >&2
@@ -95,200 +99,98 @@ fi
 
 (cd "$repo_root" && "$kg_bin" vet) >/dev/null
 (cd "$repo_root" && "$kg_bin" settle) >/dev/null
-(cd "$repo_root" && "$kg_bin" index --full) >"$index_json"
-
-jq -c --arg prompt "$prompt" '
-	def text: tostring | ascii_downcase;
-	def words:
-		$prompt
-		| ascii_downcase
-		| gsub("[^a-z0-9_-]+"; " ")
-		| split(" ")
-		| map(select(length > 3))
-		| unique;
-	def matches($entry):
-		($entry | text) as $haystack
-		| (words | length) == 0 or any(words[]; . as $word | $haystack | contains($word));
-
-	[
-		{
-			id: "project-context",
-			type: "Context",
-			source: ".kb/manifest.cue",
-			summary: "lattice: CUE lattice patterns, validation profiles, graph-state projections, and Codex KG hook controls."
-		},
-		(.decisions // {} | to_entries[] | select(matches(.value)) | {
-			id: .value.id,
-			type: "Decision",
-			source: ".kb/decisions",
-			summary: (.value.title // .value.decision)
-		}),
-		(.insights // {} | to_entries[] | select(matches(.value)) | {
-			id: .value.id,
-			type: "Insight",
-			source: ".kb/insights",
-			summary: .value.statement
-		}),
-		(.rejected // {} | to_entries[] | select(matches(.value)) | {
-			id: .value.id,
-			type: "Rejected",
-			source: ".kb/rejected",
-			summary: (.value.approach + " - " + .value.reason)
-		}),
-		(.patterns // {} | to_entries[] | select(matches(.value)) | {
-			id: .key,
-			type: "Pattern",
-			source: ".kb/patterns",
-			summary: (.value.name + ": " + .value.problem)
-		})
-	] | unique_by(.id) | .[0:12]
-' "$index_json" >"$entities_json"
 
 jq -n \
 	--arg query "$prompt" \
-	--arg vocab_source "$vocab_source" \
-	--slurpfile entities "$entities_json" \
-	--slurpfile index "$index_json" \
-	--slurpfile vocab "$vocab_json" \
 	'
-	def selected_ids:
-		$entities[0]
-		| map(.id)
-		| map(select(. != "project-context"));
-	def selected($id):
-		selected_ids | index($id);
-	def related_ids($entry):
-		($entry.related // {})
-		| to_entries
-		| map(select(.value == true) | {"@id": ("kg:" + .key)});
-	def decision_node:
-		(.decisions // {})
-		| to_entries[]
-		| .value
-		| select(selected(.id))
-		| {
-			"@id": ("kg:" + .id),
-			"@type": ["prov:Activity", "kg:Decision"],
-			id: .id,
-			title: .title,
-			"rdfs:label": .title,
-			status: .status,
-			date: .date,
-			context_text: .context,
-			decision: .decision,
-			rationale: .rationale,
-			consequences: .consequences,
-			related: related_ids(.)
-		};
-	def insight_node:
-		(.insights // {})
-		| to_entries[]
-		| .value
-		| select(selected(.id))
-		| {
-			"@id": ("kg:" + .id),
-			"@type": ["prov:Entity", "kg:Insight"],
-			id: .id,
-			"rdfs:label": .statement,
-			statement: .statement,
-			evidence: .evidence,
-			method: .method,
-			confidence: .confidence,
-			discovered: .discovered,
-			implication: .implication,
-			related: related_ids(.)
-		};
-	def rejected_node:
-		(.rejected // {})
-		| to_entries[]
-		| .value
-		| select(selected(.id))
-		| {
-			"@id": ("kg:" + .id),
-			"@type": ["oa:Annotation", "kg:Rejected"],
-			id: .id,
-			"rdfs:label": .approach,
-			approach: .approach,
-			reason: .reason,
-			date: .date,
-			alternative: .alternative,
-			related: related_ids(.)
-		};
-	def pattern_node:
-		(.patterns // {})
-		| to_entries[]
-		| {key: .key, value: .value}
-		| select(selected(.key))
-		| {
-			"@id": ("kg:" + .key),
-			"@type": "kg:Pattern",
-			id: .key,
-			title: .value.name,
-			"rdfs:label": .value.name,
-			category: .value.category,
-			problem: .value.problem,
-			solution: .value.solution,
-			context_text: .value.context,
-			example: .value.example,
-			related: related_ids(.value)
-		};
+	def q: $query | ascii_downcase;
+	def route:
+		if q | test("promotion|promoted|promote|status") then "promotion-review"
+		elif q | test("evidence|gather|session|hook output|last run|trace") then "evidence-gather"
+		elif q | test("graph-state|phase one|phase two|phase 1|phase 2") then "graph-state-review"
+		elif q | test("resolver|route|routing|context selector|context packet") then "resolver-maintenance"
+		elif q | test("\\.kb|knowledge graph|kg maintenance|kg vet|kg index|kg settle") then "kg-maintenance"
+		elif q | test("repo|inspect files|file inspection|diff") then "repo-inspection"
+		else "default-minimal"
+		end;
+	def policy($route):
+		{
+			"evidence-gather": {
+				maxInlineEntities: 2,
+				entities: ["project-context", "INSIGHT-002"],
+				resources: ["kg://entity/project-context", "kg://query/selfContext", "codex://drift/findings"]
+			},
+			"promotion-review": {
+				maxInlineEntities: 1,
+				entities: ["project-context"],
+				resources: ["codex://promotion/status", "codex://graph-state/phase-one", "codex://graph-state/phase-two", "codex://drift/findings"]
+			},
+			"graph-state-review": {
+				maxInlineEntities: 1,
+				entities: ["project-context"],
+				resources: ["codex://graph-state/phase-one", "codex://graph-state/phase-two", "codex://promotion/status"],
+				files: ["projections/graph-state", "meta/kernel.cue"]
+			},
+			"kg-maintenance": {
+				maxInlineEntities: 1,
+				entities: ["project-context"],
+				resources: ["kg://query/selfContext", "kg://index/summary"],
+				files: [".kb", ".kg/context"]
+			},
+			"resolver-maintenance": {
+				maxInlineEntities: 1,
+				entities: ["project-context"],
+				resources: ["kg://query/selfContext", "codex://surfaces"]
+			},
+			"repo-inspection": {
+				maxInlineEntities: 1,
+				entities: ["project-context"],
+				resources: ["kg://query/selfContext"]
+			},
+			"default-minimal": {
+				maxInlineEntities: 0,
+				entities: [],
+				resources: ["kg://query/selfContext"]
+			}
+	}[$route];
+	(route) as $route
+	| (policy($route)) as $policy
+	|
 	{
-		schema: "lattice.context-packet.v1",
+		schema: "lattice.context-route-packet.v1",
 		host: "codex",
 		event: "UserPromptSubmit",
-		kb: {root: ".kb"},
-		selection: {
-			query: $query,
-			selector: "kg-native-context-json-ld"
-		},
-		entities: $entities[0],
-		resources: (
-			[
-				($entities[0][] | {
-					uri: ("kg://project/" + .id),
-					path: .source,
-					source: "kg",
-					readOnly: true
-				}),
-				{
-					uri: "codex://surfaces",
-					path: ".kg/codex/mcp/resources.cue",
-					source: "mcp",
-					readOnly: true
-				},
-				{
-					uri: "codex://drift/findings",
-					path: ".kg/codex/tools/drift-check",
-					source: "mcp",
-					readOnly: true
-				}
-			] | unique_by(.uri)
-		),
-		vocab: {
-			kind: "jsonld-context",
-			source: $vocab_source,
-			namespace: "https://quicue.ca/kg#",
-			context: $vocab[0]
-		},
-		graph: {
-			"@context": $vocab[0]["@context"],
-			"@graph": (
-				$index[0]
-				| [decision_node, insight_node, rejected_node, pattern_node]
-				| map(with_entries(select(.value != null and .value != [])))
-			)
-		},
-		output: {target: "codex.additionalContext"},
-		gates: {
-			vocabMapped: true,
-			kbValid: true,
-			noDanglingRefs: true,
-			noGeneratedInput: true,
-			noParentTraversal: true,
-			transientProjection: true
-		},
+		query: $query,
+		route: $route,
+		confidence: (if $route == "default-minimal" then 0.55 else 0.8 end),
+		authority: false,
 		generated: true,
-		authority: false
+		transient: true,
+		budget: {
+			maxInlineEntities: $policy.maxInlineEntities,
+			maxInlineBytes: 4096,
+			preferMCP: true
+		},
+		selection: ({
+			entities: ($policy.entities[0:$policy.maxInlineEntities]),
+			resources: ($policy.resources[0:8])
+		} + (if ($policy.files // []) | length > 0 then {files: $policy.files} else {} end)),
+		gates: {
+			kbValid:              true,
+			noDanglingRefs:       true,
+			noGeneratedInput:     true,
+			noPluginCacheInput:   true,
+			noRawTranscriptInput: true,
+			transientProjection:  true
+		},
+		hardExclusions: [
+			"raw .kb body injection",
+			"generated/codex runtime input",
+			"plugin cache runtime input",
+			"raw transcript runtime input",
+			"parent traversal in selected files"
+		],
+		instruction: "Use MCP resources for details; do not inline broad KG content."
 	}' >"$packet_json"
 
 {
@@ -297,7 +199,7 @@ jq -n \
 	printf '\n'
 } >"$packet_cue"
 
-cue export "$repo_root/.kg/context"/*.cue "$packet_cue" -e '(_packet & #ValidatedContextPacket)' --out json >/dev/null
+cue export "$repo_root/.kg/context"/*.cue "$packet_cue" -e '(_packet & #ValidatedContextRoutePacket)' --out json >/dev/null
 
 jq -cn --slurpfile packet "$packet_json" '{
 	hookSpecificOutput: {

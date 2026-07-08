@@ -23,14 +23,9 @@ done
 
 cue export $cue_files -e metaPromotionBindings --out json >"$bindings_json"
 
-if [ -d "$repo_root/projections/graph-state" ]; then
-	target_args="$repo_root/projections/graph-state"
-else
-	target_args="$repo_root/meta"
-fi
-
 positive_check() {
 	selector=$1
+	target_args=$2
 	: >"$selector_err"
 	if cue export $target_args -e "$selector" --out json >/dev/null 2>"$selector_err"; then
 		jq -n --arg selector "$selector" '{selector: $selector, ok: true}'
@@ -41,14 +36,16 @@ positive_check() {
 }
 
 target_loads() {
+	target_args=$1
 	: >"$selector_err"
 	cue eval $target_args >/dev/null 2>"$selector_err"
 }
 
 negative_check() {
 	selector=$1
+	target_args=$2
 	: >"$selector_err"
-	if ! target_loads; then
+	if ! target_loads "$target_args"; then
 		jq -n --arg selector "$selector" --rawfile error "$selector_err" \
 			'{selector: $selector, bottoms: false, error: $error}'
 		return
@@ -70,16 +67,25 @@ negative_check() {
 : >"$phases_jsonl"
 jq -c 'to_entries[]' "$bindings_json" | while IFS= read -r entry; do
 	phase=$(printf '%s\n' "$entry" | jq -r '.key')
+	target_package=$(printf '%s\n' "$entry" | jq -r '.value.targetPackage')
 	plan_selector=$(printf '%s\n' "$entry" | jq -r '.value.planSelector')
 	implementation_selector=$(printf '%s\n' "$entry" | jq -r '.value.implementationSelector')
 	no_widening_selector=$(printf '%s\n' "$entry" | jq -r '.value.noWideningSelector // empty')
 
-	plan=$(positive_check "$plan_selector")
-	implementation=$(positive_check "$implementation_selector")
+	case "$target_package" in
+		/*|*../*|../*|*'/../'*)
+			printf 'invalid promotion targetPackage for %s: %s\n' "$phase" "$target_package" >&2
+			exit 1
+			;;
+	esac
+	target_args="$repo_root/$target_package"
+
+	plan=$(positive_check "$plan_selector" "$target_args")
+	implementation=$(positive_check "$implementation_selector" "$target_args")
 
 	no_widening_arg='{}'
 	if [ -n "$no_widening_selector" ]; then
-		no_widening=$(positive_check "$no_widening_selector")
+		no_widening=$(positive_check "$no_widening_selector" "$target_args")
 		no_widening_arg=$(jq -n --argjson noWidening "$no_widening" '{noWidening: $noWidening}')
 	fi
 
@@ -87,19 +93,21 @@ jq -c 'to_entries[]' "$bindings_json" | while IFS= read -r entry; do
 		printf '%s\n' "$entry" |
 			jq -r '.value.negativeProbeSelectors[]?' |
 			while IFS= read -r selector; do
-				negative_check "$selector"
+				negative_check "$selector" "$target_args"
 			done |
 			jq -s '.'
 	)
 
 	jq -n \
 		--arg phase "$phase" \
+		--arg targetPackage "$target_package" \
 		--argjson plan "$plan" \
 		--argjson implementation "$implementation" \
 		--argjson noWideningArg "$no_widening_arg" \
 		--argjson negativeProbes "$negative_probes" \
 		'{
 			phase: $phase,
+			targetPackage: $targetPackage,
 			selectorResults: ({
 				plan: $plan,
 				implementation: $implementation,

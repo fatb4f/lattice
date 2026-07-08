@@ -6,11 +6,25 @@ vocab=$repo_root/.kb/cue.mod/pkg/quicue.ca/kg/vocab/context.cue
 [ -f "$vocab" ] || vocab=$repo_root/.kg/vocab/context.cue
 
 event_json=$(mktemp "${TMPDIR:-/tmp}/kg-hook.XXXXXX.json")
-trap 'rm -f "$event_json"' EXIT HUP INT TERM
+output_json=$(mktemp "${TMPDIR:-/tmp}/kg-hook-output.XXXXXX.json")
+trap 'rm -f "$event_json" "$output_json"' EXIT HUP INT TERM
 cat >"$event_json"
+
+if jq -e . "$event_json" >/dev/null 2>&1; then
+	json_input=true
+else
+	json_input=false
+fi
 
 "$repo_root/.kg/tools/kg" hook codex user-prompt-submit \
 	--event "$event_json" \
 	--kb "$repo_root/.kb" \
 	--vocab "$vocab" \
-	--out codex-hook-json
+	--out codex-hook-json \
+	--mode route-packet >"$output_json"
+
+if [ "$json_input" = true ]; then
+	cat "$output_json"
+else
+	jq -r '.hookSpecificOutput.additionalContext' "$output_json"
+fi

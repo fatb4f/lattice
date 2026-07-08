@@ -22,6 +22,14 @@ _contextRuntimeState: {
 			path: ".kg/context/select.cue"
 			role: "adapter"
 		}
+		"context-routes": {
+			path: ".kg/context/routes.cue"
+			role: "adapter"
+		}
+		"context-budget": {
+			path: ".kg/context/budget.cue"
+			role: "adapter"
+		}
 		"context-packet-schema": {
 			path: ".kg/context/packet.cue"
 			role: "adapter"
@@ -52,12 +60,13 @@ _contextRuntimeState: {
 	operations: {
 		"select-context": {
 			kind:        "project"
-			description: "Select relevant context entities and emit a kg-native JSON-LD graph from the .kb index."
+			description: "Classify the prompt route and emit bounded KG/MCP resource IDs without broad KG body injection."
 			reads: {
 				"project-kg":   true
 				"kb-manifest":  true
-				"kg-vocab":     true
 				"context-selector": true
+				"context-routes":   true
+				"context-budget":   true
 			}
 			writes: {}
 			creates: {

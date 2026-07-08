@@ -22,7 +22,8 @@ import "list"
 	schema: "codex-promotion-facts.v1"
 	phases: {
 		[#PhaseID]: close({
-			phase: #PhaseID
+			phase:         #PhaseID
+			targetPackage: #NonEmptyString
 			selectorResults: close({
 				plan:           #PromotionSelectorCheck
 				implementation: #PromotionSelectorCheck
@@ -36,7 +37,7 @@ import "list"
 #PromotionGateEvaluation: close({
 	let Phase = phase
 
-	phase:   #PhaseID
+	phase: #PhaseID
 	binding: #PromotionBinding & {phase: Phase}
 
 	selectorResults: close({
@@ -46,7 +47,7 @@ import "list"
 		negativeProbes: [...#PromotionNegativeProbeCheck]
 	})
 
-	findings:   [...#KGFinding]
+	findings: [...#KGFinding]
 	admissible: bool
 	response:   #Response
 })
@@ -136,8 +137,8 @@ import "list"
 		patch:     #ObservedPatch
 		promotion: #PromotionGateFacts
 		selfContext: #SelfContextFacts | *{
-			schema:     "lattice-self-context.v1"
-			surfaces:   {}
+			schema: "lattice-self-context.v1"
+			surfaces: {}
 			invariants: {}
 		}
 	})

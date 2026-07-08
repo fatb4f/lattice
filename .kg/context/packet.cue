@@ -1,5 +1,7 @@
 package context
 
+#NonEmptyString: string & !=""
+
 #ContextSelectionInput: close({
 	host:  "codex"
 	event: "UserPromptSubmit"
@@ -104,4 +106,44 @@ package context
 
 	generated: true
 	authority: false
+})
+
+#ContextRoutePacket: close({
+	schema: "lattice.context-route-packet.v1"
+
+	host:  "codex"
+	event: "UserPromptSubmit"
+
+	query: #NonEmptyString
+
+	route:      #RouteID
+	confidence: number & >=0 & <=1
+
+	authority: false
+	generated: true
+	transient: true
+
+	budget: close({
+		maxInlineEntities: int & >=0 & <=3
+		maxInlineBytes:    int & >=0 & <=4096
+		preferMCP:         true
+	})
+
+	selection: close({
+		entities: [...#EntityID]
+		resources: [...#MCPResourceURI]
+		files?: [...#RepoPath]
+	})
+
+	gates: close({
+		kbValid:              true
+		noDanglingRefs:       true
+		noGeneratedInput:     true
+		noPluginCacheInput:   true
+		noRawTranscriptInput: true
+		transientProjection:  true
+	})
+
+	hardExclusions: [...#NonEmptyString]
+	instruction:    #NonEmptyString
 })

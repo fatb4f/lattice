@@ -7,7 +7,9 @@ package codexdrift
 	uri?: #NonEmptyString
 	description: #NonEmptyString
 	selector?: #NonEmptyString
+	command?: [...#NonEmptyString]
 	readOnly?: bool
+	expensive?: bool
 })
 
 #ReadOnlyMCPTool: #MCPEntry & {

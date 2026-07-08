@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 
@@ -47,6 +47,12 @@ const resourceExpressions = {
   'codex://graph-state/phase-one': expressions.phaseOne,
   'codex://graph-state/phase-two': expressions.phaseTwo,
   'codex://promotion/status': expressions.promotionStatus,
+};
+
+const kgResourceCommands = {
+  'kg://query/selfContext': ['query', 'selfContext'],
+  'kg://index/summary': ['index'],
+  'kg://index/full': ['index', '--full'],
 };
 
 function run(command, args, options = {}) {
@@ -127,6 +133,79 @@ function contextMatch(prompt) {
   }
 }
 
+function kgCommand(args, options = {}) {
+  return run('kg', args, { timeout: options.timeout || 20000 });
+}
+
+function fullIndex() {
+  const result = kgCommand(['index', '--full'], { timeout: 30000 });
+  if (!result.ok) return result;
+
+  try {
+    return { ok: true, value: JSON.parse(result.output || '{}') };
+  } catch (error) {
+    return { ok: false, output: `failed to parse kg index --full: ${error.message}` };
+  }
+}
+
+function entityByID(id) {
+  if (id === 'project-context') return kgCommand(['query', 'selfContext']);
+
+  const index = fullIndex();
+  if (!index.ok) return index;
+
+  const collections = ['decisions', 'insights', 'rejected', 'patterns'];
+  for (const collection of collections) {
+    const entity = index.value?.[collection]?.[id];
+    if (entity) {
+      return {
+        ok: true,
+        output: JSON.stringify({ id, collection, entity }, null, 2),
+      };
+    }
+  }
+
+  return { ok: false, output: `KG entity not found: ${id}` };
+}
+
+function relatedEntities(id) {
+  const entityResult = entityByID(id);
+  if (!entityResult.ok) return entityResult;
+
+  if (id === 'project-context') {
+    return {
+      ok: true,
+      output: JSON.stringify({ id, related: [] }, null, 2),
+    };
+  }
+
+  const index = fullIndex();
+  if (!index.ok) return index;
+
+  let entity;
+  for (const collection of ['decisions', 'insights', 'rejected', 'patterns']) {
+    entity = index.value?.[collection]?.[id];
+    if (entity) break;
+  }
+
+  const relatedIDs = Object.entries(entity?.related || {})
+    .filter(([, selected]) => selected === true)
+    .map(([relatedID]) => relatedID)
+    .slice(0, 8);
+
+  const related = relatedIDs
+    .map((relatedID) => {
+      const result = entityByID(relatedID);
+      if (!result.ok) return { id: relatedID, error: result.output };
+      return JSON.parse(result.output);
+    });
+
+  return {
+    ok: true,
+    output: JSON.stringify({ id, related }, null, 2),
+  };
+}
+
 function queryExpression(expression) {
   if (expression === expressions.phaseOne) return phaseStatus('phase-one');
   if (expression === expressions.phaseTwo) return phaseStatus('phase-two');
@@ -155,8 +234,8 @@ const server = new McpServer(
   {
     instructions: [
       'Read-only Codex drift KG server for this lattice repository.',
-      'Use it to inspect declared surfaces, drift findings, and phase promotion status.',
-      'It exposes .kg/codex, not the repo-local .kb project knowledge graph, and does not mutate repository files.',
+      'Use it to inspect declared surfaces, drift findings, phase promotion status, and targeted project KG reads.',
+      'It exposes .kg/codex control resources and bounded read-only .kb resources, and does not mutate repository files.',
     ].join(' '),
   },
 );
@@ -228,7 +307,7 @@ server.tool(
 
 server.tool(
   'kg_context_match',
-  'Return the read-only JSON-LD project KG context packet that UserPromptSubmit would inject for a prompt.',
+  'Return the bounded route packet that UserPromptSubmit would inject for a prompt.',
   {
     prompt: z.string().min(1).describe('Prompt text to match against the repo-local .kb project KG.'),
   },
@@ -260,6 +339,57 @@ for (const [uri, expression] of Object.entries(resourceExpressions)) {
     };
   });
 }
+
+for (const [uri, args] of Object.entries(kgResourceCommands)) {
+  server.resource(uri, uri, async () => {
+    const result = kgCommand(args, { timeout: uri === 'kg://index/full' ? 30000 : 20000 });
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: 'application/json',
+          text: result.output || '{}',
+        },
+      ],
+    };
+  });
+}
+
+server.resource(
+  'kg://entity/{id}',
+  new ResourceTemplate('kg://entity/{id}', { list: undefined }),
+  async (uri, variables) => {
+    const id = String(variables.id || '');
+    const result = entityByID(id);
+    return {
+      contents: [
+        {
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: result.output || '{}',
+        },
+      ],
+    };
+  },
+);
+
+server.resource(
+  'kg://related/{id}',
+  new ResourceTemplate('kg://related/{id}', { list: undefined }),
+  async (uri, variables) => {
+    const id = String(variables.id || '');
+    const result = relatedEntities(id);
+    return {
+      contents: [
+        {
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: result.output || '{}',
+        },
+      ],
+    };
+  },
+);
 
 async function main() {
   const transport = new StdioServerTransport();
