@@ -7,6 +7,7 @@ graphStatePhases: {
 		description: "Graph-state primitive ontology phase."
 		watchedPaths: [
 			"docs/graph-state-promotion-plan.md",
+			"meta/kernel.cue",
 			"projections/graph-state/README.md",
 			"projections/graph-state/primitives",
 			"projections/graph-state/promotion",
@@ -18,6 +19,7 @@ graphStatePhases: {
 		description: "Graph-state operational kernel phase."
 		watchedPaths: [
 			"docs/graph-state-promotion-plan.md",
+			"meta/kernel.cue",
 			"projections/graph-state/kernel",
 			"projections/graph-state/fixtures",
 			"projections/graph-state/promotion",

@@ -10,6 +10,7 @@ phaseWatchdogs: {
 			"missing-required-surface",
 			"unexpected-surface",
 			"duplicate-authority",
+			"verification-weakened",
 			"policy-violated",
 		]
 	}
@@ -22,6 +23,7 @@ phaseWatchdogs: {
 		blockingKinds: [
 			"missing-required-surface",
 			"unexpected-surface",
+			"verification-weakened",
 			"generated-promoted-to-authority",
 			"policy-violated",
 		]

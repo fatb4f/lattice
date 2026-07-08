@@ -61,9 +61,16 @@ package codexdrift
 	reason:   #NonEmptyString
 })
 
-#KGFinding: #CheckFinding & {
-	phase?: #PhaseID
-}
+#KGFinding: close({
+	rule?:    #KebabID
+	kind:     #DriftKind
+	surface:  #KebabID
+	path?:    #Path
+	severity: "info" | "warning" | "violation" | "critical"
+	response: #Response
+	reason:   #NonEmptyString
+	phase?:   #PhaseID
+})
 
 #Phase: close({
 	id:          #PhaseID

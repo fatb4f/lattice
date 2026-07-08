@@ -9,7 +9,7 @@ mcpResources: {
 	}
 	"codex://drift/findings": {
 		uri: "codex://drift/findings"
-		description: "Current drift findings from the Codex KG watchdog."
+		description: "Current drift and promotion-gate findings from the Codex KG watchdog."
 		selector: "findings"
 		readOnly: true
 	}

@@ -2,6 +2,7 @@
 set -eu
 
 repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+cd "$repo_root"
 
 bindings_json=$(mktemp "${TMPDIR:-/tmp}/codex-promotion-bindings.XXXXXX.json")
 phases_jsonl=$(mktemp "${TMPDIR:-/tmp}/codex-promotion-phases.XXXXXX.jsonl")
@@ -78,7 +79,7 @@ jq -c 'to_entries[]' "$bindings_json" | while IFS= read -r entry; do
 			exit 1
 			;;
 	esac
-	target_args="$repo_root/$target_package"
+	target_args="./$target_package"
 
 	plan=$(positive_check "$plan_selector" "$target_args")
 	implementation=$(positive_check "$implementation_selector" "$target_args")

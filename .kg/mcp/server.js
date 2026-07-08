@@ -44,7 +44,7 @@ const expressions = {
 
 const resourceExpressions = {
   'codex://surfaces': expressions.surfaces,
-  'codex://drift/findings': 'drift-findings',
+  'codex://drift/findings': 'gate-findings',
   'codex://graph-state/phase-one': expressions.phaseOne,
   'codex://graph-state/phase-two': expressions.phaseTwo,
   'codex://promotion/status': expressions.promotionStatus,
@@ -359,7 +359,7 @@ server.tool(
 
 for (const [uri, expression] of Object.entries(resourceExpressions)) {
   server.resource(uri, uri, async () => {
-    const result = expression === 'drift-findings' ? driftFindings() : queryExpression(expression);
+    const result = expression === 'gate-findings' ? driftFindings('gate') : queryExpression(expression);
     return {
       contents: [
         {

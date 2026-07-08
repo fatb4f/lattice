@@ -95,7 +95,7 @@ fi
 } >"$self_context_cue"
 
 case "$mode" in
-gate | promotion)
+gate | phase | promotion)
 	"$repo_root/.kg/codex/tools/promotion-facts" >"$promotion_json"
 	{
 		printf 'package codexdrift\n\n_observedPromotionFacts: '
@@ -138,9 +138,9 @@ patch)
 	;;
 phase)
 	if [ -n "$phase" ]; then
-		expr='(#PhaseWatchdogStatus & {findings: (#FullDriftKG & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo, patch: _observedFacts.patch, selfContext: _observedSelfContext}}).findings}).promotionStatus.phases["'"$phase"'"]'
+		expr='(#PhaseWatchdogStatus & {findings: (#FullDriftGate & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo, patch: _observedFacts.patch, promotion: _observedPromotionFacts, selfContext: _observedSelfContext}}).findings}).promotionStatus.phases["'"$phase"'"]'
 	else
-		expr='(#PhaseWatchdogStatus & {findings: (#FullDriftKG & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo, patch: _observedFacts.patch, selfContext: _observedSelfContext}}).findings}).promotionStatus'
+		expr='(#PhaseWatchdogStatus & {findings: (#FullDriftGate & {schema: "codex-drift-kg.v1", model: latticeReference, facts: {repo: _observedFacts.repo, patch: _observedFacts.patch, promotion: _observedPromotionFacts, selfContext: _observedSelfContext}}).findings}).promotionStatus'
 	fi
 	;;
 promotion)

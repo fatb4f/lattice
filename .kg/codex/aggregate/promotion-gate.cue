@@ -63,6 +63,7 @@ import "list"
 		if phaseFacts.targetPackage != metaPromotionBindings[phaseID].targetPackage {
 			kind:     "verification-weakened"
 			surface:  "meta-kernel"
+			path:     metaPromotionBindings[phaseID].authority
 			severity: "critical"
 			response: "block"
 			reason:   "Promotion facts targetPackage does not match promotion binding."
@@ -72,6 +73,7 @@ import "list"
 		if phaseFacts.selectorResults.plan.ok == false {
 			kind:     "verification-weakened"
 			surface:  "meta-kernel"
+			path:     metaPromotionBindings[phaseID].authority
 			severity: "critical"
 			response: "block"
 			reason:   "Promotion plan selector does not export from the bound target package."
@@ -81,6 +83,7 @@ import "list"
 		if phaseFacts.selectorResults.implementation.ok == false {
 			kind:     "verification-weakened"
 			surface:  "meta-kernel"
+			path:     metaPromotionBindings[phaseID].authority
 			severity: "critical"
 			response: "block"
 			reason:   "Promotion implementation selector does not export from the bound target package."
@@ -91,6 +94,7 @@ import "list"
 			if phaseFacts.selectorResults.noWidening.ok == false {
 				kind:     "verification-weakened"
 				surface:  "meta-kernel"
+				path:     metaPromotionBindings[phaseID].authority
 				severity: "critical"
 				response: "block"
 				reason:   "Promotion no-widening selector does not export from the bound target package."
@@ -102,6 +106,7 @@ import "list"
 		if probe.bottoms == false {
 			kind:     "verification-weakened"
 			surface:  "meta-kernel"
+			path:     metaPromotionBindings[phaseID].authority
 			severity: "critical"
 			response: "block"
 			reason:   "Promotion negative probe does not bottom."

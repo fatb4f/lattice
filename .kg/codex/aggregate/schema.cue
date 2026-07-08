@@ -106,7 +106,7 @@ import "list"
 #PhaseWatchdogStatus: close({
 	let Findings = findings
 
-	findings: [...#CheckFinding & {path: #Path}] | *[]
+	findings: [...#KGFinding & {path: #Path}] | *[]
 
 	phaseFindings: {
 		"graph-state-phase-one": (#PhaseFindings & {phaseID: "graph-state-phase-one", findings: Findings}).output
@@ -147,7 +147,7 @@ import "list"
 
 #PhaseFindings: close({
 	phaseID: #PhaseID
-	findings: [...#CheckFinding & {path: #Path}] | *[]
+	findings: [...#KGFinding & {path: #Path}] | *[]
 
 	output: [
 		for finding in findings
@@ -171,6 +171,7 @@ graphStatePhases: {
 		description: "Graph-state primitive ontology phase."
 		watchedPaths: [
 			"docs/graph-state-promotion-plan.md",
+			"meta/kernel.cue",
 			"projections/graph-state/README.md",
 			"projections/graph-state/primitives",
 			"projections/graph-state/promotion",
@@ -183,6 +184,7 @@ graphStatePhases: {
 		description: "Graph-state operational kernel phase."
 		watchedPaths: [
 			"docs/graph-state-promotion-plan.md",
+			"meta/kernel.cue",
 			"projections/graph-state/kernel",
 			"projections/graph-state/fixtures",
 			"projections/graph-state/promotion",
