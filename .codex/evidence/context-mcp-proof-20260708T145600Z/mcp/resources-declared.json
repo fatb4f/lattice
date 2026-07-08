@@ -1,0 +1,82 @@
+{
+    "codex://surfaces": {
+        "uri": "codex://surfaces",
+        "description": "Declared Codex KG control surfaces.",
+        "selector": "latticeReference.surfaces",
+        "readOnly": true
+    },
+    "codex://drift/findings": {
+        "uri": "codex://drift/findings",
+        "description": "Current drift findings from the Codex KG watchdog.",
+        "selector": "findings",
+        "readOnly": true
+    },
+    "codex://graph-state/phase-one": {
+        "uri": "codex://graph-state/phase-one",
+        "description": "Graph-state Phase 1 watchdog status.",
+        "selector": "promotionStatus.phases.\"graph-state-phase-one\"",
+        "readOnly": true
+    },
+    "codex://graph-state/phase-two": {
+        "uri": "codex://graph-state/phase-two",
+        "description": "Graph-state Phase 2 watchdog status.",
+        "selector": "promotionStatus.phases.\"graph-state-phase-two\"",
+        "readOnly": true
+    },
+    "codex://promotion/status": {
+        "uri": "codex://promotion/status",
+        "description": "Phase promotion status projection.",
+        "selector": "promotionStatus",
+        "readOnly": true
+    },
+    "kg://query/selfContext": {
+        "uri": "kg://query/selfContext",
+        "description": "Project self-context from kg query selfContext.",
+        "command": [
+            "kg",
+            "query",
+            "selfContext"
+        ],
+        "readOnly": true
+    },
+    "kg://index/summary": {
+        "uri": "kg://index/summary",
+        "description": "Compact KG index summary.",
+        "command": [
+            "kg",
+            "index"
+        ],
+        "readOnly": true
+    },
+    "kg://index/full": {
+        "uri": "kg://index/full",
+        "description": "Full KG index; use only on explicit KG inspection.",
+        "command": [
+            "kg",
+            "index",
+            "--full"
+        ],
+        "readOnly": true,
+        "expensive": true
+    },
+    "kg://entity/{id}": {
+        "uri": "kg://entity/{id}",
+        "description": "Fetch one KG entity by stable ID.",
+        "command": [
+            "kg",
+            "query",
+            "entityByID"
+        ],
+        "readOnly": true
+    },
+    "kg://related/{id}": {
+        "uri": "kg://related/{id}",
+        "description": "Fetch bounded neighbors for one KG entity.",
+        "command": [
+            "kg",
+            "query",
+            "related"
+        ],
+        "readOnly": true
+    }
+}

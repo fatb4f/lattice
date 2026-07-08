@@ -1,0 +1,147 @@
+{
+    "sourceAuthority": ".kb",
+    "graphBoundary": "directory",
+    "selector": "route-packet",
+    "graphSource": "kg index",
+    "graphProjection": "mcp-resource-uris",
+    "vocabSource": ".kb/cue.mod/pkg/quicue.ca/kg/vocab/context.cue",
+    "vocabFallback": ".kg/vocab/context.cue",
+    "authorityInputs": [
+        ".codex/skills/kg-agent/SKILL.md",
+        ".kb",
+        ".kg/hooks",
+        ".kg/codex",
+        "meta/kernel.cue",
+        "projections/graph-state"
+    ],
+    "nonAuthorityInputs": [
+        "~/.local/share/codex/plugins/cache/dotfiles",
+        "generated resolver JSON from plugin cache",
+        "transient context packets",
+        "MCP/tool outputs",
+        "raw transcripts"
+    ],
+    "forbiddenRuntimeInputs": [
+        "resolver-fragments.json",
+        "prompt-routes.json",
+        "context-index.json",
+        "route-inventory.json"
+    ],
+    "tokenBudget": {
+        "routePacketMaxBytes": 4096,
+        "inlineEntityMax": 3,
+        "inlineResourceMax": 8,
+        "entityBodyInline": false,
+        "mcpPreferred": true
+    },
+    "routes": {
+        "evidence-gather": {
+            "maxInlineEntities": 2,
+            "allowedEntities": {
+                "ADR-002": true,
+                "ADR-003": true,
+                "INSIGHT-002": true,
+                "REJ-002": true,
+                "REJ-003": true,
+                "project-context": true
+            },
+            "defaultEntities": [
+                "project-context",
+                "INSIGHT-002"
+            ],
+            "mcpResources": [
+                "kg://entity/project-context",
+                "kg://query/selfContext",
+                "codex://drift/findings"
+            ],
+            "files": []
+        },
+        "promotion-review": {
+            "maxInlineEntities": 1,
+            "allowedEntities": {
+                "project-context": true
+            },
+            "defaultEntities": [
+                "project-context"
+            ],
+            "mcpResources": [
+                "codex://promotion/status",
+                "codex://graph-state/phase-one",
+                "codex://graph-state/phase-two",
+                "codex://drift/findings"
+            ],
+            "files": []
+        },
+        "graph-state-review": {
+            "maxInlineEntities": 1,
+            "allowedEntities": {
+                "project-context": true
+            },
+            "defaultEntities": [
+                "project-context"
+            ],
+            "mcpResources": [
+                "codex://graph-state/phase-one",
+                "codex://graph-state/phase-two",
+                "codex://promotion/status"
+            ],
+            "files": [
+                "projections/graph-state",
+                "meta/kernel.cue"
+            ]
+        },
+        "kg-maintenance": {
+            "maxInlineEntities": 1,
+            "allowedEntities": {
+                "project-context": true
+            },
+            "defaultEntities": [
+                "project-context"
+            ],
+            "mcpResources": [
+                "kg://query/selfContext",
+                "kg://index/summary"
+            ],
+            "files": [
+                ".kb",
+                ".kg/context"
+            ]
+        },
+        "resolver-maintenance": {
+            "maxInlineEntities": 1,
+            "allowedEntities": {
+                "project-context": true
+            },
+            "defaultEntities": [
+                "project-context"
+            ],
+            "mcpResources": [
+                "kg://query/selfContext",
+                "codex://surfaces"
+            ],
+            "files": []
+        },
+        "repo-inspection": {
+            "maxInlineEntities": 1,
+            "allowedEntities": {
+                "project-context": true
+            },
+            "defaultEntities": [
+                "project-context"
+            ],
+            "mcpResources": [
+                "kg://query/selfContext"
+            ],
+            "files": []
+        },
+        "default-minimal": {
+            "maxInlineEntities": 0,
+            "allowedEntities": {},
+            "defaultEntities": [],
+            "mcpResources": [
+                "kg://query/selfContext"
+            ],
+            "files": []
+        }
+    }
+}

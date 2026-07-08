@@ -1,0 +1,104 @@
+{
+  "codex://surfaces": {
+    "bytes": 10750,
+    "schema": "unknown",
+    "keys": [
+      "pattern-suite",
+      "control-profile",
+      "source-registry",
+      "meta-kernel",
+      "validation-controller",
+      "codex-drift-kg",
+      "kg-hook-runtime",
+      "graph-state-phase-one",
+      "graph-state-phase-two",
+      "graph-state-promotion",
+      "graph-state-drift-reports",
+      "generated-codex-facts"
+    ]
+  },
+  "codex://drift/findings": {
+    "bytes": 2,
+    "schema": "unknown",
+    "keys": []
+  },
+  "codex://graph-state/phase-one": {
+    "bytes": 2678,
+    "schema": "unknown",
+    "keys": [
+      "phase",
+      "promotion",
+      "watchdog",
+      "evaluation"
+    ]
+  },
+  "codex://graph-state/phase-two": {
+    "bytes": 3241,
+    "schema": "unknown",
+    "keys": [
+      "phase",
+      "promotion",
+      "watchdog",
+      "evaluation"
+    ]
+  },
+  "codex://promotion/status": {
+    "bytes": 7326,
+    "schema": "codex-phase-promotion-status.v1",
+    "keys": [
+      "schema",
+      "phases"
+    ]
+  },
+  "kg://query/selfContext": {
+    "bytes": 7169,
+    "schema": "lattice-self-context.v1",
+    "keys": [
+      "schema",
+      "surfaces",
+      "invariants"
+    ]
+  },
+  "kg://index/summary": {
+    "bytes": 120,
+    "schema": "unknown",
+    "keys": [
+      "total_decisions",
+      "total_insights",
+      "total_rejected",
+      "total_patterns",
+      "total"
+    ]
+  },
+  "kg://index/full": {
+    "bytes": 9594,
+    "schema": "unknown",
+    "keys": [
+      "project",
+      "decisions",
+      "insights",
+      "rejected",
+      "patterns",
+      "summary",
+      "by_status",
+      "by_confidence"
+    ]
+  },
+  "kg://entity/project-context": {
+    "bytes": 7169,
+    "schema": "lattice-self-context.v1",
+    "keys": [
+      "schema",
+      "surfaces",
+      "invariants"
+    ]
+  },
+  "kg://related/project-context": {
+    "bytes": 46,
+    "schema": "unknown",
+    "keys": [
+      "id",
+      "related"
+    ]
+  }
+}

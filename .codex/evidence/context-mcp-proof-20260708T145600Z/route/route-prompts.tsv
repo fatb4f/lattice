@@ -1,0 +1,6 @@
+promotion-review	Inspect promotion status and targetPackage bindings.
+graph-state-review	Review graph-state phase one and phase two contracts.
+kg-maintenance	Run kg maintenance with kg vet, kg index, and kg settle.
+resolver-maintenance	Check resolver route policy and context packet selection.
+repo-inspection	Inspect files and repo diff for this change.
+default-minimal	Hello.

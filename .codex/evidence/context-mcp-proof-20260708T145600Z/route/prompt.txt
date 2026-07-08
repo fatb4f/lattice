@@ -1,0 +1,1 @@
+Let's test if the kg resolver injects route formatted context from the context:json-ld, and if MCP is wired.

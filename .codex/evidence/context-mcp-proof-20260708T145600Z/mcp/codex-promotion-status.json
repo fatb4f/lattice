@@ -1,0 +1,165 @@
+{
+    "schema": "codex-phase-promotion-status.v1",
+    "phases": {
+        "graph-state-phase-one": {
+            "phase": {
+                "id": "graph-state-phase-one",
+                "status": "promoted",
+                "description": "Graph-state primitive ontology phase.",
+                "watchedPaths": [
+                    "docs/graph-state-promotion-plan.md",
+                    "projections/graph-state/README.md",
+                    "projections/graph-state/primitives",
+                    "projections/graph-state/promotion"
+                ]
+            },
+            "promotion": {
+                "id": "graph-state-phase-one-promotion",
+                "phase": "graph-state-phase-one",
+                "authority": "meta/kernel.cue",
+                "description": "Phase 1 closes through meta.#MakeClosedObligationState.",
+                "targetPackage": "projections/graph-state",
+                "planSelector": "closedPhaseOnePromotion",
+                "implementationSelector": "closedPhaseOnePromotion",
+                "negativeProbeSelectors": []
+            },
+            "watchdog": {
+                "id": "graph-state-phase-one-watchdog",
+                "phase": "graph-state-phase-one",
+                "description": "Watch graph-state primitive ontology promotion surfaces.",
+                "watches": [
+                    "docs/graph-state-promotion-plan.md",
+                    "projections/graph-state/README.md",
+                    "projections/graph-state/primitives",
+                    "projections/graph-state/promotion"
+                ],
+                "blockingKinds": [
+                    "missing-required-surface",
+                    "unexpected-surface",
+                    "duplicate-authority",
+                    "policy-violated"
+                ]
+            },
+            "evaluation": {
+                "phase": {
+                    "id": "graph-state-phase-one",
+                    "status": "promoted",
+                    "description": "Graph-state primitive ontology phase.",
+                    "watchedPaths": [
+                        "docs/graph-state-promotion-plan.md",
+                        "projections/graph-state/README.md",
+                        "projections/graph-state/primitives",
+                        "projections/graph-state/promotion"
+                    ]
+                },
+                "watchdog": {
+                    "id": "graph-state-phase-one-watchdog",
+                    "phase": "graph-state-phase-one",
+                    "description": "Watch graph-state primitive ontology promotion surfaces.",
+                    "watches": [
+                        "docs/graph-state-promotion-plan.md",
+                        "projections/graph-state/README.md",
+                        "projections/graph-state/primitives",
+                        "projections/graph-state/promotion"
+                    ],
+                    "blockingKinds": [
+                        "missing-required-surface",
+                        "unexpected-surface",
+                        "duplicate-authority",
+                        "policy-violated"
+                    ]
+                },
+                "findings": [],
+                "blockingFindings": [],
+                "admissible": true,
+                "status": "admissible"
+            }
+        },
+        "graph-state-phase-two": {
+            "phase": {
+                "id": "graph-state-phase-two",
+                "status": "planned",
+                "description": "Graph-state operational kernel phase.",
+                "watchedPaths": [
+                    "docs/graph-state-promotion-plan.md",
+                    "projections/graph-state/kernel",
+                    "projections/graph-state/fixtures",
+                    "projections/graph-state/promotion",
+                    "generated/codex/graph-state"
+                ]
+            },
+            "promotion": {
+                "id": "graph-state-phase-two-promotion",
+                "phase": "graph-state-phase-two",
+                "authority": "meta/kernel.cue",
+                "description": "Phase 2 closes, proves no-widening, and bottoms negative probes.",
+                "targetPackage": "meta",
+                "planSelector": "closedPhaseTwoPlan",
+                "implementationSelector": "closedPhaseTwoImplementation",
+                "noWideningSelector": "phaseTwoNoWidening",
+                "negativeProbeSelectors": [
+                    "danglingEdgeNegative.out.probe.proof",
+                    "illegalEdgeTypeNegative.out.probe.proof",
+                    "missingAssignmentTargetNegative.out.probe.proof",
+                    "cyclicDependencyNegative.out.probe.proof",
+                    "projectionSelectsMissingNodeNegative.out.probe.proof",
+                    "widenedProducerOutputNegative.out.probe.proof"
+                ]
+            },
+            "watchdog": {
+                "id": "graph-state-phase-two-watchdog",
+                "phase": "graph-state-phase-two",
+                "description": "Watch graph-state kernel promotion surfaces.",
+                "watches": [
+                    "docs/graph-state-promotion-plan.md",
+                    "projections/graph-state/kernel",
+                    "projections/graph-state/fixtures",
+                    "projections/graph-state/promotion",
+                    "generated/codex/graph-state"
+                ],
+                "blockingKinds": [
+                    "missing-required-surface",
+                    "unexpected-surface",
+                    "generated-promoted-to-authority",
+                    "policy-violated"
+                ]
+            },
+            "evaluation": {
+                "phase": {
+                    "id": "graph-state-phase-two",
+                    "status": "planned",
+                    "description": "Graph-state operational kernel phase.",
+                    "watchedPaths": [
+                        "docs/graph-state-promotion-plan.md",
+                        "projections/graph-state/kernel",
+                        "projections/graph-state/fixtures",
+                        "projections/graph-state/promotion",
+                        "generated/codex/graph-state"
+                    ]
+                },
+                "watchdog": {
+                    "id": "graph-state-phase-two-watchdog",
+                    "phase": "graph-state-phase-two",
+                    "description": "Watch graph-state kernel promotion surfaces.",
+                    "watches": [
+                        "docs/graph-state-promotion-plan.md",
+                        "projections/graph-state/kernel",
+                        "projections/graph-state/fixtures",
+                        "projections/graph-state/promotion",
+                        "generated/codex/graph-state"
+                    ],
+                    "blockingKinds": [
+                        "missing-required-surface",
+                        "unexpected-surface",
+                        "generated-promoted-to-authority",
+                        "policy-violated"
+                    ]
+                },
+                "findings": [],
+                "blockingFindings": [],
+                "admissible": true,
+                "status": "admissible"
+            }
+        }
+    }
+}

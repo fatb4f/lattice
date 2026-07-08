@@ -1,0 +1,186 @@
+{
+    "schema": "lattice-self-context.v1",
+    "surfaces": {
+        "project-kg": {
+            "id": "project-kg",
+            "kind": "kg",
+            "role": "authority",
+            "path": ".kb",
+            "description": "Repo-local project knowledge graph. Directory graph boundaries define decisions, insights, patterns, rejected approaches, tasks, workspace, sources, and self-context.",
+            "writes": {
+                "kg-cli": true,
+                "human-reviewed-edit": true
+            },
+            "contextForCodex": true
+        },
+        "codex-provider": {
+            "id": "codex-provider",
+            "kind": "provider",
+            "role": "authority",
+            "path": ".kg/codex",
+            "description": "Codex provider/control package for drift checks, promotion gates, hooks, phase watchdogs, and read-only MCP surfaces.",
+            "owns": {
+                "drift-checker": true,
+                "promo-gate": true,
+                "drift-hook": true
+            },
+            "reads": {
+                "project-kg": true,
+                "lattice-kernel": true,
+                "idiomatic-patterns": true
+            },
+            "forbids": {
+                "project-knowledge-records": true
+            },
+            "contextForCodex": true
+        },
+        "kg-hook-runtime": {
+            "id": "kg-hook-runtime",
+            "kind": "tool",
+            "role": "adapter",
+            "path": ".kg",
+            "description": "KG hook runtime for dynamic context selection, packet validation, vocabulary mapping, and Codex hook emission.",
+            "reads": {
+                "project-kg": true
+            },
+            "contextForCodex": true
+        },
+        "context-selector": {
+            "id": "context-selector",
+            "kind": "adapter",
+            "role": "derived",
+            "path": ".kg/context",
+            "description": "CUE contracts for transient context selection, packet shape, validation gates, and Codex emission.",
+            "reads": {
+                "project-kg": true,
+                "kg-vocab": true
+            }
+        },
+        "kg-vocab": {
+            "id": "kg-vocab",
+            "kind": "provider",
+            "role": "authority",
+            "path": ".kb/cue.mod/pkg/quicue.ca/kg/vocab/context.cue",
+            "description": "Upstream quicue KG JSON-LD vocabulary context mapping CUE KG fields and entity types to linked-data semantics; .kg/vocab/context.cue is only a local hook fallback."
+        },
+        "drift-checker": {
+            "id": "drift-checker",
+            "kind": "tool",
+            "role": "adapter",
+            "path": ".kg/codex/tools/drift-check",
+            "description": "Executable checker owned by the Codex provider. It derives findings from repo facts, patch facts, provider policy, and project self-context.",
+            "reads": {
+                "codex-provider": true,
+                "project-kg": true
+            }
+        },
+        "promo-gate": {
+            "id": "promo-gate",
+            "kind": "gate",
+            "role": "derived",
+            "path": ".kg/codex/aggregate/promotion-gate.cue",
+            "description": "Admission gate derived from promotion facts and Codex provider policy.",
+            "reads": {
+                "codex-provider": true
+            }
+        },
+        "lattice-kernel": {
+            "id": "lattice-kernel",
+            "kind": "kernel",
+            "role": "authority",
+            "path": "meta/kernel.cue",
+            "description": "Provider-agnostic lattice proof and closedness kernel.",
+            "forbids": {
+                "provider-specific-actions": true
+            }
+        },
+        "idiomatic-patterns": {
+            "id": "idiomatic-patterns",
+            "kind": "pattern",
+            "role": "authority",
+            "path": "patterns",
+            "description": "Provider-agnostic CUE idioms and contract patterns.",
+            "forbids": {
+                "provider-specific-actions": true
+            }
+        },
+        "codex-plugins": {
+            "id": "codex-plugins",
+            "kind": "plugin",
+            "role": "adapter",
+            "path": ".codex/plugins",
+            "description": "Runtime host adapters. Plugins may shim into KG hooks but do not define provider authority or context selection logic.",
+            "reads": {
+                "codex-provider": true,
+                "project-kg": true,
+                "kg-hook-runtime": true
+            }
+        },
+        "generated-codex": {
+            "id": "generated-codex",
+            "kind": "generated",
+            "role": "derived",
+            "path": "generated/codex",
+            "description": "Generated reports, facts, and projections. Never source authority.",
+            "forbids": {
+                "manual-authority-edits": true
+            }
+        }
+    },
+    "invariants": {
+        "codex-provider-not-project-kg": {
+            "statement": ".kg/codex is a Codex provider/control package, not the project knowledge graph.",
+            "enforcedBy": [
+                ".kb/self-context.cue",
+                ".kg/codex/tools/drift-check",
+                "scripts/validate-domain.sh"
+            ]
+        },
+        "project-kg-is-kb": {
+            "statement": ".kb is the repo-local project knowledge authority.",
+            "enforcedBy": [
+                "kg vet",
+                "kg index --full",
+                "kg settle"
+            ]
+        },
+        "generated-is-never-authority": {
+            "statement": "generated/ surfaces are projections and must not be promoted to authority without review.",
+            "enforcedBy": [
+                ".kg/codex/aggregate/promotion-gate.cue",
+                ".kg/codex/tools/drift-check"
+            ]
+        },
+        "plugins-are-adapters": {
+            "statement": "Plugins are runtime adapters, not providers unless explicitly declared.",
+            "enforcedBy": [
+                ".kb/self-context.cue",
+                ".kg/codex/tools/drift-hook",
+                ".kg/hooks/codex/user-prompt-submit"
+            ]
+        },
+        "drift-checker-is-tool": {
+            "statement": "drift-checker is a provider tool, not the provider.",
+            "enforcedBy": [
+                ".kb/self-context.cue",
+                ".kg/codex/tools/drift-check"
+            ]
+        },
+        "context-packets-are-transient": {
+            "statement": "Context packets are transient runtime projections and must not become source authority or the next run's input.",
+            "enforcedBy": [
+                ".kg/context/validate.cue",
+                ".kg/tools/kg",
+                "scripts/validate-domain.sh"
+            ]
+        },
+        "no-generated-resolver-runtime-inputs": {
+            "statement": "Generated resolver fragments, prompt routes, route inventories, and context indexes are forbidden as runtime context inputs.",
+            "enforcedBy": [
+                ".kg/context/validate.cue",
+                ".kg/hooks/codex/user-prompt-submit",
+                "scripts/validate-domain.sh"
+            ]
+        }
+    }
+}

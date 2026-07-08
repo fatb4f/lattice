@@ -1,0 +1,527 @@
+{
+  "schema": "lattice.context-mcp-evidence-token-stats.v1",
+  "estimator": {
+    "kind": "repo-local-heuristic",
+    "rule": "max(regex token-like segments, ceil(utf8 bytes / 4))"
+  },
+  "totals": {
+    "files": 46,
+    "bytes": 84125,
+    "chars": 84125,
+    "lines": 2108,
+    "words": 5300,
+    "estimatedTokens": 22236
+  },
+  "bySection": {
+    "drift": {
+      "files": 2,
+      "bytes": 2387,
+      "chars": 2387,
+      "lines": 75,
+      "words": 189,
+      "estimatedTokens": 614
+    },
+    "mcp": {
+      "files": 21,
+      "bytes": 60245,
+      "chars": 60245,
+      "lines": 1700,
+      "words": 4071,
+      "estimatedTokens": 15334
+    },
+    "repo": {
+      "files": 4,
+      "bytes": 214,
+      "chars": 214,
+      "lines": 7,
+      "words": 25,
+      "estimatedTokens": 53
+    },
+    "route": {
+      "files": 19,
+      "bytes": 21279,
+      "chars": 21279,
+      "lines": 326,
+      "words": 1015,
+      "estimatedTokens": 6235
+    }
+  },
+  "routePackets": [
+    {
+      "route": "default-minimal",
+      "path": "route/packet-default-minimal.json",
+      "section": "route",
+      "bytes": 754,
+      "chars": 754,
+      "lines": 1,
+      "words": 26,
+      "estimatedTokens": 244
+    },
+    {
+      "route": "graph-state-review",
+      "path": "route/packet-graph-state-review.json",
+      "section": "route",
+      "bytes": 929,
+      "chars": 929,
+      "lines": 1,
+      "words": 33,
+      "estimatedTokens": 303
+    },
+    {
+      "route": "kg-maintenance",
+      "path": "route/packet-kg-maintenance.json",
+      "section": "route",
+      "bytes": 859,
+      "chars": 859,
+      "lines": 1,
+      "words": 36,
+      "estimatedTokens": 282
+    },
+    {
+      "route": "promotion-review",
+      "path": "route/packet-promotion-review.json",
+      "section": "route",
+      "bytes": 908,
+      "chars": 908,
+      "lines": 1,
+      "words": 31,
+      "estimatedTokens": 292
+    },
+    {
+      "route": "repo-inspection",
+      "path": "route/packet-repo-inspection.json",
+      "section": "route",
+      "bytes": 808,
+      "chars": 808,
+      "lines": 1,
+      "words": 33,
+      "estimatedTokens": 256
+    },
+    {
+      "route": "resolver-maintenance",
+      "path": "route/packet-resolver-maintenance.json",
+      "section": "route",
+      "bytes": 845,
+      "chars": 845,
+      "lines": 1,
+      "words": 33,
+      "estimatedTokens": 264
+    }
+  ],
+  "files": [
+    {
+      "path": "drift/drift-full.json",
+      "section": "drift",
+      "bytes": 3,
+      "chars": 3,
+      "lines": 1,
+      "words": 1,
+      "estimatedTokens": 2
+    },
+    {
+      "path": "drift/drift-promotion.json",
+      "section": "drift",
+      "bytes": 2384,
+      "chars": 2384,
+      "lines": 74,
+      "words": 188,
+      "estimatedTokens": 612
+    },
+    {
+      "path": "mcp/assert-all-resource-classes-read.ok",
+      "section": "mcp",
+      "bytes": 5,
+      "chars": 5,
+      "lines": 1,
+      "words": 1,
+      "estimatedTokens": 1
+    },
+    {
+      "path": "mcp/assert-codex-surfaces-resource.ok",
+      "section": "mcp",
+      "bytes": 5,
+      "chars": 5,
+      "lines": 1,
+      "words": 1,
+      "estimatedTokens": 1
+    },
+    {
+      "path": "mcp/assert-context-match.ok",
+      "section": "mcp",
+      "bytes": 5,
+      "chars": 5,
+      "lines": 1,
+      "words": 1,
+      "estimatedTokens": 1
+    },
+    {
+      "path": "mcp/assert-selected-resources-declared.ok",
+      "section": "mcp",
+      "bytes": 5,
+      "chars": 5,
+      "lines": 1,
+      "words": 1,
+      "estimatedTokens": 1
+    },
+    {
+      "path": "mcp/assert-self-context-resource.ok",
+      "section": "mcp",
+      "bytes": 5,
+      "chars": 5,
+      "lines": 1,
+      "words": 1,
+      "estimatedTokens": 1
+    },
+    {
+      "path": "mcp/codex-drift-findings.json",
+      "section": "mcp",
+      "bytes": 3,
+      "chars": 3,
+      "lines": 1,
+      "words": 1,
+      "estimatedTokens": 2
+    },
+    {
+      "path": "mcp/codex-graph-state-phase-one.json",
+      "section": "mcp",
+      "bytes": 2679,
+      "chars": 2679,
+      "lines": 74,
+      "words": 130,
+      "estimatedTokens": 670
+    },
+    {
+      "path": "mcp/codex-graph-state-phase-two.json",
+      "section": "mcp",
+      "bytes": 3242,
+      "chars": 3242,
+      "lines": 86,
+      "words": 145,
+      "estimatedTokens": 811
+    },
+    {
+      "path": "mcp/codex-promotion-status.json",
+      "section": "mcp",
+      "bytes": 7327,
+      "chars": 7327,
+      "lines": 165,
+      "words": 284,
+      "estimatedTokens": 1832
+    },
+    {
+      "path": "mcp/codex-surfaces.json",
+      "section": "mcp",
+      "bytes": 10751,
+      "chars": 10751,
+      "lines": 307,
+      "words": 502,
+      "estimatedTokens": 2744
+    },
+    {
+      "path": "mcp/context-match.json",
+      "section": "mcp",
+      "bytes": 1093,
+      "chars": 1093,
+      "lines": 42,
+      "words": 110,
+      "estimatedTokens": 281
+    },
+    {
+      "path": "mcp/kg-entity-project-context.json",
+      "section": "mcp",
+      "bytes": 7170,
+      "chars": 7170,
+      "lines": 186,
+      "words": 532,
+      "estimatedTokens": 1793
+    },
+    {
+      "path": "mcp/kg-index-full.json",
+      "section": "mcp",
+      "bytes": 9595,
+      "chars": 9595,
+      "lines": 207,
+      "words": 965,
+      "estimatedTokens": 2399
+    },
+    {
+      "path": "mcp/kg-index-summary.json",
+      "section": "mcp",
+      "bytes": 121,
+      "chars": 121,
+      "lines": 7,
+      "words": 12,
+      "estimatedTokens": 31
+    },
+    {
+      "path": "mcp/kg-query-selfContext.json",
+      "section": "mcp",
+      "bytes": 7170,
+      "chars": 7170,
+      "lines": 186,
+      "words": 532,
+      "estimatedTokens": 1793
+    },
+    {
+      "path": "mcp/kg-related-project-context.json",
+      "section": "mcp",
+      "bytes": 47,
+      "chars": 47,
+      "lines": 4,
+      "words": 6,
+      "estimatedTokens": 18
+    },
+    {
+      "path": "mcp/resource-read-summary.json",
+      "section": "mcp",
+      "bytes": 1947,
+      "chars": 1947,
+      "lines": 104,
+      "words": 144,
+      "estimatedTokens": 568
+    },
+    {
+      "path": "mcp/resources-declared.json",
+      "section": "mcp",
+      "bytes": 2426,
+      "chars": 2426,
+      "lines": 82,
+      "words": 183,
+      "estimatedTokens": 652
+    },
+    {
+      "path": "mcp/resources.json",
+      "section": "mcp",
+      "bytes": 2426,
+      "chars": 2426,
+      "lines": 82,
+      "words": 183,
+      "estimatedTokens": 652
+    },
+    {
+      "path": "mcp/status.json",
+      "section": "mcp",
+      "bytes": 273,
+      "chars": 273,
+      "lines": 12,
+      "words": 21,
+      "estimatedTokens": 95
+    },
+    {
+      "path": "mcp/tools.json",
+      "section": "mcp",
+      "bytes": 3950,
+      "chars": 3950,
+      "lines": 150,
+      "words": 316,
+      "estimatedTokens": 988
+    },
+    {
+      "path": "repo/branch.txt",
+      "section": "repo",
+      "bytes": 5,
+      "chars": 5,
+      "lines": 1,
+      "words": 1,
+      "estimatedTokens": 1
+    },
+    {
+      "path": "repo/head.txt",
+      "section": "repo",
+      "bytes": 41,
+      "chars": 41,
+      "lines": 1,
+      "words": 1,
+      "estimatedTokens": 10
+    },
+    {
+      "path": "repo/recent-commits.txt",
+      "section": "repo",
+      "bytes": 168,
+      "chars": 168,
+      "lines": 5,
+      "words": 23,
+      "estimatedTokens": 42
+    },
+    {
+      "path": "repo/status.txt",
+      "section": "repo",
+      "bytes": 0,
+      "chars": 0,
+      "lines": 0,
+      "words": 0,
+      "estimatedTokens": 0
+    },
+    {
+      "path": "route/all-routes.jsonl",
+      "section": "route",
+      "bytes": 5315,
+      "chars": 5315,
+      "lines": 6,
+      "words": 192,
+      "estimatedTokens": 1703
+    },
+    {
+      "path": "route/assert-all-routes-classified.ok",
+      "section": "route",
+      "bytes": 5,
+      "chars": 5,
+      "lines": 1,
+      "words": 1,
+      "estimatedTokens": 1
+    },
+    {
+      "path": "route/assert-all-routes-policy-entities.ok",
+      "section": "route",
+      "bytes": 5,
+      "chars": 5,
+      "lines": 1,
+      "words": 1,
+      "estimatedTokens": 1
+    },
+    {
+      "path": "route/assert-all-routes-policy-selection.ok",
+      "section": "route",
+      "bytes": 5,
+      "chars": 5,
+      "lines": 1,
+      "words": 1,
+      "estimatedTokens": 1
+    },
+    {
+      "path": "route/assert-route-packet.ok",
+      "section": "route",
+      "bytes": 5,
+      "chars": 5,
+      "lines": 1,
+      "words": 1,
+      "estimatedTokens": 1
+    },
+    {
+      "path": "route/packet-default-minimal.json",
+      "section": "route",
+      "bytes": 754,
+      "chars": 754,
+      "lines": 1,
+      "words": 26,
+      "estimatedTokens": 244
+    },
+    {
+      "path": "route/packet-graph-state-review.json",
+      "section": "route",
+      "bytes": 929,
+      "chars": 929,
+      "lines": 1,
+      "words": 33,
+      "estimatedTokens": 303
+    },
+    {
+      "path": "route/packet-kg-maintenance.json",
+      "section": "route",
+      "bytes": 859,
+      "chars": 859,
+      "lines": 1,
+      "words": 36,
+      "estimatedTokens": 282
+    },
+    {
+      "path": "route/packet-promotion-review.json",
+      "section": "route",
+      "bytes": 908,
+      "chars": 908,
+      "lines": 1,
+      "words": 31,
+      "estimatedTokens": 292
+    },
+    {
+      "path": "route/packet-repo-inspection.json",
+      "section": "route",
+      "bytes": 808,
+      "chars": 808,
+      "lines": 1,
+      "words": 33,
+      "estimatedTokens": 256
+    },
+    {
+      "path": "route/packet-resolver-maintenance.json",
+      "section": "route",
+      "bytes": 845,
+      "chars": 845,
+      "lines": 1,
+      "words": 33,
+      "estimatedTokens": 264
+    },
+    {
+      "path": "route/prompt.txt",
+      "section": "route",
+      "bytes": 109,
+      "chars": 109,
+      "lines": 1,
+      "words": 18,
+      "estimatedTokens": 27
+    },
+    {
+      "path": "route/route-policy.json",
+      "section": "route",
+      "bytes": 3372,
+      "chars": 3372,
+      "lines": 119,
+      "words": 179,
+      "estimatedTokens": 843
+    },
+    {
+      "path": "route/route-prompts.tsv",
+      "section": "route",
+      "bytes": 378,
+      "chars": 378,
+      "lines": 6,
+      "words": 48,
+      "estimatedTokens": 95
+    },
+    {
+      "path": "route/route-summary.json",
+      "section": "route",
+      "bytes": 773,
+      "chars": 773,
+      "lines": 35,
+      "words": 69,
+      "estimatedTokens": 194
+    },
+    {
+      "path": "route/selection-policy.err",
+      "section": "route",
+      "bytes": 0,
+      "chars": 0,
+      "lines": 0,
+      "words": 0,
+      "estimatedTokens": 0
+    },
+    {
+      "path": "route/selection-policy.json",
+      "section": "route",
+      "bytes": 4255,
+      "chars": 4255,
+      "lines": 147,
+      "words": 227,
+      "estimatedTokens": 1064
+    },
+    {
+      "path": "route/user-prompt-submit-envelope.json",
+      "section": "route",
+      "bytes": 1058,
+      "chars": 1058,
+      "lines": 1,
+      "words": 43,
+      "estimatedTokens": 383
+    },
+    {
+      "path": "route/user-prompt-submit.json",
+      "section": "route",
+      "bytes": 896,
+      "chars": 896,
+      "lines": 1,
+      "words": 43,
+      "estimatedTokens": 281
+    }
+  ]
+}

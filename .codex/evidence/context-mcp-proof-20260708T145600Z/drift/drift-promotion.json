@@ -1,0 +1,74 @@
+[
+    {
+        "kind": "verification-weakened",
+        "surface": "meta-kernel",
+        "severity": "critical",
+        "response": "block",
+        "reason": "Promotion plan selector does not export from the bound target package.",
+        "phase": "graph-state-phase-two"
+    },
+    {
+        "kind": "verification-weakened",
+        "surface": "meta-kernel",
+        "severity": "critical",
+        "response": "block",
+        "reason": "Promotion implementation selector does not export from the bound target package.",
+        "phase": "graph-state-phase-two"
+    },
+    {
+        "kind": "verification-weakened",
+        "surface": "meta-kernel",
+        "severity": "critical",
+        "response": "block",
+        "reason": "Promotion no-widening selector does not export from the bound target package.",
+        "phase": "graph-state-phase-two"
+    },
+    {
+        "kind": "verification-weakened",
+        "surface": "meta-kernel",
+        "severity": "critical",
+        "response": "block",
+        "reason": "Promotion negative probe does not bottom.",
+        "phase": "graph-state-phase-two"
+    },
+    {
+        "kind": "verification-weakened",
+        "surface": "meta-kernel",
+        "severity": "critical",
+        "response": "block",
+        "reason": "Promotion negative probe does not bottom.",
+        "phase": "graph-state-phase-two"
+    },
+    {
+        "kind": "verification-weakened",
+        "surface": "meta-kernel",
+        "severity": "critical",
+        "response": "block",
+        "reason": "Promotion negative probe does not bottom.",
+        "phase": "graph-state-phase-two"
+    },
+    {
+        "kind": "verification-weakened",
+        "surface": "meta-kernel",
+        "severity": "critical",
+        "response": "block",
+        "reason": "Promotion negative probe does not bottom.",
+        "phase": "graph-state-phase-two"
+    },
+    {
+        "kind": "verification-weakened",
+        "surface": "meta-kernel",
+        "severity": "critical",
+        "response": "block",
+        "reason": "Promotion negative probe does not bottom.",
+        "phase": "graph-state-phase-two"
+    },
+    {
+        "kind": "verification-weakened",
+        "surface": "meta-kernel",
+        "severity": "critical",
+        "response": "block",
+        "reason": "Promotion negative probe does not bottom.",
+        "phase": "graph-state-phase-two"
+    }
+]

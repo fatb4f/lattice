@@ -1,0 +1,207 @@
+{
+    "project": "lattice",
+    "decisions": {
+        "ADR-001": {
+            "@type": "kg:Decision",
+            "id": "ADR-001",
+            "title": "Adopt upstream-shaped CUE KG entries through the kg CLI",
+            "status": "accepted",
+            "date": "2026-07-06",
+            "context": "The repository already has a Codex drift KG, but needs the upstream full-example project knowledge shape.",
+            "decision": "Use the local kg CLI to create and validate .kb entries for decisions, patterns, insights, rejected approaches, and a derived _index.",
+            "rationale": "The CLI owns the upstream module wiring and keeps the local project KG aligned with quicue.ca/kg conventions.",
+            "consequences": [
+                "Project knowledge is exported with kg index --full.",
+                "The Codex drift KG remains under .kg/codex with a separate authority boundary."
+            ],
+            "related": {
+                "INSIGHT-001": true,
+                "struct-as-set": true
+            }
+        },
+        "ADR-002": {
+            "@type": "kg:Decision",
+            "id": "ADR-002",
+            "title": "Keep agent KG access read-only by default",
+            "status": "accepted",
+            "date": "2026-07-06",
+            "context": "Agents need fast access to KG facts but should not treat derived indexes, MCP output, or generated observations as mutation authority.",
+            "decision": "Provide a repo-local skill that routes agents through kg vet, kg index, kg query, kg settle, and read-only MCP inspection before editing KG authority.",
+            "rationale": "The CLI and existing MCP policy already model read-only KG access; the skill makes that workflow explicit for future agents.",
+            "consequences": [
+                "Agents should run kg vet and kg index before changing .kb entries.",
+                "Mutation still happens through ordinary file edits reviewed by repository validation."
+            ],
+            "related": {
+                "INSIGHT-002": true,
+                "adr-as-cue": true
+            }
+        },
+        "ADR-003": {
+            "@type": "kg:Decision",
+            "id": "ADR-003",
+            "title": "Canonicalize project KG directory boundaries",
+            "status": "accepted",
+            "date": "2026-07-07",
+            "context": "The repository has a reusable kg schema package, a repo-local project knowledge graph, and a separate Codex drift-control graph.",
+            "decision": "Use .kb as the only project knowledge instance directory; reserve .kg/codex for Codex drift controls and treat kg/ as reusable schema and examples.",
+            "rationale": "A single instance directory avoids adapter and documentation drift while preserving the framework-versus-instance split.",
+            "consequences": [
+                "Project knowledge entries, indexes, and kg CLI validation remain under .kb.",
+                "Codex drift-control surfaces remain under .kg/codex and are not a .kg alias for project knowledge.",
+                "Executable adapters must name which graph authority they expose."
+            ],
+            "related": {
+                "ADR-001": true,
+                "ADR-002": true,
+                "REJ-002": true,
+                "REJ-003": true
+            }
+        }
+    },
+    "insights": {
+        "INSIGHT-001": {
+            "@type": "kg:Insight",
+            "id": "INSIGHT-001",
+            "statement": "CUE unification can be both the schema validator and the KG federation mechanism.",
+            "evidence": [
+                "The upstream full example indexes decisions, insights, rejected approaches, and patterns through one CUE value.",
+                "The local kg CLI validates .kb entries and exports a derived _index without a database."
+            ],
+            "method": "cross_reference",
+            "confidence": "high",
+            "discovered": "2026-07-06",
+            "implication": "The repo-local KG can stay zero-infrastructure and still be queryable by agents.",
+            "action_items": [
+                "Keep kg index --full exportable through the validator."
+            ],
+            "related": {
+                "ADR-001": true
+            }
+        },
+        "INSIGHT-002": {
+            "@type": "kg:Insight",
+            "id": "INSIGHT-002",
+            "statement": "The Codex drift KG and upstream-shaped project KG serve different roles.",
+            "evidence": [
+                ".kg/codex declares watchdog and MCP control surfaces.",
+                ".kb declares project knowledge entries and derived indexes through the kg CLI."
+            ],
+            "method": "observation",
+            "confidence": "medium",
+            "discovered": "2026-07-06",
+            "implication": "Agents should query both surfaces, but should not merge their authority boundaries.",
+            "related": {
+                "ADR-002": true
+            }
+        }
+    },
+    "rejected": {
+        "REJ-001": {
+            "@type": "kg:Rejected",
+            "id": "REJ-001",
+            "approach": "Import quicue.ca/kg directly into the root lattice CUE module for the example.",
+            "reason": "That would couple root validation to a remote module dependency for a small project knowledge example.",
+            "date": "2026-07-06",
+            "alternative": "Use kg init so .kb is its own CUE module with the CLI-managed quicue.ca/kg schema link.",
+            "related": {
+                "ADR-001": true
+            }
+        },
+        "REJ-002": {
+            "@type": "kg:Rejected",
+            "id": "REJ-002",
+            "approach": "Place project knowledge entries inside .kg/codex.",
+            "reason": ".kg/codex owns Codex drift controls, watchdogs, and MCP declarations; mixing project KG entries there would blur authority boundaries.",
+            "date": "2026-07-06",
+            "alternative": "Use .kb for project knowledge and keep .kg/codex for drift controls.",
+            "related": {
+                "ADR-002": true
+            }
+        },
+        "REJ-003": {
+            "@type": "kg:Rejected",
+            "id": "REJ-003",
+            "approach": "Treat .kg as a deprecated alias for the project knowledge graph.",
+            "reason": "This repository already uses .kg/codex for Codex drift-control authority, so a broad .kg alias would blur the project knowledge and control-plane boundaries.",
+            "date": "2026-07-07",
+            "alternative": "Use .kb for project knowledge and keep .kg/codex as the only .kg subtree with KG authority.",
+            "related": {
+                "ADR-003": true,
+                "REJ-002": true
+            }
+        }
+    },
+    "patterns": {
+        "struct-as-set": {
+            "@type": "kg:Pattern",
+            "name": "Struct-as-Set",
+            "category": "cue",
+            "problem": "List-valued membership fields admit duplicates and make drift checks harder to unify.",
+            "solution": "Represent membership and relationships as {[string]: true} sets.",
+            "context": "Use for related entries, used-in fields, and required-path membership.",
+            "example": "KG decisions, patterns, insights, and rejected approaches use related structs.",
+            "used_in": {
+                "lattice": true
+            },
+            "related": {
+                "comprehension-index": true
+            }
+        },
+        "adr-as-cue": {
+            "@type": "kg:Pattern",
+            "name": "ADR as CUE Struct",
+            "category": "knowledge",
+            "problem": "Markdown-only decisions are not type-checked or queryable by repo validators.",
+            "solution": "Encode decisions as CUE structs with required context, decision, rationale, and consequences.",
+            "context": "Use for repository architecture choices that should participate in KG indexes.",
+            "used_in": {
+                "lattice": true
+            },
+            "related": {
+                "struct-as-set": true
+            }
+        },
+        "comprehension-index": {
+            "@type": "kg:Pattern",
+            "name": "Comprehension-Derived Index",
+            "category": "cue",
+            "problem": "Manually maintained summary views drift from source entries.",
+            "solution": "Compute summary, status, and confidence views with CUE comprehensions.",
+            "context": "Use for KG aggregate views and drift-control inventories.",
+            "example": ".kb/index.cue derives summary, by_status, and by_confidence.",
+            "used_in": {
+                "lattice": true
+            },
+            "related": {
+                "adr-as-cue": true
+            }
+        }
+    },
+    "summary": {
+        "total_decisions": 3,
+        "total_insights": 2,
+        "total_rejected": 3,
+        "total_patterns": 3,
+        "total": 11
+    },
+    "by_status": {
+        "proposed": {},
+        "accepted": {
+            "ADR-001": "Adopt upstream-shaped CUE KG entries through the kg CLI",
+            "ADR-002": "Keep agent KG access read-only by default",
+            "ADR-003": "Canonicalize project KG directory boundaries"
+        },
+        "deprecated": {},
+        "superseded": {}
+    },
+    "by_confidence": {
+        "high": {
+            "INSIGHT-001": "CUE unification can be both the schema validator and the KG federation mechanism."
+        },
+        "medium": {
+            "INSIGHT-002": "The Codex drift KG and upstream-shaped project KG serve different roles."
+        },
+        "low": {}
+    }
+}

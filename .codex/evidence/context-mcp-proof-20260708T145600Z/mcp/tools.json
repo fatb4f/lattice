@@ -1,0 +1,150 @@
+{
+  "tools": [
+    {
+      "name": "kg_status",
+      "description": "Show whether the lattice Codex drift KG and drift tooling are available.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "kg_query",
+      "description": "Evaluate an allowed read-only Codex drift KG CUE expression and return JSON.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "default": "policy",
+            "description": "Named expression to evaluate.",
+            "type": "string",
+            "enum": [
+              "surfaces",
+              "policy",
+              "resources",
+              "tools",
+              "prompts",
+              "promotionStatus",
+              "phaseOne",
+              "phaseTwo"
+            ]
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "kg_drift_scan",
+      "description": "Scan Codex KG drift findings by scope.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "default": "full",
+            "description": "Drift scan scope.",
+            "type": "string",
+            "enum": [
+              "full",
+              "repo",
+              "patch",
+              "phase",
+              "promotion",
+              "gate"
+            ]
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "kg_phase_status",
+      "description": "Read graph-state phase watchdog status.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "phase": {
+            "default": "all",
+            "description": "Phase status scope.",
+            "type": "string",
+            "enum": [
+              "all",
+              "phase-one",
+              "phase-two"
+            ]
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "kg_surface_explain",
+      "description": "Read declared Codex drift KG control surfaces.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "kg_mcp_policy",
+      "description": "Read the declared MCP read-only policy, resources, tools, and prompts.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "kg_context_match",
+      "description": "Return the bounded route packet that UserPromptSubmit would inject for a prompt.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Prompt text to match against the repo-local .kb project KG."
+          }
+        },
+        "required": [
+          "prompt"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "kg_vet",
+      "description": "Validate the lattice Codex drift KG CUE package.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    }
+  ]
+}

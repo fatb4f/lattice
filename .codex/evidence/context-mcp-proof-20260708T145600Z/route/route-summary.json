@@ -1,0 +1,35 @@
+{
+  "schema": "lattice.context-route-packet.v1",
+  "route": "resolver-maintenance",
+  "confidence": 0.8,
+  "budget": {
+    "maxInlineEntities": 1,
+    "maxInlineBytes": 4096,
+    "preferMCP": true
+  },
+  "selection": {
+    "entities": [
+      "project-context"
+    ],
+    "resources": [
+      "kg://query/selfContext",
+      "codex://surfaces"
+    ],
+    "files": []
+  },
+  "gates": {
+    "kbValid": true,
+    "noDanglingRefs": true,
+    "noGeneratedInput": true,
+    "noPluginCacheInput": true,
+    "noRawTranscriptInput": true,
+    "transientProjection": true
+  },
+  "hardExclusions": [
+    "raw .kb body injection",
+    "generated/codex runtime input",
+    "plugin cache runtime input",
+    "raw transcript runtime input",
+    "parent traversal in selected files"
+  ]
+}

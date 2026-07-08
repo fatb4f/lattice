@@ -1,0 +1,12 @@
+{
+  "repoRoot": "/home/_404/src/lattice",
+  "kgDir": "/home/_404/src/lattice/.kg/codex",
+  "kgDirExists": true,
+  "driftCheckExists": true,
+  "contextHookExists": true,
+  "cuePolicy": true,
+  "kg": {
+    "ok": true,
+    "path": "/home/_404/src/quicue.ca/kg/tools/kg"
+  }
+}

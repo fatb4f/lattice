@@ -1,0 +1,5 @@
+f7b7760 (HEAD -> main, origin/main, origin/HEAD) wip
+3d952c1 wip
+7c2f19b wip
+e3661ad feat(context): route KG context through bounded MCP resources
+e04b754 feat:phase 1

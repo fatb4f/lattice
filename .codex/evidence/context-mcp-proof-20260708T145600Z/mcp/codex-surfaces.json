@@ -1,0 +1,307 @@
+{
+    "pattern-suite": {
+        "id": "pattern-suite",
+        "kind": "authority",
+        "description": "Flat executable 16-pattern CUE kernel pattern suite.",
+        "requiredPaths": [
+            "patterns/schema.cue",
+            "patterns/unification.cue",
+            "patterns/definitions.cue",
+            "patterns/defaults.cue",
+            "patterns/disjunctions.cue",
+            "patterns/comprehensions.cue",
+            "patterns/closedness.cue",
+            "patterns/subsumption.cue",
+            "patterns/negative-fixtures.cue",
+            "patterns/projections.cue",
+            "patterns/constructors.cue",
+            "patterns/top-and-bottom.cue",
+            "patterns/bounds.cue",
+            "patterns/hidden-and-let.cue",
+            "patterns/cycles.cue",
+            "patterns/lists.cue",
+            "patterns/attributes.cue"
+        ],
+        "forbiddenPaths": [
+            "pillars",
+            "idioms",
+            "patterns/catalog.cue",
+            "patterns/pillars.cue",
+            "patterns/language_pillars.cue",
+            "patterns/contract_pillars.cue",
+            "patterns/adapter_pillars.cue",
+            "patterns/idiom_families.cue"
+        ],
+        "protectedPaths": []
+    },
+    "control-profile": {
+        "id": "control-profile",
+        "kind": "verification",
+        "description": "Profile catalogue for deriving closed-loop feedback techniques from idiomatic patterns.",
+        "requiredPaths": [
+            "profiles/control/schema.cue",
+            "profiles/control/techniques.cue"
+        ],
+        "forbiddenPaths": [
+            "patterns/control",
+            "patterns/control.cue"
+        ],
+        "protectedPaths": []
+    },
+    "source-registry": {
+        "id": "source-registry",
+        "kind": "verification",
+        "description": "Reference/source registry for CUE pattern research inputs.",
+        "requiredPaths": [
+            "sources/apercue.cue",
+            "sources/cue_by_example.cue",
+            "sources/cuetorials.cue",
+            "sources/official_docs.cue",
+            "sources/sources.cue"
+        ],
+        "forbiddenPaths": [
+            "idioms",
+            "patterns/sources.cue",
+            "patterns/official_docs.cue",
+            "patterns/cue_by_example.cue",
+            "patterns/cuetorials.cue",
+            "patterns/apercue.cue"
+        ],
+        "protectedPaths": []
+    },
+    "meta-kernel": {
+        "id": "meta-kernel",
+        "kind": "authority",
+        "description": "Reusable CUE validation and proof kernel.",
+        "requiredPaths": [
+            "meta/kernel.cue"
+        ],
+        "forbiddenPaths": [],
+        "protectedPaths": [
+            "meta/kernel.cue"
+        ]
+    },
+    "validation-controller": {
+        "id": "validation-controller",
+        "kind": "controller",
+        "description": "Shell controller for selector validation and destructive probes.",
+        "requiredPaths": [
+            "scripts/validate-domain.sh"
+        ],
+        "forbiddenPaths": [],
+        "protectedPaths": [
+            "scripts/validate-domain.sh"
+        ]
+    },
+    "codex-drift-kg": {
+        "id": "codex-drift-kg",
+        "kind": "policy",
+        "description": "Codex KG package outside the pattern validation path.",
+        "requiredPaths": [
+            ".kg/codex/README.md",
+            ".kg/codex/model.cue",
+            ".kg/codex/reference.cue",
+            ".kg/codex/checks.cue",
+            ".kg/codex/kg.cue",
+            ".kg/codex/policy.cue",
+            ".kg/codex/core/schema.cue",
+            ".kg/codex/core/control-surface.cue",
+            ".kg/codex/core/drift-rule.cue",
+            ".kg/codex/core/finding.cue",
+            ".kg/codex/core/phase.cue",
+            ".kg/codex/core/promotion.cue",
+            ".kg/codex/core/watchdog.cue",
+            ".kg/codex/vocab/schema.cue",
+            ".kg/codex/vocab/context.cue",
+            ".kg/codex/vocab/ids.cue",
+            ".kg/codex/vocab/phases.cue",
+            ".kg/codex/vocab/responses.cue",
+            ".kg/codex/vocab/severity.cue",
+            ".kg/codex/vocab/surfaces.cue",
+            ".kg/codex/ext/schema.cue",
+            ".kg/codex/ext/codex-hook.cue",
+            ".kg/codex/ext/graph-state.cue",
+            ".kg/codex/ext/meta-promotion.cue",
+            ".kg/codex/ext/patch-observation.cue",
+            ".kg/codex/ext/repo-observation.cue",
+            ".kg/codex/aggregate/schema.cue",
+            ".kg/codex/aggregate/drift.cue",
+            ".kg/codex/aggregate/index.cue",
+            ".kg/codex/aggregate/jsonld.cue",
+            ".kg/codex/aggregate/lint.cue",
+            ".kg/codex/aggregate/phase-watchdog.cue",
+            ".kg/codex/aggregate/promotion-gate.cue",
+            ".kg/codex/aggregate/promotion-status.cue",
+            ".kg/codex/mcp/schema.cue",
+            ".kg/codex/mcp/policy.cue",
+            ".kg/codex/mcp/prompts.cue",
+            ".kg/codex/mcp/resources.cue",
+            ".kg/codex/mcp/server.cue",
+            ".kg/codex/mcp/tools.cue",
+            ".kg/codex/tests/valid/schema.cue",
+            ".kg/codex/tests/valid/phase-watchdog.cue",
+            ".kg/codex/tests/valid/phase-watchdog-admission.cue",
+            ".kg/codex/tests/invalid/mutation-tool.cue",
+            ".kg/codex/tests/invalid/self-context-fixtures.cue",
+            ".kg/codex/tools/drift-facts",
+            ".kg/codex/tools/drift-check",
+            ".kg/codex/tools/drift-hook",
+            ".kg/codex/tools/promotion-facts"
+        ],
+        "forbiddenPaths": [
+            "patterns/kg.cue",
+            "patterns/kg",
+            "meta/kg.cue",
+            "meta/kg"
+        ],
+        "protectedPaths": [
+            ".kg/codex/README.md",
+            ".kg/codex/model.cue",
+            ".kg/codex/reference.cue",
+            ".kg/codex/checks.cue",
+            ".kg/codex/kg.cue",
+            ".kg/codex/policy.cue",
+            ".kg/codex/core",
+            ".kg/codex/vocab",
+            ".kg/codex/ext",
+            ".kg/codex/aggregate",
+            ".kg/codex/mcp",
+            ".kg/codex/tests",
+            ".kg/codex/tools/drift-facts",
+            ".kg/codex/tools/drift-check",
+            ".kg/codex/tools/drift-hook",
+            ".kg/codex/tools/promotion-facts"
+        ]
+    },
+    "kg-hook-runtime": {
+        "id": "kg-hook-runtime",
+        "kind": "adapter",
+        "description": "KG hook runtime for dynamic .kb context selection and transient Codex context packets.",
+        "requiredPaths": [
+            ".kg/context/emit.cue",
+            ".kg/context/kernel.cue",
+            ".kg/context/packet.cue",
+            ".kg/context/select.cue",
+            ".kg/context/validate.cue",
+            ".kg/hooks/codex/user-prompt-submit",
+            ".kg/tools/kg",
+            ".kg/vocab/context.cue"
+        ],
+        "forbiddenPaths": [],
+        "protectedPaths": [
+            ".kg/context",
+            ".kg/hooks",
+            ".kg/tools/kg",
+            ".kg/vocab/context.cue"
+        ]
+    },
+    "graph-state-phase-one": {
+        "id": "graph-state-phase-one",
+        "kind": "authority",
+        "description": "Graph-state primitive ontology promotion phase surface.",
+        "requiredPaths": [
+            "docs/graph-state-promotion-plan.md"
+        ],
+        "forbiddenPaths": [],
+        "protectedPaths": [
+            "docs/graph-state-promotion-plan.md",
+            "projections/graph-state/README.md",
+            "projections/graph-state/primitives",
+            "projections/graph-state/promotion"
+        ]
+    },
+    "graph-state-phase-two": {
+        "id": "graph-state-phase-two",
+        "kind": "authority",
+        "description": "Graph-state operational kernel promotion phase surface.",
+        "requiredPaths": [
+            "docs/graph-state-promotion-plan.md"
+        ],
+        "forbiddenPaths": [],
+        "protectedPaths": [
+            "docs/graph-state-promotion-plan.md",
+            "projections/graph-state/kernel",
+            "projections/graph-state/fixtures",
+            "projections/graph-state/promotion",
+            "generated/codex/graph-state"
+        ]
+    },
+    "graph-state-promotion": {
+        "id": "graph-state-promotion",
+        "kind": "verification",
+        "description": "Graph-state promotion proof and admission surface.",
+        "requiredPaths": [],
+        "forbiddenPaths": [],
+        "protectedPaths": [
+            "docs/graph-state-promotion-plan.md",
+            "projections/graph-state/promotion"
+        ]
+    },
+    "graph-state-drift-reports": {
+        "id": "graph-state-drift-reports",
+        "kind": "generated",
+        "description": "Generated graph-state drift reports and observations.",
+        "requiredPaths": [],
+        "forbiddenPaths": [],
+        "protectedPaths": [
+            "generated/codex/graph-state"
+        ]
+    },
+    "generated-codex-facts": {
+        "id": "generated-codex-facts",
+        "kind": "generated",
+        "description": "Generated observations from git diff, repo scan, and validation output.",
+        "requiredPaths": [],
+        "forbiddenPaths": [],
+        "protectedPaths": [
+            "generated/codex"
+        ]
+    },
+    "project-knowledge-kg": {
+        "id": "project-knowledge-kg",
+        "kind": "authority",
+        "description": "Repo-local quicue kg CLI knowledge graph under .kb.",
+        "requiredPaths": [
+            ".kb/cue.mod/module.cue",
+            ".kb/manifest.cue",
+            ".kb/project.cue",
+            ".kb/index.cue",
+            ".kb/self-context.cue",
+            ".kb/decisions/decisions.cue",
+            ".kb/insights/insights.cue",
+            ".kb/patterns/patterns.cue",
+            ".kb/rejected/rejected.cue",
+            ".kb/tasks/tasks.cue",
+            ".kb/workspace/workspace.cue",
+            ".kb/sources/sources.cue",
+            ".kb/001-untitled.cue",
+            ".kb/002-untitled.cue",
+            ".kb/003-directory-contract.cue",
+            ".kb/insight-001.cue",
+            ".kb/insight-002.cue",
+            ".kb/rejected-001.cue",
+            ".kb/rejected-002.cue",
+            ".kb/rejected-003.cue",
+            ".kb/new-pattern.cue",
+            ".kb/new-pattern-1.cue",
+            ".kb/new-pattern-2.cue"
+        ],
+        "forbiddenPaths": [],
+        "protectedPaths": [
+            ".kb"
+        ]
+    },
+    "kg-agent-skill": {
+        "id": "kg-agent-skill",
+        "kind": "interface",
+        "description": "Repo-local Codex skill that routes agents through the kg CLI.",
+        "requiredPaths": [
+            ".codex/skills/kg-agent/SKILL.md",
+            ".codex/skills/kg-agent/agents/openai.yaml"
+        ],
+        "forbiddenPaths": [],
+        "protectedPaths": [
+            ".codex/skills/kg-agent"
+        ]
+    }
+}

@@ -1,0 +1,86 @@
+{
+    "phase": {
+        "id": "graph-state-phase-two",
+        "status": "planned",
+        "description": "Graph-state operational kernel phase.",
+        "watchedPaths": [
+            "docs/graph-state-promotion-plan.md",
+            "projections/graph-state/kernel",
+            "projections/graph-state/fixtures",
+            "projections/graph-state/promotion",
+            "generated/codex/graph-state"
+        ]
+    },
+    "promotion": {
+        "id": "graph-state-phase-two-promotion",
+        "phase": "graph-state-phase-two",
+        "authority": "meta/kernel.cue",
+        "description": "Phase 2 closes, proves no-widening, and bottoms negative probes.",
+        "targetPackage": "meta",
+        "planSelector": "closedPhaseTwoPlan",
+        "implementationSelector": "closedPhaseTwoImplementation",
+        "noWideningSelector": "phaseTwoNoWidening",
+        "negativeProbeSelectors": [
+            "danglingEdgeNegative.out.probe.proof",
+            "illegalEdgeTypeNegative.out.probe.proof",
+            "missingAssignmentTargetNegative.out.probe.proof",
+            "cyclicDependencyNegative.out.probe.proof",
+            "projectionSelectsMissingNodeNegative.out.probe.proof",
+            "widenedProducerOutputNegative.out.probe.proof"
+        ]
+    },
+    "watchdog": {
+        "id": "graph-state-phase-two-watchdog",
+        "phase": "graph-state-phase-two",
+        "description": "Watch graph-state kernel promotion surfaces.",
+        "watches": [
+            "docs/graph-state-promotion-plan.md",
+            "projections/graph-state/kernel",
+            "projections/graph-state/fixtures",
+            "projections/graph-state/promotion",
+            "generated/codex/graph-state"
+        ],
+        "blockingKinds": [
+            "missing-required-surface",
+            "unexpected-surface",
+            "generated-promoted-to-authority",
+            "policy-violated"
+        ]
+    },
+    "evaluation": {
+        "phase": {
+            "id": "graph-state-phase-two",
+            "status": "planned",
+            "description": "Graph-state operational kernel phase.",
+            "watchedPaths": [
+                "docs/graph-state-promotion-plan.md",
+                "projections/graph-state/kernel",
+                "projections/graph-state/fixtures",
+                "projections/graph-state/promotion",
+                "generated/codex/graph-state"
+            ]
+        },
+        "watchdog": {
+            "id": "graph-state-phase-two-watchdog",
+            "phase": "graph-state-phase-two",
+            "description": "Watch graph-state kernel promotion surfaces.",
+            "watches": [
+                "docs/graph-state-promotion-plan.md",
+                "projections/graph-state/kernel",
+                "projections/graph-state/fixtures",
+                "projections/graph-state/promotion",
+                "generated/codex/graph-state"
+            ],
+            "blockingKinds": [
+                "missing-required-surface",
+                "unexpected-surface",
+                "generated-promoted-to-authority",
+                "policy-violated"
+            ]
+        },
+        "findings": [],
+        "blockingFindings": [],
+        "admissible": true,
+        "status": "admissible"
+    }
+}
