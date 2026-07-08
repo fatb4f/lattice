@@ -166,7 +166,7 @@ import "list"
 graphStatePhases: {
 	"graph-state-phase-one": #Phase & {
 		id:          "graph-state-phase-one"
-		status:      "planned"
+		status:      "promoted"
 		description: "Graph-state primitive ontology phase."
 		watchedPaths: [
 			"docs/graph-state-promotion-plan.md",

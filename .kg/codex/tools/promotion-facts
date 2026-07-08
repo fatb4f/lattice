@@ -23,9 +23,10 @@ done
 
 cue export $cue_files -e metaPromotionBindings --out json >"$bindings_json"
 
-target_args="$repo_root/meta"
 if [ -d "$repo_root/projections/graph-state" ]; then
-	target_args="$target_args $repo_root/projections/graph-state"
+	target_args="$repo_root/projections/graph-state"
+else
+	target_args="$repo_root/meta"
 fi
 
 positive_check() {

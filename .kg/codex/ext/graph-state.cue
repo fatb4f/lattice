@@ -2,7 +2,8 @@ package codexdrift
 
 graphStatePhases: {
 	"graph-state-phase-one": #Phase & {
-		id: "graph-state-phase-one"
+		id:          "graph-state-phase-one"
+		status:      "promoted"
 		description: "Graph-state primitive ontology phase."
 		watchedPaths: [
 			"docs/graph-state-promotion-plan.md",
@@ -13,7 +14,7 @@ graphStatePhases: {
 	}
 
 	"graph-state-phase-two": #Phase & {
-		id: "graph-state-phase-two"
+		id:          "graph-state-phase-two"
 		description: "Graph-state operational kernel phase."
 		watchedPaths: [
 			"docs/graph-state-promotion-plan.md",
