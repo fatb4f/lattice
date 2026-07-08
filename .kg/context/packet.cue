@@ -30,6 +30,21 @@ package context
 	"Derivation" |
 	"PipelineRun"
 
+#ContextGraphNode: {
+	"@id":   string & !=""
+	"@type": string | [...string]
+	id:      string & !=""
+
+	title?:        string & !=""
+	"rdfs:label"?: string & !=""
+	related?: [...close({
+		"@id": string & !=""
+	})]
+
+	// JSON-LD graph nodes carry KG-native domain payload fields.
+	[string]: _
+}
+
 #ContextPacket: close({
 	schema: "lattice.context-packet.v1"
 
@@ -71,16 +86,7 @@ package context
 
 	graph: close({
 		"@context": _
-		"@graph": [...close({
-			"@id":   string & !=""
-			"@type": string | [...string]
-			id:      string & !=""
-			title?:  string & !=""
-			"rdfs:label"?: string & !=""
-			related?: [...close({
-				"@id": string & !=""
-			})]
-		})]
+		"@graph": [...#ContextGraphNode]
 	})
 
 	output: close({

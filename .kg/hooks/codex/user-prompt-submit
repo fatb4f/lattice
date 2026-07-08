@@ -9,7 +9,7 @@ event_json=$(mktemp "${TMPDIR:-/tmp}/kg-hook.XXXXXX.json")
 trap 'rm -f "$event_json"' EXIT HUP INT TERM
 cat >"$event_json"
 
-exec "$repo_root/.kg/tools/kg" hook codex user-prompt-submit \
+"$repo_root/.kg/tools/kg" hook codex user-prompt-submit \
 	--event "$event_json" \
 	--kb "$repo_root/.kb" \
 	--vocab "$vocab" \
