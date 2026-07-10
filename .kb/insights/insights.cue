@@ -2,7 +2,7 @@ package insights
 
 import "quicue.ca/kg/core@v0"
 
-graph: {
+Graph: {
 	"INSIGHT-001": core.#Insight & {
 		id:        "INSIGHT-001"
 		statement: "CUE unification can be both the schema validator and the KG federation mechanism."

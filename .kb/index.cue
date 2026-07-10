@@ -1,30 +1,97 @@
 package kg
 
-import "quicue.ca/kg/aggregate@v0"
+import (
+	decisionpkg "github.com/fatb4f/lattice/kg/decisions"
+	insightpkg "github.com/fatb4f/lattice/kg/insights"
+	patternpkg "github.com/fatb4f/lattice/kg/patterns"
+	rejectedpkg "github.com/fatb4f/lattice/kg/rejected"
+	sourcepkg "github.com/fatb4f/lattice/kg/sources"
+	taskpkg "github.com/fatb4f/lattice/kg/tasks"
+	workspacepkg "github.com/fatb4f/lattice/kg/workspace"
+)
 
-_index: aggregate.#KGIndex & {
-	project: "lattice"
+_collections: {
+	decisions: decisionpkg.Graph
+	insights:  insightpkg.Graph
+	rejected:  rejectedpkg.Graph
+	patterns:  patternpkg.Graph
+	sources:   sourcepkg.Graph
+	tasks:     taskpkg.Graph
+	workspace: workspacepkg.Graph
+}
 
-	decisions: {
-		(d001.id): d001
-		(d002.id): d002
-		(d003.id): d003
+_manifestGraphSet: close({
+	for id, _ in kb.graphs {
+		(id): true
+	}
+})
+
+_collectionGraphSet: close({
+	for id, _ in _collections {
+		(id): true
+	}
+})
+
+_graphAssemblyClosure: _manifestGraphSet & _collectionGraphSet
+
+_projectName: project.name
+_contextValue: project
+
+#KGIndexV1: {
+	project: string & !=""
+	context: {...}
+	decisions: {...}
+	insights: {...}
+	rejected: {...}
+	patterns: {...}
+	sources: {...}
+	tasks: {...}
+	workspace: {...}
+	entities: {...}
+
+	summary: {
+		total_decisions: len(decisions)
+		total_insights:  len(insights)
+		total_rejected:  len(rejected)
+		total_patterns:  len(patterns)
+		total_sources:   len(sources)
+		total_tasks:     len(tasks)
+		total_workspace: len(workspace)
+		total: total_decisions + total_insights + total_rejected + total_patterns + total_sources + total_tasks + total_workspace
 	}
 
-	insights: {
-		(i001.id): i001
-		(i002.id): i002
-	}
+	by_status: {for status in ["proposed", "accepted", "deprecated", "superseded"] {
+		(status): {for id, decision in decisions if decision.status == status {(id): decision.title}}
+	}}
 
-	rejected: {
-		(r001.id): r001
-		(r002.id): r002
-		(r003.id): r003
-	}
+	by_confidence: {for confidence in ["high", "medium", "low"] {
+		(confidence): {for id, insight in insights if insight.confidence == confidence {(id): insight.statement}}
+	}}
+}
 
-	patterns: {
-		"struct-as-set": struct_as_set
-		"adr-as-cue": adr_as_cue
-		"comprehension-index": comprehension_index
+_index: #KGIndexV1 & {
+	project:   _projectName
+	context:   _contextValue
+	decisions: _collections.decisions
+	insights:  _collections.insights
+	rejected:  _collections.rejected
+	patterns:  _collections.patterns
+	sources:   _collections.sources
+	tasks:     _collections.tasks
+	workspace: _collections.workspace
+
+	// Collection-agnostic adapters resolve IDs through this derived map.
+	entities: {
+		"project-context": {
+			collection: "context"
+			value:      _contextValue
+		}
+		for collectionName, collection in _collections
+		for id, entity in collection {
+			(id): {
+				collection: collectionName
+				value:      entity
+			}
+		}
 	}
 }

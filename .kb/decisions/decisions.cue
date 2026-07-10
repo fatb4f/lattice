@@ -2,7 +2,7 @@ package decisions
 
 import "quicue.ca/kg/core@v0"
 
-graph: {
+Graph: {
 	"ADR-001": core.#Decision & {
 		id:        "ADR-001"
 		title:     "Adopt upstream-shaped CUE KG entries through the kg CLI"

@@ -2,6 +2,9 @@
 set -eu
 
 repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+export KG_BIN=${KG_BIN:-$repo_root/.cache/bin/kg}
+export PATH=$repo_root/.cache/bin:$PATH
+"$repo_root/scripts/require-toolchain.sh"
 cd "$repo_root"
 
 bindings_json=$(mktemp "${TMPDIR:-/tmp}/codex-promotion-bindings.XXXXXX.json")

@@ -74,8 +74,9 @@ fi
 [ -n "$prompt" ] || exit 0
 
 repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-kg_bin=$(command -v kg || true)
-[ -n "$kg_bin" ] || { printf 'kg hook: external kg CLI required\n' >&2; exit 2; }
+"$repo_root/scripts/require-toolchain.sh"
+kg_bin=${KG_BIN:-$repo_root/.cache/bin/kg}
+cue_bin=${CUE_BIN:-$(command -v cue || true)}
 case "$kg_bin" in
 /*) kg_bin_abs=$kg_bin ;;
 *) kg_bin_abs=$(cd "$(dirname "$kg_bin")" && pwd -P)/$(basename "$kg_bin") ;;
@@ -100,7 +101,7 @@ fi
 
 (cd "$repo_root" && "$kg_bin" vet) >/dev/null
 (cd "$repo_root" && "$kg_bin" settle) >/dev/null
-cue export "$repo_root/.kg/context" -e '#RoutePolicyProjection' --out json >"$policy_json"
+"$cue_bin" export "$repo_root/.kg/context" -e '#RoutePolicyProjection' --out json >"$policy_json"
 
 jq -n \
 	--arg query "$prompt" \
@@ -170,7 +171,7 @@ jq -n \
 	printf '\n'
 } >"$packet_cue"
 
-cue export "$repo_root/.kg/context"/*.cue "$packet_cue" -e '(_packet & #RoutePolicyBoundPacket)' --out json >/dev/null
+"$cue_bin" export "$repo_root/.kg/context"/*.cue "$packet_cue" -e '(_packet & #RoutePolicyBoundPacket)' --out json >/dev/null
 
 jq -cn --slurpfile packet "$packet_json" '{
 	hookSpecificOutput: {

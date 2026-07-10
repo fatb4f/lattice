@@ -2,7 +2,7 @@ package patterns
 
 import "quicue.ca/kg/core@v0"
 
-graph: {
+Graph: {
 	"struct-as-set": core.#Pattern & {
 		name:     "Struct-as-Set"
 		category: "cue"

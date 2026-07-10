@@ -1,0 +1,29 @@
+name: domain-validation
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  clean-checkout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: Install pinned CUE
+        run: |
+          mkdir -p .cache/bin
+          GOBIN="$GITHUB_WORKSPACE/.cache/bin" \
+            go install cuelang.org/go/cmd/cue@v0.17.0
+      - name: Install pinned quicue-kg boundary
+        run: scripts/bootstrap-kg.sh
+      - name: Validate clean checkout
+        env:
+          PATH: ${{ github.workspace }}/.cache/bin:/usr/local/bin:/usr/bin:/bin
+          CUE_BIN: ${{ github.workspace }}/.cache/bin/cue
+          KG_BIN: ${{ github.workspace }}/.cache/bin/kg
+        run: scripts/validate-domain.sh
+      - name: Reject stale generated or normalized surfaces
+        run: git diff --exit-code

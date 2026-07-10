@@ -5,7 +5,8 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "bun server.js"
+    "start": "bun server.js",
+    "test": "node --test server.test.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",

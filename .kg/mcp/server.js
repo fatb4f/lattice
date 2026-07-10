@@ -6,12 +6,15 @@ import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mc
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 
+import { normalizeFullIndex } from './index-response.js';
+
 const serverDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(serverDir, '../..');
 const kgDir = resolve(repoRoot, '.kg/codex');
 const driftCheck = resolve(kgDir, 'tools/drift-check');
 const contextHook = resolve(repoRoot, '.kg/hooks/codex/user-prompt-submit');
 const localKgShim = resolve(repoRoot, '.kg/tools/kg');
+const toolchainGate = resolve(repoRoot, 'scripts/require-toolchain.sh');
 const topLevelCueFiles = [
   'model.cue',
   'reference.cue',
@@ -80,7 +83,7 @@ function resolveExecutable(command) {
 }
 
 function resolveExternalKg() {
-  const configured = process.env.KG_BIN || 'kg';
+  const configured = process.env.KG_BIN || resolve(repoRoot, '.cache/bin/kg');
   const resolved = resolveExecutable(configured);
   if (!resolved) {
     return { ok: false, error: `external kg CLI not found: ${configured}` };
@@ -129,7 +132,9 @@ function exportCue(expression, out = 'json') {
     files = aggregateCueFiles;
   }
 
-  return run('cue', ['export', ...files, '-e', expression, '--out', out]);
+  const gate = run('bash', [toolchainGate]);
+  if (!gate.ok) return errorOutput('toolchain_invalid', gate.output);
+  return run(process.env.CUE_BIN || 'cue', ['export', ...files, '-e', expression, '--out', out]);
 }
 
 function driftFindings(mode = 'full') {
@@ -174,20 +179,15 @@ function contextMatch(prompt) {
 }
 
 function kgCommand(args, options = {}) {
+  const gate = run('bash', [toolchainGate]);
+  if (!gate.ok) return errorOutput('toolchain_invalid', gate.output);
   const kg = resolveExternalKg();
   if (!kg.ok) return { ok: false, output: kg.error };
   return run(kg.path, args, { timeout: options.timeout || 20000 });
 }
 
 function fullIndex() {
-  const result = kgCommand(['index', '--full'], { timeout: 30000 });
-  if (!result.ok) return result;
-
-  try {
-    return { ok: true, value: JSON.parse(result.output || '{}') };
-  } catch (error) {
-    return { ok: false, output: `failed to parse kg index --full: ${error.message}` };
-  }
+  return normalizeFullIndex(kgCommand(['index', '--full'], { timeout: 30000 }));
 }
 
 function parseJSONResult(result, label) {
@@ -204,6 +204,16 @@ function jsonOutput(value) {
   return {
     ok: true,
     output: JSON.stringify(value, null, 2),
+  };
+}
+
+function errorOutput(code, message, details = {}) {
+  return {
+    ok: false,
+    output: JSON.stringify({
+      schema: 'lattice.mcp-error.v1',
+      error: { code, message, details },
+    }, null, 2),
   };
 }
 
@@ -345,44 +355,30 @@ function selfContextProjection(projection) {
 }
 
 function entityByID(id) {
-  if (id === 'project-context') return kgCommand(['query', 'selfContext']);
-
   const index = fullIndex();
   if (!index.ok) return index;
 
-  const collections = ['decisions', 'insights', 'rejected', 'patterns'];
-  for (const collection of collections) {
-    const entity = index.value?.[collection]?.[id];
-    if (entity) {
-      return {
-        ok: true,
-        output: JSON.stringify({ id, collection, entity }, null, 2),
-      };
-    }
+  const record = index.value?.entities?.[id];
+  if (record) {
+    return jsonOutput({
+      schema: 'lattice.kg-entity.v1',
+      id,
+      collection: record.collection,
+      entity: record.value,
+    });
   }
 
-  return { ok: false, output: `KG entity not found: ${id}` };
+  return errorOutput('kg_entity_not_found', `KG entity not found: ${id}`, { id });
 }
 
 function relatedEntities(id) {
   const entityResult = entityByID(id);
   if (!entityResult.ok) return entityResult;
 
-  if (id === 'project-context') {
-    return {
-      ok: true,
-      output: JSON.stringify({ id, related: [] }, null, 2),
-    };
-  }
-
   const index = fullIndex();
   if (!index.ok) return index;
 
-  let entity;
-  for (const collection of ['decisions', 'insights', 'rejected', 'patterns']) {
-    entity = index.value?.[collection]?.[id];
-    if (entity) break;
-  }
+  const entity = index.value?.entities?.[id]?.value;
 
   const relatedIDs = Object.entries(entity?.related || {})
     .filter(([, selected]) => selected === true)
@@ -392,7 +388,7 @@ function relatedEntities(id) {
   const related = relatedIDs
     .map((relatedID) => {
       const result = entityByID(relatedID);
-      if (!result.ok) return { id: relatedID, error: result.output };
+      if (!result.ok) return { id: relatedID, error: JSON.parse(result.output).error };
       return JSON.parse(result.output);
     });
 
@@ -516,7 +512,9 @@ server.tool(
   'Validate the lattice Codex drift KG CUE package.',
   {},
   async () => {
-    const result = run('cue', ['vet', ...topLevelCueFiles]);
+    const gate = run('bash', [toolchainGate]);
+    if (!gate.ok) return content(errorOutput('toolchain_invalid', gate.output));
+    const result = run(process.env.CUE_BIN || 'cue', ['vet', ...topLevelCueFiles]);
     if (result.ok) return text('OK: .kg/codex Codex drift KG CUE package is valid');
     return content(result);
   },

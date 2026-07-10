@@ -2,7 +2,7 @@ package rejected
 
 import "quicue.ca/kg/core@v0"
 
-graph: {
+Graph: {
 	"REJ-001": core.#Rejected & {
 		id:          "REJ-001"
 		approach:    "Import quicue.ca/kg directly into the root lattice CUE module for the example."

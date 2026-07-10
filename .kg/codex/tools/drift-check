@@ -62,6 +62,9 @@ if [ -n "$phase" ]; then
 fi
 
 repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+export KG_BIN=${KG_BIN:-$repo_root/.cache/bin/kg}
+export PATH=$repo_root/.cache/bin:$PATH
+"$repo_root/scripts/require-toolchain.sh"
 facts_json=$(mktemp "${TMPDIR:-/tmp}/codex-drift-facts.XXXXXX.json")
 facts_cue=$(mktemp "${TMPDIR:-/tmp}/codex-drift-facts.XXXXXX.cue")
 self_context_json=$(mktemp "${TMPDIR:-/tmp}/lattice-self-context.XXXXXX.json")

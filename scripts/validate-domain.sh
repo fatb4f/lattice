@@ -4,6 +4,10 @@ set -euo pipefail
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 cd "$script_dir/.."
 
+export KG_BIN="${KG_BIN:-$PWD/.cache/bin/kg}"
+export PATH="$PWD/.cache/bin:$PATH"
+scripts/require-toolchain.sh
+
 expect_failure() {
 	if "$@" >/dev/null 2>&1; then
 		printf 'expected failure but command passed:'
@@ -360,7 +364,11 @@ validate_project_kg() {
 	fi
 
 	kg vet >/dev/null
-	kg index --full >/dev/null
+	kg index --full | jq -e '
+		.context.name == .project
+		and (.entities["project-context"].collection == "context")
+		and ([.decisions, .insights, .rejected, .patterns, .sources, .tasks, .workspace] | all(type == "object"))
+	' >/dev/null
 	kg settle >/dev/null
 	(cd .kb && cue vet .)
 	(cd .kb/decisions && cue vet .)
@@ -371,6 +379,17 @@ validate_project_kg() {
 	(cd .kb/workspace && cue vet .)
 	(cd .kb/sources && cue vet .)
 	(cd .kb && cue export . -e kb --out json >/dev/null)
+	(cd .kb && cue export . -e '_index.entities' --out json >/dev/null)
+	(cd .kb && cue export . -e _graphAssemblyClosure --out json >/dev/null)
+	expect_failure bash -c 'cd .kb && cue export . fixtures/manifest-only-graph.cue -e _graphAssemblyClosure --out json'
+	expect_failure bash -c 'cd .kb && cue export . fixtures/collection-only-graph.cue -e _graphAssemblyClosure --out json'
+	(cd .kb/tasks && cue export . -e '(#TaskV1 & validTaskV1Fixture)' --out json >/dev/null)
+	expect_failure bash -c 'cd .kb/tasks && cue export . -e "(#TaskV1 & invalidTaskV1Fixture)" --out json'
+	(cd .kb/sources && cue export . -e '(#SourceV1 & validSourceV1Fixture)' --out json >/dev/null)
+	expect_failure bash -c 'cd .kb/sources && cue export . -e "(#SourceV1 & invalidSourceV1Fixture)" --out json'
+	(cd .kb/workspace && cue export . -e '(#WorkspaceV1 & validWorkspaceV1Fixture)' --out json >/dev/null)
+	expect_failure bash -c 'cd .kb/workspace && cue export . -e "(#WorkspaceV1 & invalidWorkspaceV1Fixture)" --out json'
+	node --test .kg/mcp/server.test.js
 }
 
 validate_meta
