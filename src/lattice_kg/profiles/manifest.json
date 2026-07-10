@@ -1,0 +1,1 @@
+{"schema":"lattice.profile-manifest.v1","protocolVersion":"lattice.registry.v1","profiles":[{"id":"control","version":"0.1.0","protocolVersion":"lattice.registry.v1","resource":"control/profile.cue","digest":"sha256:4d651b506ed323f57d1021b714a5883daad17dce93c0e2f370102d3be29ae3bb"}]}

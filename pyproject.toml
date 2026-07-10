@@ -1,0 +1,37 @@
+[project]
+name = "lattice-kg"
+version = "0.1.0"
+description = "Deterministic CUE-contract registry composition"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.optional-dependencies]
+workbench = ["marimo>=0.18"]
+dev = ["pytest", "ruff", "pyright"]
+
+[project.scripts]
+kg = "lattice_kg.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.11.0,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.uv]
+package = true
+
+[tool.uv.build-backend]
+module-name = ["lattice_kg", "registry_adapter"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.format]
+quote-style = "double"

@@ -1,0 +1,10 @@
+{
+  "schema": "lattice.registry-manifest.v1",
+  "identity": {
+    "id": "lattice-fixture",
+    "revision": "fixture-r1",
+    "graphDigest": "sha256:3a295f6390191dd38e3ad864ddfb0f445ffc60df6d9c8f79de0801d2bd6bf338",
+    "contractVersion": "lattice.registry.v1"
+  },
+  "graph": "graph.jsonld"
+}

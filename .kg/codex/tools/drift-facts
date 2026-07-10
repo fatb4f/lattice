@@ -43,10 +43,13 @@ if [ "$mode" = "range" ] && [ -z "$base" ]; then
 fi
 
 repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+repo_json=$(mktemp "${TMPDIR:-/tmp}/codex-drift-repo.XXXXXX.json")
+patch_json=$(mktemp "${TMPDIR:-/tmp}/codex-drift-patch.XXXXXX.json")
+trap 'rm -f "$repo_json" "$patch_json"' EXIT HUP INT TERM
 
 case "$mode" in
 worktree)
-	repo_json=$(
+	(
 		cd "$repo_root"
 		find . \
 			-path ./.git -prune -o \
@@ -62,10 +65,10 @@ worktree)
 				)
 			}
 		'
-	)
+	) >"$repo_json"
 	;;
 range)
-	repo_json=$(
+	(
 		cd "$repo_root"
 		git ls-tree -r --name-only "$head" |
 			sort |
@@ -77,13 +80,13 @@ range)
 				)
 			}
 		'
-	)
+	) >"$repo_json"
 	;;
 esac
 
 case "$mode" in
 worktree)
-	patch_json=$(
+	(
 		cd "$repo_root"
 		{
 			git status --porcelain=v1 --untracked-files=all
@@ -119,10 +122,10 @@ worktree)
 			] as $changes |
 			{changes: $changes}
 		'
-	)
+	) >"$patch_json"
 	;;
 range)
-	patch_json=$(
+	(
 		cd "$repo_root"
 		{
 			git diff --name-status --find-renames "$base..$head"
@@ -156,12 +159,12 @@ range)
 			] as $changes |
 			{base: $base, head: $head, changes: $changes}
 		'
-	)
+	) >"$patch_json"
 	;;
 esac
 
 jq -n \
 	--arg schema "codex-drift-facts.v1" \
-	--argjson repo "$repo_json" \
-	--argjson patch "$patch_json" \
-	'{schema: $schema, repo: $repo, patch: $patch}'
+	--slurpfile repo "$repo_json" \
+	--slurpfile patch "$patch_json" \
+	'{schema: $schema, repo: $repo[0], patch: $patch[0]}'
