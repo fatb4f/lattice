@@ -95,14 +95,8 @@ package context
 		target: "codex.additionalContext"
 	})
 
-	gates: close({
-		vocabMapped:         true
-		kbValid:             true
-		noDanglingRefs:      true
-		noGeneratedInput:    true
-		noParentTraversal:   true
-		transientProjection: true
-	})
+	evaluatedAt: #UTCTimestamp
+	gates:       #ContextGateResults
 
 	generated: true
 	authority: false
@@ -122,6 +116,7 @@ package context
 	authority: false
 	generated: true
 	transient: true
+	evaluatedAt: #UTCTimestamp
 
 	index: close({
 		schema:             "lattice.kg-full-index-envelope.v1"
@@ -148,14 +143,7 @@ package context
 		files: [...#RepoPath] | *[]
 	})
 
-	gates: close({
-		kbValid:              true
-		noDanglingRefs:       true
-		noGeneratedInput:     true
-		noPluginCacheInput:   true
-		noRawTranscriptInput: true
-		transientProjection:  true
-	})
+	gates: #ContextRouteGateResults
 
 	hardExclusions: [...#NonEmptyString]
 	instruction:    #NonEmptyString

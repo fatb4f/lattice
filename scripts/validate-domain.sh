@@ -82,8 +82,10 @@ validate_kg_runtime() {
 		fi
 	done
 
-	printf '{"hook_event_name":"UserPromptSubmit","prompt":"project knowledge graph context"}' |
-		.kg/hooks/codex/user-prompt-submit |
+	local hook_output route_packet packet_probe status
+	hook_output=$(printf '{"hook_event_name":"UserPromptSubmit","prompt":"project knowledge graph context"}' |
+		.kg/hooks/codex/user-prompt-submit)
+	printf '%s\n' "$hook_output" |
 		jq -e '.hookSpecificOutput.hookEventName == "UserPromptSubmit"
 			and (.hookSpecificOutput.additionalContext | fromjson
 				| .schema == "lattice.context-route-packet.v1"
@@ -93,10 +95,93 @@ validate_kg_runtime() {
 				and (.selection.entities | length) <= .budget.maxInlineEntities
 				and (.selection.resources | length) <= 8
 				and (.selection.resources | all(test("^(kg|codex)://")))
-				and (.gates.noGeneratedInput == true)
-				and (.gates.noPluginCacheInput == true)
-				and (.gates.noRawTranscriptInput == true)
+				and (.gates["no-generated-input"].status == "pass")
+				and (.gates["no-generated-input"].evidence | length > 0)
+				and (.gates["no-plugin-cache-input"].status == "pass")
+				and (.gates["no-raw-transcript-input"].status == "pass")
+				and ([.gates[] | select(.status == "pass") | .evidence[]
+					| (.observedAt <= .expiresAt)
+					and (.ref == ("inline:" + .digest))
+					and (.record.exitStatus == 0)
+					and (.record.inputManifest.inputDigest | startswith("sha256:"))
+					and (.record.inputManifest.executionManifestDigest | startswith("sha256:"))
+					and (.record.inputManifest.inputs | length == 3)
+					and (.record.inputManifest.outputs | length == 4)
+					and (.record.resultDigest == .digest)] | all)
+				and ([.gates[].evidence[0].digest] | unique | length == 6)
 				and (.instruction | test("Use MCP resources")))' >/dev/null
+	route_packet=$(printf '%s\n' "$hook_output" | jq -r '.hookSpecificOutput.additionalContext')
+	local digest_root_a digest_root_b digest_a digest_b manifest_a manifest_b input_digest
+	digest_root_a=$(mktemp -d "${TMPDIR:-/tmp}/lattice-digest-a.XXXXXX")
+	digest_root_b=$(mktemp -d "${TMPDIR:-/tmp}/lattice-digest-b.XXXXXX")
+	cp -R .kb/. "$digest_root_a/"
+	cp -R .kb/. "$digest_root_b/"
+	digest_a=$(cd "$digest_root_a" && find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | awk '{print "sha256:" $1}')
+	digest_b=$(cd "$digest_root_b" && find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | awk '{print "sha256:" $1}')
+	[[ "$digest_a" == "$digest_b" ]]
+	input_digest=$(printf '%s\n' "$route_packet" | jq -r '.gates["kb-valid"].evidence[0].record.inputManifest.inputDigest')
+	manifest_a=$(printf '%s\n' "$route_packet" | jq -cS '.gates["kb-valid"].evidence[0].record.inputManifest | .outputs |= map(.path = ("/tmp/run-a/" + .role))')
+	manifest_b=$(printf '%s\n' "$route_packet" | jq -cS '.gates["kb-valid"].evidence[0].record.inputManifest | .outputs |= map(.path = ("/tmp/run-b/" + .role))')
+	[[ "$input_digest" == "$(printf '%s\n' "$manifest_a" | jq -r '.inputDigest')" ]]
+	[[ "$input_digest" == "$(printf '%s\n' "$manifest_b" | jq -r '.inputDigest')" ]]
+	[[ "$(printf '%s' "$manifest_a" | sha256sum | awk '{print $1}')" != "$(printf '%s' "$manifest_b" | sha256sum | awk '{print $1}')" ]]
+	rm -rf "$digest_root_a" "$digest_root_b"
+	packet_probe=$(mktemp "${TMPDIR:-/tmp}/lattice-packet-probe.XXXXXX.cue")
+	trap 'rm -f "$packet_probe"' RETURN
+
+	for status in fail skipped unsupported indeterminate; do
+		{
+			printf 'package context\n\n_probe: '
+			printf '%s\n' "$route_packet" | jq --arg status "$status" '.gates["kb-valid"].status = $status'
+		} >"$packet_probe"
+		expect_failure cue export ./.kg/context/*.cue "$packet_probe" -e '(_probe & #RoutePolicyBoundPacket)' --out json
+	done
+
+	{
+		printf 'package context\n\n_probe: '
+		printf '%s\n' "$route_packet" | jq 'del(.gates["kb-valid"])'
+	} >"$packet_probe"
+	expect_failure cue export ./.kg/context/*.cue "$packet_probe" -e '(_probe & #RoutePolicyBoundPacket)' --out json
+
+	{
+		printf 'package context\n\n_probe: '
+		printf '%s\n' "$route_packet" | jq '.evaluatedAt = "2099-01-01T00:00:00Z"'
+	} >"$packet_probe"
+	expect_failure cue export ./.kg/context/*.cue "$packet_probe" -e '(_probe & #RoutePolicyBoundPacket)' --out json
+
+	{
+		printf 'package context\n\n_probe: '
+		printf '%s\n' "$route_packet" | jq '.gates["kb-valid"].evidence[0].ref = "inline:sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"'
+	} >"$packet_probe"
+	expect_failure cue export ./.kg/context/*.cue "$packet_probe" -e '(_probe & #RoutePolicyBoundPacket)' --out json
+
+	{
+		printf 'package context\n\n_probe: '
+		printf '%s\n' "$route_packet" | jq 'del(.gates["kb-valid"].evidence[0].record)'
+	} >"$packet_probe"
+	expect_failure cue export ./.kg/context/*.cue "$packet_probe" -e '(_probe & #RoutePolicyBoundPacket)' --out json
+	expect_failure cue eval ./.kg/context -e '(#ValidatedContextPacket & {
+		evaluatedAt: "2099-01-01T00:00:00Z"
+		gates: {"kb-valid": {evaluatedAt: "2026-01-01T00:00:00Z"}}
+	}).gates["kb-valid"].evaluatedAt'
+	expect_failure cue export ./.kg/context -e '(#ValidatedContextGateResults & {})' --out json
+	expect_failure sh -c 'printf '\''{"hook_event_name":"UserPromptSubmit","messages":[{"role":"user","content":"raw"}]}\n'\'' | .kg/hooks/codex/user-prompt-submit >/dev/null'
+	expect_failure sh -c 'printf '\''{"hook_event_name":"UserPromptSubmit","message":[{"role":"user","content":"raw"}]}\n'\'' | .kg/hooks/codex/user-prompt-submit >/dev/null'
+	expect_failure sh -c 'printf '\''{"hook_event_name":"UserPromptSubmit","message":{"messages":[{"role":"user","content":"raw"}]}}\n'\'' | .kg/hooks/codex/user-prompt-submit >/dev/null'
+	expect_failure sh -c 'printf '\''user: raw transcript\nassistant: response\n'\'' | .kg/hooks/codex/user-prompt-submit >/dev/null'
+	expect_failure sh -c 'printf '\''{"hook_event_name":"UserPromptSubmit","prompt":"one","message":"two"}\n'\'' | .kg/hooks/codex/user-prompt-submit >/dev/null'
+	expect_failure sh -c 'printf '\''{"hook_event_name":"UserPromptSubmit","prompt":"raw","undeclared":true}\n'\'' | .kg/hooks/codex/user-prompt-submit >/dev/null'
+
+	cue export ./.kg/context -e _negativeGateFixtures --out json |
+		jq -e '.fail.status == "fail"
+			and .skipped.status == "skipped"
+			and .unsupported.status == "unsupported"
+			and .indeterminate.status == "indeterminate"' >/dev/null
+	expect_failure cue export ./.kg/context -e '(#PassingGateResult & {
+		gateId: "missing-evidence-pass", checker: "fixture", status: "pass", policy: "fail-closed",
+		startedAt: "2026-01-01T00:00:00Z", completedAt: "2026-01-01T00:00:00Z", evaluatedAt: "2026-01-01T00:00:00Z",
+		inputs: ["fixture:missing-evidence"], evidence: [], diagnostics: []
+	})' --out json
 }
 
 validate_meta() {

@@ -29,34 +29,28 @@ import "list"
 })
 
 #ValidatedContextPacket: #ContextPacket & {
-	gates: {
-		vocabMapped:         true
-		kbValid:             true
-		noDanglingRefs:      true
-		noGeneratedInput:    true
-		noParentTraversal:   true
-		transientProjection: true
+	evaluatedAt: #UTCTimestamp
+	let E = evaluatedAt
+	gates: #ValidatedContextGateResults & {
+		[string]: {evaluatedAt: E}
 	}
 	generated: true
 	authority: false
 }
 
 #ValidatedContextRoutePacket: #ContextRoutePacket & {
+	evaluatedAt: #UTCTimestamp
+	let E = evaluatedAt
 	budget: {
-		maxInlineEntities: <=defaultTokenBudget.inlineEntityMax
-		maxInlineBytes:    <=defaultTokenBudget.routePacketMaxBytes
-		maxResourceHandles: <=defaultTokenBudget.inlineResourceMax
-		maxAutoReadBytes: <=defaultTokenBudget.maxAutoReadBytes
+		maxInlineEntities:   <=defaultTokenBudget.inlineEntityMax
+		maxInlineBytes:      <=defaultTokenBudget.routePacketMaxBytes
+		maxResourceHandles:  <=defaultTokenBudget.inlineResourceMax
+		maxAutoReadBytes:    <=defaultTokenBudget.maxAutoReadBytes
 		allowExpensiveReads: defaultTokenBudget.allowExpensiveReads
-		preferMCP:         true
+		preferMCP:           true
 	}
-	gates: {
-		kbValid:              true
-		noDanglingRefs:       true
-		noGeneratedInput:     true
-		noPluginCacheInput:   true
-		noRawTranscriptInput: true
-		transientProjection:  true
+	gates: #ValidatedContextRouteGateResults & {
+		[string]: {evaluatedAt: E}
 	}
 	generated: true
 	authority: false
@@ -69,9 +63,9 @@ import "list"
 	_policy: routePolicy[route]
 
 	budget: {
-		maxInlineEntities: <=_policy.maxInlineEntities
-		maxResourceHandles: <=_policy.maxResourceHandles
-		maxAutoReadBytes: <=_policy.maxAutoReadBytes
+		maxInlineEntities:   <=_policy.maxInlineEntities
+		maxResourceHandles:  <=_policy.maxResourceHandles
+		maxAutoReadBytes:    <=_policy.maxAutoReadBytes
 		allowExpensiveReads: _policy.allowExpensiveReads
 	}
 
