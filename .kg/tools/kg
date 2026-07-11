@@ -92,7 +92,8 @@ kg_bin=$kg_bin_abs
 packet_json=$(mktemp "${TMPDIR:-/tmp}/lattice-context-packet.XXXXXX.json")
 packet_cue=$(mktemp "${TMPDIR:-/tmp}/lattice-context-packet.XXXXXX.cue")
 policy_json=$(mktemp "${TMPDIR:-/tmp}/lattice-route-policy.XXXXXX.json")
-trap 'rm -f "$packet_json" "$packet_cue" "$policy_json"' EXIT HUP INT TERM
+index_json=$(mktemp "${TMPDIR:-/tmp}/lattice-full-index.XXXXXX.json")
+trap 'rm -f "$packet_json" "$packet_cue" "$policy_json" "$index_json"' EXIT HUP INT TERM
 
 if [ "$kb" != "$repo_root/.kb" ]; then
 	printf 'kg hook: this runtime only accepts the repo-local .kb authority\n' >&2
@@ -101,15 +102,45 @@ fi
 
 (cd "$repo_root" && "$kg_bin" vet) >/dev/null
 (cd "$repo_root" && "$kg_bin" settle) >/dev/null
+(cd "$repo_root" && "$kg_bin" index --full) >"$index_json"
 "$cue_bin" export "$repo_root/.kg/context" -e '#RoutePolicyProjection' --out json >"$policy_json"
+
+revision=$(git -C "$repo_root" rev-parse HEAD)
+input_digest=$(
+	git -C "$repo_root" ls-files -co --exclude-standard -- .kb \
+		| LC_ALL=C sort \
+		| git -C "$repo_root" hash-object --stdin-paths \
+		| sha256sum \
+		| awk '{print "sha256:" $1}'
+)
+kg_version=$(sha256sum "$kg_bin" | awk '{print "sha256:" $1}')
+cue_version=$($cue_bin version | sed -n '1p')
 
 jq -n \
 	--arg query "$prompt" \
+	--arg revision "$revision" \
+	--arg input_digest "$input_digest" \
+	--arg kg_version "$kg_version" \
+	--arg cue_version "$cue_version" \
 	--slurpfile projection "$policy_json" \
+	--slurpfile full_index "$index_json" \
 	'
 	($projection[0]) as $projection
+	| ($full_index[0]) as $index
 	| ($projection.routes) as $routes
 	| ($projection.budget) as $budget
+	| ($index.entities // {}) as $entities
+	| if (($index.summary.total // -1) < 0 or ($index.summary.total > ($entities | length))) then
+		error("full KG index is incomplete")
+	  else . end
+	| [
+		$entities | to_entries[]
+		| .key as $source
+		| (.value.value.related // {}) | to_entries[]
+		| select(.value == true and ($entities[.key] == null))
+		| {source: $source, target: .key}
+	  ] as $dangling
+	| if ($dangling | length) > 0 then error("full KG index has dangling relations") else . end
 	|
 	def q: $query | ascii_downcase;
 	def route:
@@ -134,6 +165,12 @@ jq -n \
 		authority: false,
 		generated: true,
 		transient: true,
+		index: {
+			schema: "lattice.kg-full-index-envelope.v1",
+			repositoryRevision: $revision,
+			inputDigest: $input_digest,
+			tools: {kg: $kg_version, cue: $cue_version}
+		},
 		budget: {
 			maxInlineEntities: $policy.maxInlineEntities,
 			maxInlineBytes: $budget.routePacketMaxBytes,
@@ -143,7 +180,7 @@ jq -n \
 			preferMCP: $budget.mcpPreferred
 		},
 		selection: ({
-			entities: ($policy.defaultEntities[0:$policy.maxInlineEntities]),
+			entities: ([$policy.defaultEntities[] | select($entities[.] != null)][0:$policy.maxInlineEntities]),
 			resources: ($policy.mcpResources[0:([($budget.inlineResourceMax), ($policy.maxResourceHandles)] | min)]),
 			files: ($policy.files // [])
 		}),

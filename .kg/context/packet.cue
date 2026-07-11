@@ -123,6 +123,16 @@ package context
 	generated: true
 	transient: true
 
+	index: close({
+		schema:             "lattice.kg-full-index-envelope.v1"
+		repositoryRevision: #NonEmptyString
+		inputDigest:        #NonEmptyString
+		tools: close({
+			kg:  #NonEmptyString
+			cue: #NonEmptyString
+		})
+	})
+
 	budget: close({
 		maxInlineEntities: int & >=0 & <=3
 		maxInlineBytes:    int & >=0 & <=4096

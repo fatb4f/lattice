@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readdirSync, realpathSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, lstatSync, readFileSync, readlinkSync, readdirSync, realpathSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -187,7 +188,40 @@ function kgCommand(args, options = {}) {
 }
 
 function fullIndex() {
-  return normalizeFullIndex(kgCommand(['index', '--full'], { timeout: 30000 }));
+  const kg = resolveExternalKg();
+  if (!kg.ok) return errorOutput('kg_index_toolchain_unsupported', kg.error);
+
+  const revision = run('git', ['rev-parse', 'HEAD']);
+  const cueVersion = run(process.env.CUE_BIN || 'cue', ['version']);
+  const inputs = run('git', ['ls-files', '-co', '--exclude-standard', '--', '.kb']);
+  if (!revision.ok || !cueVersion.ok || !inputs.ok) {
+    return errorOutput(
+      'kg_index_provenance_unavailable',
+      'Unable to determine full-index provenance',
+      { revision: revision.output, cue: cueVersion.output, inputs: inputs.output },
+    );
+  }
+
+  const digest = createHash('sha256');
+  for (const path of inputs.output.split('\n').filter(Boolean).sort()) {
+    const absolute = resolve(repoRoot, path);
+    digest.update(path);
+    digest.update('\0');
+    const stat = lstatSync(absolute);
+    digest.update(stat.isSymbolicLink() ? readlinkSync(absolute) : readFileSync(absolute));
+    digest.update('\0');
+  }
+  const kgDigest = createHash('sha256').update(readFileSync(kg.path)).digest('hex');
+
+  return normalizeFullIndex(
+    kgCommand(['index', '--full'], { timeout: 30000 }),
+    {
+      revision: revision.output,
+      inputDigest: `sha256:${digest.digest('hex')}`,
+      kgVersion: `sha256:${kgDigest}`,
+      cueVersion: cueVersion.output.split('\n')[0],
+    },
+  );
 }
 
 function parseJSONResult(result, label) {
@@ -358,10 +392,11 @@ function entityByID(id) {
   const index = fullIndex();
   if (!index.ok) return index;
 
-  const record = index.value?.entities?.[id];
+  const record = index.value?.graph?.entities?.[id];
   if (record) {
     return jsonOutput({
       schema: 'lattice.kg-entity.v1',
+      index: index.value.provenance,
       id,
       collection: record.collection,
       entity: record.value,
@@ -372,29 +407,30 @@ function entityByID(id) {
 }
 
 function relatedEntities(id) {
-  const entityResult = entityByID(id);
-  if (!entityResult.ok) return entityResult;
-
   const index = fullIndex();
   if (!index.ok) return index;
 
-  const entity = index.value?.entities?.[id]?.value;
+  const entity = index.value?.graph?.entities?.[id];
+  if (!entity) return errorOutput('kg_entity_not_found', `KG entity not found: ${id}`, { id });
 
-  const relatedIDs = Object.entries(entity?.related || {})
-    .filter(([, selected]) => selected === true)
-    .map(([relatedID]) => relatedID)
+  const relatedIDs = index.value.graph.relations
+    .filter((relation) => relation.source === id)
+    .map((relation) => relation.target)
     .slice(0, 8);
 
-  const related = relatedIDs
-    .map((relatedID) => {
-      const result = entityByID(relatedID);
-      if (!result.ok) return { id: relatedID, error: JSON.parse(result.output).error };
-      return JSON.parse(result.output);
-    });
+  const related = relatedIDs.map((relatedID) => {
+    const record = index.value.graph.entities[relatedID];
+    return { id: relatedID, collection: record.collection, entity: record.value };
+  });
 
   return {
     ok: true,
-    output: JSON.stringify({ id, related }, null, 2),
+    output: JSON.stringify({
+      schema: 'lattice.kg-related.v1',
+      index: index.value.provenance,
+      id,
+      related,
+    }, null, 2),
   };
 }
 
@@ -565,7 +601,12 @@ for (const uri of kgContextProjections) {
 
 for (const [uri, args] of Object.entries(kgResourceCommands)) {
   server.resource(uri, uri, async () => {
-    const result = kgCommand(args, { timeout: uri === 'kg://index/full' ? 30000 : 20000 });
+    const result = uri === 'kg://index/full'
+      ? (() => {
+          const index = fullIndex();
+          return index.ok ? jsonOutput(index.value) : index;
+        })()
+      : kgCommand(args, { timeout: 20000 });
     return {
       contents: [
         {
