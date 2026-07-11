@@ -10,7 +10,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any
 
-from lattice_kg.contracts.models import (
+from lattice.rag.contracts.models import (
     ContractError,
     EvidenceRef,
     RegistryEntity,
@@ -19,7 +19,7 @@ from lattice_kg.contracts.models import (
     _require,
     _strings,
 )
-from lattice_kg.contracts.serialization import sha256_digest
+from lattice.rag.provenance import sha256_digest
 
 CONTEXT = "https://lattice.dev/context/registry/v1"
 AUTHORITIES = frozenset({"asserted", "observed", "derived", "external"})

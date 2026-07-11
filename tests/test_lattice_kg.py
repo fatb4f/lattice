@@ -10,11 +10,11 @@ import unittest
 from importlib.resources import files
 from pathlib import Path
 
-from lattice_kg import compose, load_snapshot
-from lattice_kg.contracts.models import ContextBudget, ContractError
-from lattice_kg.contracts.serialization import sha256_digest
-from lattice_kg.profiles import load_manifest
-from lattice_kg.registry.loader import SnapshotValidationError
+from lattice import compose, load_snapshot
+from lattice.profiles import load_manifest
+from lattice.rag.contracts.models import ContextBudget, ContractError
+from lattice.rag.indexing import SnapshotValidationError
+from lattice.rag.provenance import sha256_digest
 
 ROOT = Path(__file__).parents[1]
 FIXTURE = ROOT / "registry" / "fixtures" / "canonical"
@@ -99,7 +99,7 @@ class LatticeKgTests(unittest.TestCase):
             compose(too_small, self.snapshot)
 
     def test_contract_and_profile_resources_are_installed_package_resources(self) -> None:
-        packaged = files("lattice_kg.contracts.resources").joinpath("registry/schema.cue").read_bytes()
+        packaged = files("lattice.rag.contracts.resources").joinpath("registry/schema.cue").read_bytes()
         self.assertEqual(packaged, (ROOT / "projections" / "registry" / "schema.cue").read_bytes())
         self.assertIn("#CompositionTrace", packaged.decode())
         manifest = load_manifest()
@@ -280,8 +280,8 @@ class LatticeKgTests(unittest.TestCase):
                 [
                     "cue",
                     "vet",
-                    str(ROOT / "src" / "lattice_kg" / "contracts" / "resources" / "profiles" / "schema.cue"),
-                    str(ROOT / "src" / "lattice_kg" / "profiles" / "manifest.json"),
+                    str(ROOT / "src" / "lattice" / "rag" / "contracts" / "resources" / "profiles" / "schema.cue"),
+                    str(ROOT / "src" / "lattice" / "profiles" / "manifest.json"),
                     "-d",
                     "#ProfileManifest",
                 ],
@@ -301,7 +301,7 @@ class LatticeKgTests(unittest.TestCase):
                 [
                     sys.executable,
                     "-m",
-                    "lattice_kg.cli",
+                    "lattice.cli",
                     "compose",
                     "--snapshot",
                     str(FIXTURE),
@@ -320,9 +320,9 @@ class LatticeKgTests(unittest.TestCase):
             artifact = compose(self.request, self.snapshot)
             self.assertEqual(packet.read_bytes(), artifact.packet_bytes)
             self.assertEqual(trace.read_bytes(), artifact.trace_bytes)
-            subprocess.run([sys.executable, "-m", "lattice_kg.cli", "profile", "validate"], check=True)
+            subprocess.run([sys.executable, "-m", "lattice.cli", "profile", "validate"], check=True)
 
-    def test_wheel_exposes_deprecated_registry_adapter(self) -> None:
+    def test_wheel_exposes_lattice_and_compatibility_imports(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             temp_path = Path(temp)
             dist = temp_path / "dist"
@@ -333,7 +333,7 @@ class LatticeKgTests(unittest.TestCase):
                 capture_output=True,
                 text=True,
             )
-            wheel = next(dist.glob("lattice_kg-*.whl"))
+            wheel = next(dist.glob("lattice-*.whl"))
             environment = temp_path / "environment"
             subprocess.run([sys.executable, "-m", "venv", str(environment)], check=True)
             python = environment / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
@@ -344,12 +344,17 @@ class LatticeKgTests(unittest.TestCase):
                     "-I",
                     "-c",
                     "import warnings\n"
+                    "warnings.simplefilter('ignore', DeprecationWarning)\n"
+                    "import lattice\n"
+                    "assert callable(lattice.compose)\n"
                     "import lattice_kg\n"
-                    "with warnings.catch_warnings(record=True) as captured:\n"
-                    "    warnings.simplefilter('always')\n"
-                    "    import registry_adapter\n"
-                    "assert registry_adapter.compose is lattice_kg.compose\n"
-                    "assert any(issubclass(item.category, DeprecationWarning) for item in captured)\n",
+                    "import registry_adapter\n"
+                    "assert lattice_kg.compose is lattice.compose\n"
+                    "assert registry_adapter.compose is lattice.compose\n"
+                    "from importlib.resources import files\n"
+                    "adapters = files('lattice.adapters')\n"
+                    "for name in ('context_hook.sh', 'codex_hook.sh', 'index_response.js', 'mcp_server.js'):\n"
+                    "    assert adapters.joinpath(name).is_file(), name\n",
                 ],
                 cwd=temp_path,
                 check=True,
@@ -360,7 +365,7 @@ class LatticeKgTests(unittest.TestCase):
 
     @unittest.skipUnless(importlib.util.find_spec("marimo"), "workbench extra is not installed")
     def test_workbench_extra_constructs_registered_application(self) -> None:
-        subprocess.run([sys.executable, "-m", "lattice_kg.cli", "workbench", "--headless-smoke-test"], check=True)
+        subprocess.run([sys.executable, "-m", "lattice.cli", "workbench", "--headless-smoke-test"], check=True)
 
 
 if __name__ == "__main__":

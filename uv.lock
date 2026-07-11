@@ -179,28 +179,32 @@ wheels = [
 ]
 
 [[package]]
-name = "lattice-kg"
+name = "lattice"
 version = "0.1.0"
 source = { editable = "." }
 
 [package.optional-dependencies]
+workbench = [
+    { name = "marimo" },
+]
+
+[package.dev-dependencies]
 dev = [
     { name = "pyright" },
     { name = "pytest" },
     { name = "ruff" },
 ]
-workbench = [
-    { name = "marimo" },
-]
 
 [package.metadata]
-requires-dist = [
-    { name = "marimo", marker = "extra == 'workbench'", specifier = ">=0.18" },
-    { name = "pyright", marker = "extra == 'dev'" },
-    { name = "pytest", marker = "extra == 'dev'" },
-    { name = "ruff", marker = "extra == 'dev'" },
+requires-dist = [{ name = "marimo", marker = "extra == 'workbench'", specifier = ">=0.18" }]
+provides-extras = ["workbench"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pyright" },
+    { name = "pytest" },
+    { name = "ruff" },
 ]
-provides-extras = ["workbench", "dev"]
 
 [[package]]
 name = "loro"

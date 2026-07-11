@@ -1,16 +1,18 @@
 [project]
-name = "lattice-kg"
+name = "lattice"
 version = "0.1.0"
-description = "Deterministic CUE-contract registry composition"
+description = "Python runtime boundary for Lattice adapters, RAG, and generated Marimo applications"
 requires-python = ">=3.12"
 dependencies = []
 
 [project.optional-dependencies]
 workbench = ["marimo>=0.18"]
+
+[dependency-groups]
 dev = ["pytest", "ruff", "pyright"]
 
 [project.scripts]
-kg = "lattice_kg.cli:main"
+lattice = "lattice.cli:main"
 
 [build-system]
 requires = ["uv_build>=0.11.0,<0.12.0"]
@@ -20,7 +22,7 @@ build-backend = "uv_build"
 package = true
 
 [tool.uv.build-backend]
-module-name = ["lattice_kg", "registry_adapter"]
+module-name = ["lattice", "lattice_kg", "registry_adapter"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

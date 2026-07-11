@@ -1,4 +1,4 @@
-"""Single canonical JSON serialization path for all engine artifacts."""
+"""Canonical serialization and digest provenance for runtime artifacts."""
 
 from __future__ import annotations
 

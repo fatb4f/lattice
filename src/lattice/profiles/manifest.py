@@ -19,7 +19,7 @@ def _freeze(value: Any) -> Any:
 
 
 def load_manifest() -> Mapping[str, Any]:
-    root = files("lattice_kg.profiles")
+    root = files("lattice.profiles")
     data = json.loads(root.joinpath("manifest.json").read_text(encoding="utf-8"))
     if (
         not isinstance(data, dict)

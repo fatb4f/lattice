@@ -1,7 +1,13 @@
-"""The installed deterministic lattice knowledge-graph engine."""
+"""Compatibility import; runtime authority lives under :mod:`lattice`."""
 
-from .composition.engine import CompositionArtifact, PythonRegistryEngine, compose
-from .registry.loader import RegistrySnapshot, SnapshotValidationError, load_snapshot
+from lattice import (
+    CompositionArtifact,
+    PythonRegistryEngine,
+    RegistrySnapshot,
+    SnapshotValidationError,
+    compose,
+    load_snapshot,
+)
 
 __all__ = [
     "CompositionArtifact",

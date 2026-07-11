@@ -1,4 +1,4 @@
-"""Closed boundary adapters and immutable internal registry values."""
+"""Closed boundary values consumed from versioned CUE/KG exports."""
 
 from __future__ import annotations
 

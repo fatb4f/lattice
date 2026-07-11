@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from lattice_kg import SnapshotValidationError, compose, load_snapshot
-from lattice_kg.contracts.models import ContractError
+from lattice import SnapshotValidationError, compose, load_snapshot
+from lattice.rag.contracts.models import ContractError
 
 ROOT = Path(__file__).parents[1]
 FIXTURE = ROOT / "registry" / "fixtures" / "canonical"
@@ -118,7 +118,7 @@ class RegistryAdapterTests(unittest.TestCase):
             shutil.copytree(FIXTURE, target)
             graph = json.loads((target / "graph.jsonld").read_text())
             graph["relations"][0]["object"] = "urn:remote:entity"
-            from lattice_kg.contracts.serialization import sha256_digest
+            from lattice.rag.provenance import sha256_digest
 
             manifest = json.loads((target / "manifest.json").read_text())
             manifest["identity"]["graphDigest"] = sha256_digest(graph)

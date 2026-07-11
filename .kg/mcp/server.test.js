@@ -1,22 +1,12 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import { normalizeFullIndex } from './index-response.js';
 
-const provenance = {
-  revision: 'abc123',
-  inputDigest: 'sha256:123',
-  kgVersion: 'kg v1',
-  cueVersion: 'cue version v0.17.0',
-};
-
-const graph = {
-  entities: {
-    one: { collection: 'decisions', value: { related: { two: true } } },
-    two: { collection: 'insights', value: {} },
-  },
-  summary: { total: 2 },
-};
+const fixture = new URL('../../tests/fixtures/full_index/', import.meta.url);
+const provenance = JSON.parse(readFileSync(new URL('provenance.json', fixture), 'utf8'));
+const graph = JSON.parse(readFileSync(new URL('graph.json', fixture), 'utf8'));
 
 test('full KG index command failures use the structured invalid-index envelope', () => {
   const result = normalizeFullIndex({ ok: false, output: 'invalid graph' }, provenance);

@@ -475,11 +475,19 @@ validate_project_kg() {
 	(cd .kb/workspace && cue export . -e '(#WorkspaceV1 & validWorkspaceV1Fixture)' --out json >/dev/null)
 	expect_failure bash -c 'cd .kb/workspace && cue export . -e "(#WorkspaceV1 & invalidWorkspaceV1Fixture)" --out json'
 	node --test .kg/mcp/server.test.js
+	bun .kg/mcp/server.js </dev/null
+}
+
+validate_python_runtime() {
+	uv sync --locked
+	uv run lattice diagnostics runtime-surface --root .
+	uv run pytest
 }
 
 validate_meta
 validate_kg
 validate_project_kg
+validate_python_runtime
 validate_kg_runtime
 validate_patterns
 validate_sources

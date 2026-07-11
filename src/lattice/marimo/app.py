@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import json
 
-import marimo as mo
+import marimo as mo  # pyright: ignore[reportMissingImports]
 
-from lattice_kg import compose, load_snapshot
-from lattice_kg.profiles import load_manifest
+from lattice import compose, load_snapshot
+from lattice.profiles import load_manifest
 
 DEFAULT_REQUEST = (
     '{"schema":"lattice.compose-request.v1","intent":"inspect","focus":{"paths":["meta/kernel.cue"]},'

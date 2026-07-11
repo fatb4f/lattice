@@ -7,9 +7,9 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any, Protocol
 
-from lattice_kg.contracts.models import ComposeRequest, ContractError, RegistryEntity, RegistryRelation
-from lattice_kg.contracts.serialization import canonical_json, sha256_digest
-from lattice_kg.registry.loader import RegistrySnapshot
+from lattice.rag.contracts.models import ComposeRequest, ContractError, RegistryEntity, RegistryRelation
+from lattice.rag.indexing import RegistrySnapshot
+from lattice.rag.provenance import canonical_json, sha256_digest
 
 POLICY_VERSION = "inspect-v1"
 SERIALIZER_VERSION = "json-v1"
