@@ -23,6 +23,37 @@ resources + operations + gates + witnesses
 
 The first downstream projection is the dotfiles Codex contract, which maps artifacts/actions/checks/evidence onto that generic lattice surface.
 
+## Evidence-backed runtime delivery
+
+The locked Python runtime consumes the versioned `kg index --full` envelope while CUE remains the contract and
+admission authority:
+
+```sh
+uv sync --locked
+uv run lattice index build --out /tmp/lattice-index.json
+uv run lattice route --envelope /tmp/lattice-index.json --query "knowledge graph context" --out /tmp/route.json
+uv run lattice materialize --envelope /tmp/lattice-index.json --route-packet /tmp/route.json --out /tmp/context.json
+uv run lattice audit hook --envelope /tmp/lattice-index.json --prompt "knowledge graph context" --out /tmp/hook-audit.json
+uv run lattice diagnose --format json --bundle build/diagnostics-review
+uv run lattice-mcp
+```
+
+`lattice route` exports and admits `graphRoutingPolicy` from `.kg/context/routing.cue` when `--policy` is omitted.
+The versioned policy owns ranking weights, allowed metadata, relation propagation, tie-breaking, ceilings, and default
+budgets; Python only executes the exported document.
+
+The retained `.kg/mcp/server.js` and Bun package are compatibility launchers
+and boundary tests only; Python owns the sole MCP resource implementation.
+
+Indexes and projections are cached under `.cache/lattice` by repository revision, normalized inputs, and tool
+identity. The registered Codex hook emits only compact prompt context and does not run diagnostic gates or create audit
+artifacts. `lattice audit hook` and `lattice diagnose` own evidence-bearing offline audits; review bundles and the
+generated workbook remain non-authoritative.
+
+Use `scripts/validate-fast.sh` for formatting, typing, unit tests, and CUE contract checks without live full-index
+work. `scripts/validate-domain.sh` is the integration gate: it creates one shared full-index envelope, reuses it for
+diagnostics, and reviews the offline hook audit without executing the registered hook.
+
 ## Core generalization
 
 Your **CUE lattice TDD/BDD kernel** applies anywhere the system can be modeled as:

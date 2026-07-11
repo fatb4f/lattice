@@ -29,8 +29,9 @@ package context
 })
 
 #GateManifestOutput: close({
-	role: #NonEmptyString
-	path: #NonEmptyString
+	role:   #NonEmptyString
+	path:   #NonEmptyString
+	digest: #SHA256Digest
 })
 
 #GateEvidence: close({

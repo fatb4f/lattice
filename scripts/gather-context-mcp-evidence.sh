@@ -15,10 +15,22 @@ git rev-parse HEAD >"$out/repo/head.txt"
 git status --short >"$out/repo/status.txt"
 git branch --show-current >"$out/repo/branch.txt"
 git log -n 5 --oneline --decorate >"$out/repo/recent-commits.txt"
+uv run lattice index build --no-cache --out "$out/route/full-index.json"
 
-printf '%s\n' "$prompt" \
-	| .kg/hooks/codex/user-prompt-submit \
-	>"$out/route/user-prompt-submit.json"
+emit_audit_packet() {
+	packet_prompt=$1
+	packet_output=$2
+	context_output=$3
+	uv run lattice audit hook \
+		--envelope "$out/route/full-index.json" \
+		--prompt "$packet_prompt" \
+		--out "$packet_output" \
+		--context-out "$context_output"
+}
+
+emit_audit_packet "$prompt" \
+	"$out/route/user-prompt-submit.json" \
+	"$out/route/user-prompt-context.json"
 
 jq '{
 	schema,
@@ -29,11 +41,6 @@ jq '{
 	gates,
 	hardExclusions
 }' "$out/route/user-prompt-submit.json" >"$out/route/route-summary.json"
-
-printf '{"hook_event_name":"UserPromptSubmit","prompt":%s}\n' \
-	"$(jq -Rn --arg prompt "$prompt" '$prompt')" \
-	| .kg/hooks/codex/user-prompt-submit \
-	>"$out/route/user-prompt-submit-envelope.json"
 
 .kg/codex/tools/drift-check --format json --mode full \
 	>"$out/drift/drift-full.json"
@@ -63,9 +70,8 @@ EOF
 while IFS='	' read -r expected_route route_prompt; do
 	[ -n "$expected_route" ] || continue
 	route_file="$out/route/packet-$expected_route.json"
-	printf '%s\n' "$route_prompt" \
-		| .kg/hooks/codex/user-prompt-submit \
-		>"$route_file"
+	route_context="$out/route/context-$expected_route.json"
+	emit_audit_packet "$route_prompt" "$route_file" "$route_context"
 	jq -c --arg expected "$expected_route" '. + {expectedRoute: $expected}' "$route_file" \
 		>>"$out/route/all-routes.jsonl"
 done <"$out/route/route-prompts.tsv"

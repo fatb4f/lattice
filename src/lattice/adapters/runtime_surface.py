@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 
 LEGACY_KG_RUNTIME = frozenset(
@@ -50,6 +51,20 @@ def _is_exact_wrapper(path: Path, expected: str) -> bool:
     return path.read_text(encoding="utf-8").replace("\r\n", "\n") == expected
 
 
+def _tracked_files(root: Path) -> set[str] | None:
+    try:
+        completed = subprocess.run(
+            ["git", "ls-files", "-z", "--", "src/lattice"],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return {item.decode() for item in completed.stdout.split(b"\0") if item}
+
+
 def runtime_surface_violations(root: Path) -> list[str]:
     violations: list[str] = []
     kg = root / ".kg"
@@ -63,9 +78,13 @@ def runtime_surface_violations(root: Path) -> list[str]:
             violations.append(f"unadmitted file beneath .kg: {relative}")
     package = root / "src" / "lattice"
     if package.exists():
+        tracked = _tracked_files(root)
         for path in sorted(item for item in package.rglob("*") if item.is_file()):
             relative = path.relative_to(package).as_posix()
             if "__pycache__" in path.parts:
+                repo_relative = path.relative_to(root).as_posix()
+                if tracked is None or repo_relative in tracked:
+                    violations.append(f"tracked Python cache artifact beneath src/lattice: {repo_relative}")
                 continue
             if path.suffix not in PACKAGE_SOURCE_SUFFIXES and relative not in PACKAGE_DATA_PATHS:
                 violations.append(f"unadmitted non-source file beneath src/lattice: {path.relative_to(root)}")

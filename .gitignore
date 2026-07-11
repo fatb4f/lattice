@@ -1,3 +1,5 @@
 .kg/mcp/node_modules/
 .kb/cue.mod/pkg/
 .cache/
+__pycache__/
+*.py[cod]

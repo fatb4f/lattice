@@ -3,7 +3,9 @@ name = "lattice"
 version = "0.1.0"
 description = "Python runtime boundary for Lattice adapters, RAG, and generated Marimo applications"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "mcp>=1.0",
+]
 
 [project.optional-dependencies]
 workbench = ["marimo>=0.18"]
@@ -13,6 +15,7 @@ dev = ["pytest", "ruff", "pyright"]
 
 [project.scripts]
 lattice = "lattice.cli:main"
+lattice-mcp = "lattice.adapters.mcp:main"
 
 [build-system]
 requires = ["uv_build>=0.11.0,<0.12.0"]
@@ -26,6 +29,7 @@ module-name = ["lattice", "lattice_kg", "registry_adapter"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["integration: executes the live KG, hook, MCP, or diagnostics toolchain"]
 
 [tool.ruff]
 target-version = "py312"

@@ -1,0 +1,30 @@
+{
+  "summary": {
+    "status": "pass",
+    "counts": {
+      "total": 18,
+      "pass": 18,
+      "nonPassing": 0
+    }
+  },
+  "checks": [
+    ["runtime-surface", "package-boundary", "pass"],
+    ["package-health", "package-boundary", "pass"],
+    ["kg-vet", "graph", "pass"],
+    ["kg-settle", "graph", "pass"],
+    ["full-index", "index", "pass"],
+    ["hook-registration", "hooks", "pass"],
+    ["prompt-event-normalization", "hooks", "pass"],
+    ["transient-output-boundaries", "hooks", "pass"],
+    ["forbidden-runtime-inputs", "hooks", "pass"],
+    ["vocabulary-authority", "authority", "pass"],
+    ["cache-isolation", "cache", "pass"],
+    ["registry-index-integrity", "registry", "pass"],
+    ["graph-routing", "routing", "pass"],
+    ["context-materialization", "context", "pass"],
+    ["generic-mcp", "mcp", "pass"],
+    ["projection-jsonld", "projections", "pass"],
+    ["evidence-freshness", "evidence", "pass"],
+    ["declared-installed-drift", "drift", "pass"]
+  ]
+}

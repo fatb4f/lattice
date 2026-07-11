@@ -28,7 +28,8 @@ export function validateFullIndex(graph) {
     entityIDs.size === 0 ||
     typeof graph.summary?.total !== 'number' ||
     !Number.isInteger(graph.summary.total) ||
-    graph.summary.total !== entityIDs.size
+    graph.summary.total !== Object.values(graph.entities)
+      .filter((record) => record?.collection !== 'context').length
   ) {
     return invalid('kg_index_incomplete', 'The full KG index entity inventory is incomplete', {
       declaredTotal: graph.summary?.total,
@@ -102,12 +103,19 @@ export function normalizeFullIndex(result, provenance = {}) {
     const validation = validateFullIndex(graph);
     if (!validation.ok) return validation;
 
-    const required = ['revision', 'inputDigest', 'kgVersion', 'cueVersion'];
+    const required = ['revision', 'inputDigest', 'policyDigest', 'kgVersion', 'cueVersion'];
     const missing = required.filter((field) => !provenance[field]);
     if (missing.length > 0) {
       return invalid('kg_index_provenance_missing', 'The full KG index provenance is incomplete', {
         missing,
       });
+    }
+    if (
+      !/^sha256:[0-9a-f]{64}$/.test(provenance.inputDigest) ||
+      !/^sha256:[0-9a-f]{64}$/.test(provenance.policyDigest) ||
+      !/^sha256:[0-9a-f]{64}$/.test(provenance.kgVersion)
+    ) {
+      return invalid('kg_index_provenance_invalid', 'Full-index provenance digests are invalid');
     }
 
     return {
@@ -117,6 +125,7 @@ export function normalizeFullIndex(result, provenance = {}) {
         provenance: {
           repositoryRevision: provenance.revision,
           inputDigest: provenance.inputDigest,
+          policyDigest: provenance.policyDigest,
           tools: {
             kg: provenance.kgVersion,
             cue: provenance.cueVersion,

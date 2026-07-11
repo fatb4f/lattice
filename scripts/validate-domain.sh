@@ -8,6 +8,11 @@ export KG_BIN="${KG_BIN:-$PWD/.cache/bin/kg}"
 export PATH="$PWD/.cache/bin:$PATH"
 scripts/require-toolchain.sh
 
+validation_runtime=$(mktemp -d "${TMPDIR:-/tmp}/lattice-validation.XXXXXX")
+shared_index_envelope="$validation_runtime/full-index.json"
+diagnostic_bundle="$validation_runtime/diagnostics-review"
+trap 'rm -rf "$validation_runtime"' EXIT
+
 expect_failure() {
 	if "$@" >/dev/null 2>&1; then
 		printf 'expected failure but command passed:'
@@ -82,35 +87,56 @@ validate_kg_runtime() {
 		fi
 	done
 
-	local hook_output route_packet packet_probe status
-	hook_output=$(printf '{"hook_event_name":"UserPromptSubmit","prompt":"project knowledge graph context"}' |
-		.kg/hooks/codex/user-prompt-submit)
+	local hook_output prompt_context audit_binding audit_digest audit_path route_packet packet_probe status
+	if [[ -f "$diagnostic_bundle/packets/hook-prompt-context.json" && -f "$diagnostic_bundle/packets/hook-audit.json" ]]; then
+		prompt_context=$(<"$diagnostic_bundle/packets/hook-prompt-context.json")
+		hook_output=$(jq -cn --arg context "$prompt_context" '{
+			hookSpecificOutput: {hookEventName: "UserPromptSubmit", additionalContext: $context}
+		}')
+	else
+		hook_output=$(printf '{"hook_event_name":"UserPromptSubmit","prompt":"project knowledge graph context"}' |
+			.kg/hooks/codex/user-prompt-submit)
+	fi
 	printf '%s\n' "$hook_output" |
 		jq -e '.hookSpecificOutput.hookEventName == "UserPromptSubmit"
 			and (.hookSpecificOutput.additionalContext | fromjson
-				| .schema == "lattice.context-route-packet.v1"
-				and .budget.preferMCP == true
-				and .budget.maxInlineEntities <= 3
-				and .budget.maxInlineBytes <= 4096
-				and (.selection.entities | length) <= .budget.maxInlineEntities
+				| .schema == "lattice.codex-prompt-context.v1"
+				and ((keys | sort) == ["indexInputDigest", "instruction", "policyDigest", "requestId", "route", "schema", "selection"])
 				and (.selection.resources | length) <= 8
 				and (.selection.resources | all(test("^(kg|codex)://")))
-				and (.gates["no-generated-input"].status == "pass")
-				and (.gates["no-generated-input"].evidence | length > 0)
-				and (.gates["no-plugin-cache-input"].status == "pass")
-				and (.gates["no-raw-transcript-input"].status == "pass")
-				and ([.gates[] | select(.status == "pass") | .evidence[]
+				and (.instruction | test("Use MCP resources")))' >/dev/null
+	prompt_context=$(printf '%s\n' "$hook_output" | jq -r '.hookSpecificOutput.additionalContext')
+	[[ $(printf '%s' "$prompt_context" | wc -c) -le 4096 ]]
+	audit_path="$diagnostic_bundle/packets/hook-audit.json"
+	audit_binding="$diagnostic_bundle/packets/hook-audit-binding.json"
+	[[ -f "$audit_binding" ]]
+	audit_digest=$(jq -r '.auditArtifact.digest' "$audit_binding")
+	jq -e '.gateSummary.status == "pass"
+		and (.gateSummary.evidenceDigest | startswith("sha256:"))
+		and (.auditArtifact.uri | startswith("artifact://lattice/hook-audit/sha256:"))
+		and (.auditArtifact.digest | startswith("sha256:"))' "$audit_binding" >/dev/null
+	[[ -f "$audit_path" ]]
+	[[ "sha256:$(sha256sum "$audit_path" | awk '{print $1}')" == "$audit_digest" ]]
+	route_packet=$(<"$audit_path")
+	printf '%s\n' "$route_packet" |
+		jq -e '.schema == "lattice.context-route-packet.v1"
+			and .budget.preferMCP == true
+			and (.selection.entities | length) <= .budget.maxInlineEntities
+			and (.selection.resources | length) <= .budget.maxResourceHandles
+			and (.gates["no-generated-input"].status == "pass")
+			and (.gates["no-plugin-cache-input"].status == "pass")
+			and (.gates["no-raw-transcript-input"].status == "pass")
+			and ([.gates[] | select(.status == "pass") | .evidence[]
 					| (.observedAt <= .expiresAt)
 					and (.ref == ("inline:" + .digest))
 					and (.record.exitStatus == 0)
 					and (.record.inputManifest.inputDigest | startswith("sha256:"))
 					and (.record.inputManifest.executionManifestDigest | startswith("sha256:"))
-					and (.record.inputManifest.inputs | length == 3)
-					and (.record.inputManifest.outputs | length == 4)
+					and (.record.inputManifest.inputs | length == 5)
+					and (.record.inputManifest.outputs | length == 2)
 					and (.record.resultDigest == .digest)] | all)
 				and ([.gates[].evidence[0].digest] | unique | length == 6)
-				and (.instruction | test("Use MCP resources")))' >/dev/null
-	route_packet=$(printf '%s\n' "$hook_output" | jq -r '.hookSpecificOutput.additionalContext')
+				and ([.candidates[] | select(.disposition == "included") | .entityId] == .selection.entities)' >/dev/null
 	local digest_root_a digest_root_b digest_a digest_b manifest_a manifest_b input_digest
 	digest_root_a=$(mktemp -d "${TMPDIR:-/tmp}/lattice-digest-a.XXXXXX")
 	digest_root_b=$(mktemp -d "${TMPDIR:-/tmp}/lattice-digest-b.XXXXXX")
@@ -449,11 +475,13 @@ validate_project_kg() {
 	fi
 
 	kg vet >/dev/null
-	kg index --full | jq -e '
-		.context.name == .project
-		and (.entities["project-context"].collection == "context")
-		and ([.decisions, .insights, .rejected, .patterns, .sources, .tasks, .workspace] | all(type == "object"))
-	' >/dev/null
+	uv run lattice index build --out "$shared_index_envelope"
+	jq -e '
+		.graph.context.name == .graph.project
+		and (.graph.entities["project-context"].collection == "context")
+		and ([.graph.decisions, .graph.insights, .graph.rejected, .graph.patterns,
+			.graph.sources, .graph.tasks, .graph.workspace] | all(type == "object"))
+	' "$shared_index_envelope" >/dev/null
 	kg settle >/dev/null
 	(cd .kb && cue vet .)
 	(cd .kb/decisions && cue vet .)
@@ -481,7 +509,14 @@ validate_project_kg() {
 validate_python_runtime() {
 	uv sync --locked
 	uv run lattice diagnostics runtime-surface --root .
-	uv run pytest
+	uv run pytest -m "not integration"
+	cue vet ./.kg/diagnostics/*.cue
+	uv run lattice diagnose --envelope "$shared_index_envelope" --format json --bundle "$diagnostic_bundle" |
+		jq -e '.summary.status == "pass" and .summary.counts.nonPassing == 0' >/dev/null
+	jq -e '.schema == "lattice.diagnostics-review-bundle.v1"
+		and (.files | index("checks.json") != null)
+		and (.files | index("logs/diagnostics.log") != null)
+		and (.files | index("workbook.html") != null)' "$diagnostic_bundle/manifest.json" >/dev/null
 }
 
 validate_meta

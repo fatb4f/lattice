@@ -67,11 +67,14 @@ else
 	exit 2
 fi
 
-"$repo_root/.kg/tools/kg" hook codex user-prompt-submit \
+set -- hook codex user-prompt-submit \
 	--event "$normalized_event" \
 	--kb "$repo_root/.kb" \
 	--vocab "$vocab" \
 	--out codex-hook-json \
-	--mode route-packet >"$output_json"
+	--mode route-packet
+[ -z "${LATTICE_HOOK_ENVELOPE:-}" ] || set -- "$@" --envelope "$LATTICE_HOOK_ENVELOPE"
+
+"$repo_root/.kg/tools/kg" "$@" >"$output_json"
 
 cat "$output_json"

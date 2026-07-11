@@ -5,6 +5,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from typing import Any
 
 from lattice.adapters.full_index import FullIndexError, load_full_index_envelope, normalize_full_index
 from lattice.adapters.runtime_surface import runtime_surface_violations
@@ -15,7 +16,7 @@ FIXTURES = ROOT / "tests" / "fixtures" / "full_index"
 
 
 class FullIndexBoundaryTests(unittest.TestCase):
-    def run_javascript_normalizer(self, raw: str, provenance: dict[str, str]) -> dict[str, object]:
+    def run_javascript_normalizer(self, raw: str, provenance: dict[str, str]) -> dict[str, Any]:
         script = """
 import { normalizeFullIndex } from './src/lattice/adapters/index_response.js';
 const result = normalizeFullIndex({ok: true, output: process.argv[1]}, JSON.parse(process.argv[2]));
@@ -59,7 +60,7 @@ console.log(JSON.stringify(normalized));
 
     def test_declared_total_must_equal_entity_inventory(self) -> None:
         graph = json.loads((FIXTURES / "graph.json").read_text())
-        graph["summary"]["total"] -= 1
+        graph["summary"]["total"] += 1
         with self.assertRaisesRegex(FullIndexError, "incomplete"):
             normalize_full_index(graph, json.loads((FIXTURES / "provenance.json").read_text()))
 
@@ -84,6 +85,7 @@ console.log(JSON.stringify(normalizeFullIndex({ok: true, output: JSON.stringify(
 
     def test_bun_bridge_matches_python_error_envelope(self) -> None:
         graph = (FIXTURES / "graph.json").read_text()
+        expected: dict[str, Any] = {}
         try:
             normalize_full_index(graph, {})
         except FullIndexError as exc:
@@ -155,6 +157,7 @@ console.log(result.output);
         }
         for name, (raw, case_provenance, error_code) in cases.items():
             with self.subTest(name=name):
+                python_result: dict[str, Any]
                 try:
                     python_result = {"ok": True, "value": normalize_full_index(raw, case_provenance)}
                 except FullIndexError as exc:
@@ -206,6 +209,19 @@ class RuntimeSurfaceGateTests(unittest.TestCase):
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(contents)
             self.assertEqual(len(runtime_surface_violations(root)), len(paths))
+
+    def test_tracked_python_cache_artifact_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            artifact = root / "src" / "lattice" / "__pycache__" / "module.cpython-312.pyc"
+            artifact.parent.mkdir(parents=True)
+            artifact.write_bytes(b"tracked bytecode")
+            subprocess.run(["git", "init", "--quiet"], cwd=root, check=True)
+            subprocess.run(["git", "add", artifact.relative_to(root)], cwd=root, check=True)
+            self.assertEqual(
+                runtime_surface_violations(root),
+                ["tracked Python cache artifact beneath src/lattice: src/lattice/__pycache__/module.cpython-312.pyc"],
+            )
 
     def test_minified_substantive_wrapper_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

@@ -97,4 +97,10 @@ import "list"
 			}
 		}]
 	}
+	if len(selection.entities) > budget.maxInlineEntities {
+		_|_("route packet entities exceed inline budget")
+	}
+	if len(selection.resources) > budget.maxResourceHandles {
+		_|_("route packet resources exceed handle budget")
+	}
 }

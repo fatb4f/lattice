@@ -1,0 +1,35 @@
+{
+  "@context": {
+    "@version": 1.1,
+    "kg": "https://quicue.ca/kg#",
+    "lattice": "https://lattice.dev/vocab#",
+    "related": {
+      "@id": "kg:related",
+      "@type": "@id"
+    },
+    "sourceId": "lattice:sourceId"
+  },
+  "@graph": [
+    {
+      "@id": "urn:lattice:kg:one",
+      "@type": "kg:Decision",
+      "lattice:collection": "decisions",
+      "lattice:payload": {
+        "related": {
+          "two": true
+        }
+      },
+      "related": [
+        "urn:lattice:kg:two"
+      ],
+      "sourceId": "one"
+    },
+    {
+      "@id": "urn:lattice:kg:two",
+      "@type": "kg:Insight",
+      "lattice:collection": "insights",
+      "lattice:payload": {},
+      "sourceId": "two"
+    }
+  ]
+}

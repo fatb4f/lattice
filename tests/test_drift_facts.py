@@ -10,12 +10,12 @@ from pathlib import Path
 ROOT = Path(__file__).parents[1]
 DRIFT_FACTS = ROOT / ".kg" / "codex" / "tools" / "drift-facts"
 CONTEXT_WRAPPER = (
-    "sh -c 'd=$PWD; while [ \"$d\" != / ]; do p=$d/.kg/hooks/codex/user-prompt-submit; "
-    "[ -f \"$p\" ] && exec sh \"$p\"; d=${d%/*}; done; exit 0'"
+    'sh -c \'d=$PWD; while [ "$d" != / ]; do p=$d/.kg/hooks/codex/user-prompt-submit; '
+    '[ -f "$p" ] && exec sh "$p"; d=${d%/*}; done; exit 0\''
 )
 DRIFT_WRAPPER = (
-    "sh -c 'd=$PWD; while [ \"$d\" != / ]; do p=$d/.kg/codex/tools/drift-hook; "
-    "[ -f \"$p\" ] && exec sh \"$p\"; d=${d%/*}; done; exit 0'"
+    'sh -c \'d=$PWD; while [ "$d" != / ]; do p=$d/.kg/codex/tools/drift-hook; '
+    '[ -f "$p" ] && exec sh "$p"; d=${d%/*}; done; exit 0\''
 )
 
 
@@ -24,9 +24,7 @@ def _init_repo(root: Path) -> None:
 
 
 def _facts(root: Path, environment: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [str(DRIFT_FACTS)], cwd=root, env=environment, capture_output=True, text=True, check=False
-    )
+    return subprocess.run([str(DRIFT_FACTS)], cwd=root, env=environment, capture_output=True, text=True, check=False)
 
 
 def test_drift_facts_preserves_small_fixture_semantics() -> None:
@@ -81,8 +79,7 @@ def test_drift_facts_rejects_malformed_streamed_json() -> None:
         assert jq is not None
         fake_jq = fake_bin / "jq"
         fake_jq.write_text(
-            "#!/bin/sh\n"
-            'case " $* " in *" -Rn "*) printf \'%s\\n\' \'{malformed\' ;; *) exec "$REAL_JQ" "$@" ;; esac\n',
+            '#!/bin/sh\ncase " $* " in *" -Rn "*) printf \'%s\\n\' \'{malformed\' ;; *) exec "$REAL_JQ" "$@" ;; esac\n',
             encoding="utf-8",
         )
         fake_jq.chmod(0o755)
@@ -100,20 +97,39 @@ def test_user_prompt_submit_wrappers_both_succeed() -> None:
         fake_kg = fake_bin / "kg"
         fake_kg.write_text(
             "#!/bin/sh\n"
-            'case "$1" in vet) exit 0 ;; query) printf \'{}\' ;; index) printf \'{"summary":{}}\' ;; esac\n',
+            "case \"$1\" in vet|settle) exit 0 ;; query) printf '{}' ;; "
+            'index) printf \'{"entities":{"fixture":{"collection":"context","value":{}}},'
+            '"summary":{"total":0}}\' ;; esac\n',
             encoding="utf-8",
         )
         fake_kg.chmod(0o755)
-        environment = {**os.environ, "PATH": f"{fake_bin}:{os.environ['PATH']}"}
-        for wrapper in (CONTEXT_WRAPPER, DRIFT_WRAPPER):
+        environment = {
+            **os.environ,
+            "KG_BIN": str(fake_kg),
+            "PATH": f"{fake_bin}:{os.environ['PATH']}",
+        }
+        for wrapper, wrapper_environment in (
+            (CONTEXT_WRAPPER, environment),
+            (DRIFT_WRAPPER, os.environ),
+        ):
             result = subprocess.run(
                 wrapper,
                 cwd=ROOT,
                 shell=True,
-                env=environment,
+                env=wrapper_environment,
                 input=event,
                 capture_output=True,
                 text=True,
                 check=False,
             )
             assert result.returncode == 0, result.stderr
+
+
+def test_user_prompt_submit_registers_only_compact_context_hook() -> None:
+    registration = json.loads((ROOT / ".codex" / "hooks.json").read_text(encoding="utf-8"))["hooks"]
+    prompt_commands = [hook["command"] for group in registration["UserPromptSubmit"] for hook in group["hooks"]]
+    assert len(prompt_commands) == 1
+    assert ".kg/hooks/codex/user-prompt-submit" in prompt_commands[0]
+    all_commands = [hook["command"] for groups in registration.values() for group in groups for hook in group["hooks"]]
+    assert all(".kg/codex/tools/drift-hook" not in command for command in all_commands)
+    assert all("lattice diagnose" not in command and "audit hook" not in command for command in all_commands)

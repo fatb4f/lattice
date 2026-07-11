@@ -6,6 +6,12 @@ repo_root="$(cd -- "$script_dir/.." && pwd)"
 cd "$repo_root"
 
 hook=.kg/hooks/codex/user-prompt-submit
+audit_snapshot_before=$(mktemp)
+audit_snapshot_after=$(mktemp)
+trap 'rm -f "$audit_snapshot_before" "$audit_snapshot_after"' EXIT
+if [[ -d .cache/lattice/hook-audit ]]; then
+	find .cache/lattice/hook-audit -type f -print0 | sort -z | xargs -0 -r sha256sum >"$audit_snapshot_before"
+fi
 
 expect_failure() {
 	local payload=$1
@@ -35,12 +41,18 @@ printf '%s\n' "$hook_output" |
 	jq -e '
 		.hookSpecificOutput.hookEventName == "UserPromptSubmit"
 		and (.hookSpecificOutput.additionalContext | fromjson
-			| .schema == "lattice.context-route-packet.v1"
-			and .event == "UserPromptSubmit"
-			and .query == "project knowledge graph context"
-			and (.gates["no-raw-transcript-input"].status == "pass"))
+			| .schema == "lattice.codex-prompt-context.v1"
+			and ((keys | sort) == ["indexInputDigest", "instruction", "policyDigest", "requestId", "route", "schema", "selection"])
+			and (.indexInputDigest | startswith("sha256:"))
+			and (.policyDigest | startswith("sha256:")))
 		and (tostring | contains("transcript_path") | not)
 	' >/dev/null
+prompt_context=$(printf '%s\n' "$hook_output" | jq -r '.hookSpecificOutput.additionalContext')
+[[ $(printf '%s' "$prompt_context" | wc -c) -le 4096 ]]
+if [[ -d .cache/lattice/hook-audit ]]; then
+	find .cache/lattice/hook-audit -type f -print0 | sort -z | xargs -0 -r sha256sum >"$audit_snapshot_after"
+fi
+cmp "$audit_snapshot_before" "$audit_snapshot_after"
 
 expect_failure "$(printf '%s\n' "$valid_event" | jq -c '.unexpected = true')"
 expect_failure "$(printf '%s\n' "$valid_event" | jq -c '.permission_mode = "unknown"')"
